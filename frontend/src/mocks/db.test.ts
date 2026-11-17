@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { mockDb } from './db';
+import { demoUser } from './data';
 import { sampleTranscriptFor } from './transcripts';
 
 /**
@@ -259,6 +260,61 @@ describe('mockDb meeting intelligence', () => {
     expect(second.tasks).toHaveLength(0);
     expect(second.decisions).toHaveLength(0);
     expect(second.knowledge).toBeNull();
+  });
+});
+
+describe('mockDb decision status', () => {
+  it('records a status change with actor, note and activity', async () => {
+    const before = await mockDb.listDecisions();
+    const target = before.find((decision) => decision.status === 'proposed');
+    expect(target).toBeDefined();
+
+    const activitiesBefore = (await mockDb.listActivities()).length;
+
+    const updated = await mockDb.updateDecisionStatus(
+      target!.id,
+      { status: 'accepted', note: 'Confirmed in the weekly review.' },
+      demoUser
+    );
+
+    expect(updated.status).toBe('accepted');
+    expect(updated.history).toHaveLength(target!.history.length + 1);
+    expect(updated.history[updated.history.length - 1]).toMatchObject({
+      status: 'accepted',
+      note: 'Confirmed in the weekly review.',
+      actor: { id: demoUser.id },
+    });
+
+    const reloaded = (await mockDb.listDecisions()).find(
+      (decision) => decision.id === target!.id
+    );
+    expect(reloaded?.status).toBe('accepted');
+
+    const activities = await mockDb.listActivities();
+    expect(activities).toHaveLength(activitiesBefore + 1);
+    expect(activities[0]).toMatchObject({
+      type: 'decision',
+      title: 'Decision accepted',
+    });
+  });
+
+  it('leaves history untouched when the status does not change', async () => {
+    const [target] = await mockDb.listDecisions();
+
+    const updated = await mockDb.updateDecisionStatus(
+      target.id,
+      { status: target.status },
+      demoUser
+    );
+
+    expect(updated.status).toBe(target.status);
+    expect(updated.history).toHaveLength(target.history.length);
+  });
+
+  it('rejects unknown decision ids', async () => {
+    await expect(
+      mockDb.updateDecisionStatus('d-missing', { status: 'accepted' }, demoUser)
+    ).rejects.toThrow('Decision not found');
   });
 });
 

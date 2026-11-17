@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import {
   CheckCircle2,
+  ChevronRight,
   Clock3,
   Download,
   GitBranch,
@@ -14,7 +15,7 @@ import { ErrorState } from '@/components/common/error-state';
 import { EmptyState } from '@/components/common/empty-state';
 import { UserAvatar } from '@/components/common/user-avatar';
 import { DecisionStatusBadge } from '@/components/common/status-badges';
-import { Badge, type BadgeProps } from '@/components/ui/badge';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -28,28 +29,18 @@ import {
 } from '@/components/ui/table';
 import { useDecisions } from '@/hooks/use-workspace';
 import { cn, downloadCsv, formatDate } from '@/lib/utils';
-import type { Decision, DecisionStatus } from '@/types';
-
-const filters: Array<{ value: 'all' | DecisionStatus; label: string }> = [
-  { value: 'all', label: 'All' },
-  { value: 'accepted', label: 'Accepted' },
-  { value: 'proposed', label: 'Proposed' },
-  { value: 'superseded', label: 'Superseded' },
-  { value: 'rejected', label: 'Rejected' },
-];
-
-const impactVariant: Record<Decision['impact'], BadgeProps['variant']> = {
-  high: 'danger',
-  medium: 'warning',
-  low: 'neutral',
-};
+import type { DecisionStatus } from '@/types';
+import { DecisionDetailDialog } from './components/decision-detail-dialog';
+import { decisionFilters, decisionImpactVariant } from './decision-meta';
 
 export function DecisionsPage() {
   const decisions = useDecisions();
   const [filter, setFilter] = useState<'all' | DecisionStatus>('all');
   const [query, setQuery] = useState('');
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const list = decisions.data ?? [];
+  const selected = list.find((decision) => decision.id === selectedId) ?? null;
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -115,7 +106,7 @@ export function DecisionsPage() {
     <div className="space-y-5">
       <PageHeader
         title="Decisions"
-        description="A durable log of what was decided, who owns it and which conversation it came from."
+        description="A durable log of what was decided, who owns it and which conversation it came from. Open a decision to change its status."
         badge={
           <Badge variant="outline" className="bg-secondary/30">
             {list.length} logged
@@ -155,7 +146,7 @@ export function DecisionsPage() {
       <Card>
         <CardContent className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-1">
-            {filters.map((item) => (
+            {decisionFilters.map((item) => (
               <Button
                 key={item.value}
                 variant={filter === item.value ? 'secondary' : 'ghost'}
@@ -204,23 +195,33 @@ export function DecisionsPage() {
                 {filtered.map((decision) => (
                   <TableRow key={decision.id}>
                     <TableCell className="max-w-[360px]">
-                      <p className="text-xs font-medium text-foreground">
-                        {decision.title}
-                      </p>
-                      <p className="mt-0.5 line-clamp-1 text-[10px] text-muted-foreground">
-                        {decision.context}
-                      </p>
-                      {decision.projectName ? (
-                        <p className="mt-1 text-[10px] text-blue-400/80">
-                          {decision.projectName}
-                        </p>
-                      ) : null}
+                      <button
+                        type="button"
+                        onClick={() => setSelectedId(decision.id)}
+                        aria-label={`Open decision ${decision.title}`}
+                        className="group flex w-full items-start gap-2 rounded-md text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      >
+                        <span className="min-w-0 flex-1">
+                          <span className="block text-xs font-medium text-foreground">
+                            {decision.title}
+                          </span>
+                          <span className="mt-0.5 block line-clamp-1 text-[10px] text-muted-foreground">
+                            {decision.context}
+                          </span>
+                          {decision.projectName ? (
+                            <span className="mt-1 block text-[10px] text-blue-400/80">
+                              {decision.projectName}
+                            </span>
+                          ) : null}
+                        </span>
+                        <ChevronRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100" />
+                      </button>
                     </TableCell>
                     <TableCell>
                       <DecisionStatusBadge status={decision.status} />
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
-                      <Badge variant={impactVariant[decision.impact]}>
+                      <Badge variant={decisionImpactVariant[decision.impact]}>
                         {decision.impact}
                       </Badge>
                     </TableCell>
@@ -253,6 +254,14 @@ export function DecisionsPage() {
           </CardContent>
         </Card>
       )}
+
+      <DecisionDetailDialog
+        key={selected?.id ?? 'closed'}
+        decision={selected}
+        onOpenChange={(open) => {
+          if (!open) setSelectedId(null);
+        }}
+      />
     </div>
   );
 }

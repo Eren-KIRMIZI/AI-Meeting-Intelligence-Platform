@@ -14,7 +14,7 @@ import {
   getMeeting,
   listMeetings,
 } from '@/services/meetings.service';
-import { listDecisions } from '@/services/decisions.service';
+import { listDecisions, updateDecisionStatus } from '@/services/decisions.service';
 import { listActivities } from '@/services/activity.service';
 import { listKnowledge } from '@/services/knowledge.service';
 import {
@@ -42,6 +42,7 @@ import type {
   CreateWorkflowInput,
   InviteMemberInput,
   Task,
+  UpdateDecisionInput,
   UpdateTaskInput,
 } from '@/types';
 
@@ -242,6 +243,22 @@ export function useUpdateTask() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['tasks'] });
       void queryClient.invalidateQueries({ queryKey: ['projects'] });
+      void queryClient.invalidateQueries({ queryKey: ['activities'] });
+    },
+  });
+}
+
+export function useUpdateDecision() {
+  const queryClient = useQueryClient();
+  const { orgId, user } = useAuth();
+
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: UpdateDecisionInput }) => {
+      if (!user) throw new Error('A signed-in user is required.');
+      return updateDecisionStatus(id, input, { orgId, user });
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['decisions'] });
       void queryClient.invalidateQueries({ queryKey: ['activities'] });
     },
   });

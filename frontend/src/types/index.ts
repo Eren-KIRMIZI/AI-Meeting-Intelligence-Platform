@@ -183,6 +183,14 @@ export interface UpdateTaskInput {
 
 export type DecisionStatus = 'proposed' | 'accepted' | 'rejected' | 'superseded';
 
+export interface DecisionStatusEvent {
+  id: string;
+  status: DecisionStatus;
+  note?: string;
+  actor: UserProfile;
+  createdAt: string;
+}
+
 export interface Decision {
   id: string;
   title: string;
@@ -193,6 +201,12 @@ export interface Decision {
   decidedAt: string;
   impact: 'low' | 'medium' | 'high';
   projectName?: string;
+  history: DecisionStatusEvent[];
+}
+
+export interface UpdateDecisionInput {
+  status: DecisionStatus;
+  note?: string;
 }
 
 export type ActivityType =

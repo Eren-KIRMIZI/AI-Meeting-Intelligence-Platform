@@ -80,6 +80,16 @@ export interface DecisionRow {
   project_id: string | null;
 }
 
+export interface DecisionEventRow {
+  id: string;
+  organization_id: string;
+  decision_id: string;
+  actor_id: string | null;
+  status: string;
+  note: string | null;
+  created_at: string;
+}
+
 export interface ActivityRow {
   id: string;
   actor_id: string | null;

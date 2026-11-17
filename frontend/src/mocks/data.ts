@@ -565,6 +565,21 @@ export const seedDecisions: Decision[] = [
     decidedAt: at(-3, 11),
     impact: 'high',
     projectName: projectName('p-execution'),
+    history: [
+      {
+        id: 'de-01-1',
+        status: 'proposed',
+        actor: people.ayse,
+        createdAt: at(-4, 11),
+      },
+      {
+        id: 'de-01-2',
+        status: 'accepted',
+        note: 'Agreed in the leadership staff meeting; every module ships with an owner.',
+        actor: people.ayse,
+        createdAt: at(-3, 11),
+      },
+    ],
   },
   {
     id: 'd-02',
@@ -576,6 +591,21 @@ export const seedDecisions: Decision[] = [
     decidedAt: at(-7, 11),
     impact: 'high',
     projectName: projectName('p-pulse'),
+    history: [
+      {
+        id: 'de-02-1',
+        status: 'proposed',
+        actor: people.sarah,
+        createdAt: at(-8, 11),
+      },
+      {
+        id: 'de-02-2',
+        status: 'accepted',
+        note: 'Transcript QA capacity supports a 10% cohort in the first week.',
+        actor: people.ayse,
+        createdAt: at(-7, 11),
+      },
+    ],
   },
   {
     id: 'd-03',
@@ -587,6 +617,15 @@ export const seedDecisions: Decision[] = [
     decidedAt: at(-1, 15),
     impact: 'high',
     projectName: projectName('p-brand'),
+    history: [
+      {
+        id: 'de-03-1',
+        status: 'proposed',
+        note: 'Needs a decision before the next channel plan is locked.',
+        actor: people.nadia,
+        createdAt: at(-1, 15),
+      },
+    ],
   },
   {
     id: 'd-04',
@@ -598,6 +637,21 @@ export const seedDecisions: Decision[] = [
     decidedAt: at(-10, 10),
     impact: 'high',
     projectName: projectName('p-execution'),
+    history: [
+      {
+        id: 'de-04-1',
+        status: 'proposed',
+        actor: people.sarah,
+        createdAt: at(-11, 10),
+      },
+      {
+        id: 'de-04-2',
+        status: 'accepted',
+        note: 'Security review confirmed membership checks are the only boundary.',
+        actor: people.ayse,
+        createdAt: at(-10, 10),
+      },
+    ],
   },
   {
     id: 'd-05',
@@ -609,6 +663,27 @@ export const seedDecisions: Decision[] = [
     decidedAt: at(-20, 14),
     impact: 'low',
     projectName: projectName('p-insight'),
+    history: [
+      {
+        id: 'de-05-1',
+        status: 'proposed',
+        actor: people.mina,
+        createdAt: at(-21, 14),
+      },
+      {
+        id: 'de-05-2',
+        status: 'accepted',
+        actor: people.ayse,
+        createdAt: at(-20, 14),
+      },
+      {
+        id: 'de-05-3',
+        status: 'superseded',
+        note: 'Research moved into the knowledge hub, so the shared drive is redundant.',
+        actor: people.mina,
+        createdAt: at(-12, 9),
+      },
+    ],
   },
   {
     id: 'd-06',
@@ -620,6 +695,15 @@ export const seedDecisions: Decision[] = [
     decidedAt: at(-2, 10),
     impact: 'medium',
     projectName: projectName('p-execution'),
+    history: [
+      {
+        id: 'de-06-1',
+        status: 'proposed',
+        note: 'Proposed after three decisions sat open for more than two weeks.',
+        actor: people.lucas,
+        createdAt: at(-2, 10),
+      },
+    ],
   },
 ];
 

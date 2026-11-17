@@ -234,6 +234,52 @@ begin
     )
   on conflict (id) do nothing;
 
+  -- Decision status history ------------------------------------------------
+  insert into public.decision_events (
+    id, organization_id, decision_id, actor_id, status, note, created_at
+  )
+  values
+    (
+      '0e100000-0000-4000-8000-000000000001', seed_org,
+      '0e000000-0000-4000-8000-000000000001', owner_id, 'proposed',
+      null, now() - interval '9 days'
+    ),
+    (
+      '0e100000-0000-4000-8000-000000000002', seed_org,
+      '0e000000-0000-4000-8000-000000000001', owner_id, 'accepted',
+      'Agreed in the leadership staff meeting; every module ships with an owner.',
+      now() - interval '8 days'
+    ),
+    (
+      '0e100000-0000-4000-8000-000000000003', seed_org,
+      '0e000000-0000-4000-8000-000000000002', owner_id, 'proposed',
+      null, now() - interval '7 days'
+    ),
+    (
+      '0e100000-0000-4000-8000-000000000004', seed_org,
+      '0e000000-0000-4000-8000-000000000002', owner_id, 'accepted',
+      'Transcript QA capacity supports a 10% cohort in the first week.',
+      now() - interval '6 days'
+    ),
+    (
+      '0e100000-0000-4000-8000-000000000005', seed_org,
+      '0e000000-0000-4000-8000-000000000003', owner_id, 'proposed',
+      'Needs a decision before the next channel plan is locked.',
+      now() - interval '1 day'
+    ),
+    (
+      '0e100000-0000-4000-8000-000000000006', seed_org,
+      '0e000000-0000-4000-8000-000000000004', owner_id, 'proposed',
+      null, now() - interval '9 days'
+    ),
+    (
+      '0e100000-0000-4000-8000-000000000007', seed_org,
+      '0e000000-0000-4000-8000-000000000004', owner_id, 'accepted',
+      'Security review confirmed membership checks are the only boundary.',
+      now() - interval '8 days'
+    )
+  on conflict (id) do nothing;
+
   -- Activity feed ---------------------------------------------------------
   insert into public.activities (
     id, organization_id, actor_id, type, title, description, created_at

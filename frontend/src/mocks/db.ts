@@ -17,12 +17,15 @@ import type {
   Project,
   Task,
   TeamMember,
+  UpdateDecisionInput,
   UpdateTaskInput,
   UserProfile,
   Workflow,
   WorkflowRun,
 } from '@/types';
 import { analysisSteps, analyzeTranscript } from '@/lib/meeting-intelligence';
+import { decisionActivityTitle } from '@/lib/decisions';
+import { decisionStatusMeta } from '@/lib/status';
 import {
   demoUser,
   seedActivities,
@@ -475,6 +478,14 @@ export const mockDb = {
         decidedAt: new Date().toISOString(),
         impact: 'medium',
         projectName: meeting.projectName,
+        history: [
+          {
+            id: newId('de'),
+            status: 'proposed',
+            actor: demoUser,
+            createdAt: new Date().toISOString(),
+          },
+        ],
       };
 
       decisions.unshift(decision);
@@ -529,6 +540,38 @@ export const mockDb = {
   async listDecisions() {
     await wait();
     return clone(decisions);
+  },
+
+  async updateDecisionStatus(
+    decisionId: string,
+    input: UpdateDecisionInput,
+    actor: UserProfile
+  ) {
+    await wait(160);
+    const decision = decisions.find((item) => item.id === decisionId);
+    if (!decision) throw new Error('Decision not found');
+    if (decision.status === input.status) return clone(decision);
+
+    const note = input.note?.trim();
+    decision.status = input.status;
+    decision.history.push({
+      id: newId('de'),
+      status: input.status,
+      note: note || undefined,
+      actor,
+      createdAt: new Date().toISOString(),
+    });
+
+    pushActivity({
+      actor,
+      type: 'decision',
+      title: decisionActivityTitle(input.status),
+      description: `“${decision.title}” was marked ${decisionStatusMeta[
+        input.status
+      ].label.toLowerCase()}${note ? `: ${note}` : '.'}`,
+    });
+
+    return clone(decision);
   },
 
   async listActivities() {

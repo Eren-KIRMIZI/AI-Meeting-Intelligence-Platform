@@ -49,6 +49,7 @@ Nova turns meetings into execution: every conversation becomes a brief with deci
    ├─ migrations/0001_init.sql                 schema, triggers, RLS, storage, bootstrap
    ├─ migrations/0002_meeting_intelligence.sql transcript + analysis columns
    ├─ migrations/0003_workflow_runs.sql        workflow execution history
+   ├─ migrations/0004_decision_events.sql      decision status audit trail
    └─ seed.sql                                 idempotent demo workspace
 ```
 
@@ -109,7 +110,8 @@ Open the SQL editor and run, in order:
 1. `supabase/migrations/0001_init.sql`
 2. `supabase/migrations/0002_meeting_intelligence.sql`
 3. `supabase/migrations/0003_workflow_runs.sql`
-4. `supabase/seed.sql` — optional demo workspace. Requires at least one auth user; sign up once first.
+4. `supabase/migrations/0004_decision_events.sql`
+5. `supabase/seed.sql` — optional demo workspace. Requires at least one auth user; sign up once first.
 
 Or with the Supabase CLI:
 
@@ -125,6 +127,7 @@ The migration creates:
 - `meetings`, `meeting_participants`, `decisions`
 - `activities`, `knowledge_documents`, `workflows`, `integrations`, `notifications`
 - `workflow_runs` (added in `0003`) for workflow execution history
+- `decision_events` (added in `0004`) for the append-only decision status log
 - `handle_new_user` trigger, `set_updated_at` triggers, indexes
 - RLS helpers: `is_org_member`, `is_org_admin`, `shares_org_with`
 - `bootstrap_workspace()` for first-run onboarding
@@ -133,6 +136,8 @@ The migration creates:
 The second migration adds `transcript`, `analysis`, `analysis_error`, `analysis_confidence`, `analyzed_at` and `analysis_model` to `meetings`. Existing RLS already scopes those columns to active workspace members.
 
 The third migration adds `workflow_runs`, scoped to workspace members for reads. Automation writes stay on the service role, so no authenticated insert or update policy is granted.
+
+The fourth migration adds `decision_events`, an append-only audit trail for the decision log. Members can read and insert events for their own workspace; history is never updated or deleted.
 
 ### 3. Configure environment
 
@@ -272,6 +277,7 @@ If you rotate keys, update Vercel environment variables and redeploy. Never comm
 - Modules: Overview, Projects, Tasks, Meetings, Decisions, Knowledge, Workflows, Intelligence, Analytics, Team, Settings
 - Workflows expose an inline run log with status, trigger, step outcomes and duration
 - Analytics recomputes KPIs, decision mix, workload and project health for 7, 14 or 30 day windows
+- Decisions open a detail panel with accept, reject, supersede and reopen actions, a reason note and an append-only status history
 - Knowledge opens a full-document reader with section parsing, search highlighting, related notes and source-meeting links
 
 All interactive controls are wired: create dialogs, task status changes, filters, exports, settings persistence, command palette (`Ctrl/⌘ + K`) and toasts.

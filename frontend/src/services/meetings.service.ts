@@ -375,17 +375,58 @@ export async function commitMeetingAnalysis(
 
     if (decisionInsert.error) throw new Error(decisionInsert.error.message);
 
-    createdDecisions = (decisionInsert.data ?? []).map((row) => ({
-      id: row.id,
-      title: row.title,
-      context: row.context ?? '',
-      status: 'proposed',
-      owner: profileFor(row.owner_id, profiles) ?? context.user,
-      meetingTitle: meeting.title,
-      decidedAt: row.decided_at ?? new Date().toISOString(),
-      impact: 'medium',
-      projectName: meeting.projectName,
-    }));
+    const decisionRows = decisionInsert.data ?? [];
+    const eventInsert = await client
+      .from('decision_events')
+      .insert(
+        decisionRows.map((row) => ({
+          organization_id: organizationId,
+          decision_id: row.id,
+          actor_id: context.user.id,
+          status: 'proposed',
+          note: null,
+        }))
+      )
+      .select('*')
+      .returns<
+        Array<{
+          id: string;
+          decision_id: string;
+          status: string;
+          created_at: string;
+        }>
+      >();
+
+    if (eventInsert.error) throw new Error(eventInsert.error.message);
+
+    const eventsByDecision = new Map(
+      (eventInsert.data ?? []).map((event) => [event.decision_id, event])
+    );
+
+    createdDecisions = decisionRows.map((row) => {
+      const event = eventsByDecision.get(row.id);
+      return {
+        id: row.id,
+        title: row.title,
+        context: row.context ?? '',
+        status: 'proposed',
+        owner: profileFor(row.owner_id, profiles) ?? context.user,
+        meetingTitle: meeting.title,
+        decidedAt: row.decided_at ?? new Date().toISOString(),
+        impact: 'medium',
+        projectName: meeting.projectName,
+        history: event
+          ? [
+              {
+                id: event.id,
+                status: 'proposed' as const,
+                actor: context.user,
+                createdAt: event.created_at,
+              },
+            ]
+          : [],
+      };
+    });
 
     nextAnalysis.decisions = nextAnalysis.decisions.map((decision) => {
       if (!input.decisionIds.includes(decision.id) || decision.decisionId) {

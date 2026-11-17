@@ -91,6 +91,7 @@ function decision(
     meetingTitle: 'Weekly product sync',
     decidedAt,
     impact: 'medium',
+    history: [],
   };
 }
 
