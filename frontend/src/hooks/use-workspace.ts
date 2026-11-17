@@ -30,6 +30,7 @@ import { inviteMember, listTeam } from '@/services/team.service';
 import {
   listNotifications,
   markAllNotificationsRead,
+  markNotificationRead,
 } from '@/services/notifications.service';
 import type {
   AnalyzeMeetingInput,
@@ -362,6 +363,19 @@ export function useMarkNotificationsRead() {
 
   return useMutation({
     mutationFn: () => markAllNotificationsRead(user?.id ?? null, orgId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+}
+
+export function useMarkNotificationRead() {
+  const queryClient = useQueryClient();
+  const { user, orgId } = useAuth();
+
+  return useMutation({
+    mutationFn: (notificationId: string) =>
+      markNotificationRead(notificationId, user?.id ?? null, orgId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },

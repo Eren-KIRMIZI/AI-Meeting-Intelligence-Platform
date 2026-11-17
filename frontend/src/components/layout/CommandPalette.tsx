@@ -61,7 +61,7 @@ export function CommandPalette() {
         label: project.name,
         hint: project.category,
         icon: FolderKanban,
-        path: '/projects',
+        path: `/projects/${project.id}`,
       })
     );
 
@@ -69,9 +69,9 @@ export function CommandPalette() {
       id: `task-${task.id}`,
       group: 'Tasks',
       label: task.title,
-      hint: task.projectName,
+      hint: task.assignee?.fullName ?? task.projectName,
       icon: ListTodo,
-      path: '/tasks',
+      path: `/tasks?task=${task.id}`,
     }));
 
     const meetingResults: CommandResult[] = (meetings.data ?? []).map(
@@ -84,7 +84,7 @@ export function CommandPalette() {
           day: 'numeric',
         }),
         icon: CalendarDays,
-        path: '/meetings',
+        path: `/meetings/${meeting.id}`,
       })
     );
 

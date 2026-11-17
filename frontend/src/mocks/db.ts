@@ -620,4 +620,12 @@ export const mockDb = {
     notifications = notifications.map((notification) => ({ ...notification, read: true }));
     return clone(notifications);
   },
+
+  async markNotificationRead(notificationId: string) {
+    await wait(80);
+    const notification = notifications.find((item) => item.id === notificationId);
+    if (!notification) throw new Error('Notification not found');
+    notification.read = true;
+    return clone(notification);
+  },
 };

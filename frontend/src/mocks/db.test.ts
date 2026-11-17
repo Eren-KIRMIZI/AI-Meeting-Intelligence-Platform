@@ -131,6 +131,26 @@ describe('mockDb workspace', () => {
     });
   });
 
+  it('marks a single notification as read without touching the rest', async () => {
+    const before = await mockDb.listNotifications();
+    const unread = before.find((notification) => !notification.read);
+    expect(unread).toBeDefined();
+
+    const updated = await mockDb.markNotificationRead(unread!.id);
+    expect(updated.read).toBe(true);
+
+    const after = await mockDb.listNotifications();
+    const unreadBefore = before.filter((notification) => !notification.read).length;
+    const unreadAfter = after.filter((notification) => !notification.read).length;
+    expect(unreadAfter).toBe(unreadBefore - 1);
+  });
+
+  it('rejects unknown notification ids', async () => {
+    await expect(mockDb.markNotificationRead('n-missing')).rejects.toThrow(
+      'Notification not found'
+    );
+  });
+
   it('marks every notification as read', async () => {
     const after = await mockDb.markNotificationsRead();
 

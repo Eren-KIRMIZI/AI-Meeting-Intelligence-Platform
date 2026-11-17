@@ -64,3 +64,27 @@ export async function markAllNotificationsRead(
 
   if (error) throw new Error(error.message);
 }
+
+export async function markNotificationRead(
+  notificationId: string,
+  userId: string | null,
+  orgId: string | null
+): Promise<void> {
+  if (!isSupabaseConfigured || !userId) {
+    await mockDb.markNotificationRead(notificationId);
+    return;
+  }
+
+  const client = getClient();
+  const organizationId = assertOrg(orgId);
+
+  const { error } = await client
+    .from('notifications')
+    .update({ read_at: new Date().toISOString() })
+    .eq('id', notificationId)
+    .eq('user_id', userId)
+    .eq('organization_id', organizationId)
+    .is('read_at', null);
+
+  if (error) throw new Error(error.message);
+}

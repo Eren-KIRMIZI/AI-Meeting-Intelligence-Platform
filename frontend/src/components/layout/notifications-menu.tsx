@@ -11,6 +11,7 @@ import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
@@ -19,6 +20,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn, formatRelativeTime } from '@/lib/utils';
 import {
+  useMarkNotificationRead,
   useMarkNotificationsRead,
   useNotifications,
 } from '@/hooks/use-workspace';
@@ -39,12 +41,26 @@ const notificationTones = {
   mention: 'border-amber-500/20 bg-amber-500/10 text-amber-400',
 } as const;
 
-function NotificationRow({ notification }: { notification: AppNotification }) {
+const notificationPaths: Record<AppNotification['type'], string> = {
+  meeting: '/meetings',
+  task: '/tasks',
+  decision: '/decisions',
+  mention: '/overview',
+};
+
+function NotificationRow({
+  notification,
+  onOpen,
+}: {
+  notification: AppNotification;
+  onOpen: (notification: AppNotification) => void;
+}) {
   const Icon = notificationIcons[notification.type];
   return (
-    <div
+    <DropdownMenuItem
+      onSelect={() => onOpen(notification)}
       className={cn(
-        'flex gap-3 px-3 py-3 transition-colors hover:bg-secondary/40',
+        'flex cursor-pointer items-start gap-3 rounded-none px-3 py-3 focus:bg-secondary/40 [&_svg]:!size-3.5 [&_svg]:!text-current',
         !notification.read && 'bg-primary/[0.035]'
       )}
     >
@@ -72,7 +88,7 @@ function NotificationRow({ notification }: { notification: AppNotification }) {
           {formatRelativeTime(notification.createdAt)}
         </p>
       </div>
-    </div>
+    </DropdownMenuItem>
   );
 }
 
@@ -80,7 +96,13 @@ export function NotificationsMenu() {
   const navigate = useNavigate();
   const { data, isLoading } = useNotifications();
   const markAllRead = useMarkNotificationsRead();
+  const markRead = useMarkNotificationRead();
   const unread = (data ?? []).filter((notification) => !notification.read).length;
+
+  const openNotification = (notification: AppNotification) => {
+    if (!notification.read) markRead.mutate(notification.id);
+    navigate(notificationPaths[notification.type]);
+  };
 
   return (
     <DropdownMenu>
@@ -146,6 +168,7 @@ export function NotificationsMenu() {
                 <NotificationRow
                   key={notification.id}
                   notification={notification}
+                  onOpen={openNotification}
                 />
               ))}
             </div>

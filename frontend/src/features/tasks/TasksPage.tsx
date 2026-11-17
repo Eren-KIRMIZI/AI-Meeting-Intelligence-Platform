@@ -127,8 +127,17 @@ export function TasksPage() {
     setProjectFilter(searchParams.get('project') ?? 'all');
   }, [searchParams]);
 
-  const list = tasks.data ?? [];
-  const projectList = projects.data ?? [];
+  const list = useMemo(() => tasks.data ?? [], [tasks.data]);
+  const projectList = useMemo(() => projects.data ?? [], [projects.data]);
+
+  // Deep link from the command palette: /tasks?task=<id> opens the detail dialog.
+  const taskParam = searchParams.get('task');
+
+  useEffect(() => {
+    if (!taskParam) return;
+    const match = list.find((task) => task.id === taskParam);
+    if (match) setSelectedTask(match);
+  }, [list, taskParam]);
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -516,7 +525,14 @@ export function TasksPage() {
         task={selectedTask}
         open={Boolean(selectedTask)}
         onOpenChange={(open) => {
-          if (!open) setSelectedTask(null);
+          if (!open) {
+            setSelectedTask(null);
+            if (searchParams.has('task')) {
+              const next = new URLSearchParams(searchParams);
+              next.delete('task');
+              setSearchParams(next, { replace: true });
+            }
+          }
         }}
       />
     </div>
