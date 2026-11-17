@@ -30,6 +30,7 @@ Nova turns meetings into execution: every conversation becomes a brief with deci
 │  ├─ api/                     Vercel serverless functions
 │  │  ├─ _lib/                 http + redis helpers (not routed)
 │  │  ├─ health.ts             GET  /api/health
+│  │  ├─ meetings/analyze.ts   POST /api/meetings/analyze
 │  │  └─ team/invite.ts        POST /api/team/invite
 │  ├─ src/
 │  │  ├─ app/                  providers, router, root component
@@ -45,8 +46,9 @@ Nova turns meetings into execution: every conversation becomes a brief with deci
 │  ├─ .env.example
 │  └─ vercel.json
 └─ supabase/
-   ├─ migrations/0001_init.sql  schema, triggers, RLS, storage, bootstrap
-   └─ seed.sql                  idempotent demo workspace
+   ├─ migrations/0001_init.sql                 schema, triggers, RLS, storage, bootstrap
+   ├─ migrations/0002_meeting_intelligence.sql transcript + analysis columns
+   └─ seed.sql                                 idempotent demo workspace
 ```
 
 Mock data never leaks into live mode: every service checks `isSupabaseConfigured` and falls back to `src/mocks/db.ts` only when credentials are absent.
@@ -80,7 +82,7 @@ Open the printed URL (default `http://localhost:5173`). Use **Continue with demo
 
 ### Testing & CI
 
-Tests use Vitest with jsdom, Testing Library and jest-dom. The suite covers pure helpers, metric builders, enum guards, the demo data store, sidebar accessibility, the 404 page and a task-board interaction end to end.
+Tests use Vitest with jsdom, Testing Library and jest-dom. The suite covers pure helpers, metric builders, enum guards, the transcript analyzer, the demo data store and its meeting pipeline (analyze → commit), sidebar accessibility, the 404 page and a task-board interaction end to end.
 
 ```bash
 cd frontend
@@ -104,7 +106,8 @@ Create a Supabase project, then copy the API URL and the **publishable (anon)** 
 Open the SQL editor and run, in order:
 
 1. `supabase/migrations/0001_init.sql`
-2. `supabase/seed.sql` — optional demo workspace. Requires at least one auth user; sign up once first.
+2. `supabase/migrations/0002_meeting_intelligence.sql`
+3. `supabase/seed.sql` — optional demo workspace. Requires at least one auth user; sign up once first.
 
 Or with the Supabase CLI:
 
@@ -123,6 +126,8 @@ The migration creates:
 - RLS helpers: `is_org_member`, `is_org_admin`, `shares_org_with`
 - `bootstrap_workspace()` for first-run onboarding
 - A private `meeting-assets` storage bucket with org-scoped policies
+
+The second migration adds `transcript`, `analysis`, `analysis_error`, `analysis_confidence`, `analyzed_at` and `analysis_model` to `meetings`. Existing RLS already scopes those columns to active workspace members.
 
 ### 3. Configure environment
 
@@ -149,6 +154,8 @@ SUPABASE_URL=https://<project>.supabase.co
 SUPABASE_SECRET_KEY=<service-role-key>
 UPSTASH_REDIS_REST_URL=<optional>
 UPSTASH_REDIS_REST_TOKEN=<optional>
+OPENAI_API_KEY=<optional, enables live transcript extraction>
+OPENAI_MODEL=gpt-4o-mini
 VITE_APP_URL=https://your-app.vercel.app
 ```
 
@@ -198,6 +205,31 @@ Guards:
 5. Invites via the admin API, then stores an `invited` membership.
 
 Use `vercel dev` locally when testing API routes; plain `vite` serves the frontend only.
+
+### `POST /api/meetings/analyze`
+
+Requires `Authorization: Bearer <access-token>`. Turns a transcript into the same analysis shape the demo analyzer produces.
+
+```json
+{
+  "meetingId": "<uuid>",
+  "organizationId": "<uuid>",
+  "transcript": "Ayşe: We agreed to ship the checklist.\nEmre: I will draft it by Tuesday."
+}
+```
+
+Guards:
+
+1. Validates the JWT with Supabase Auth.
+2. Confirms the caller is an **active owner/admin/member** of the organization.
+3. Verifies the meeting belongs to that organization.
+4. Requires `OPENAI_API_KEY` on the server; returns `503` when it is absent.
+5. Rate limits to 20 analyses per hour per user via Upstash (fails open when unset).
+6. Caps the transcript at 20,000 characters and validates the provider JSON before returning it.
+
+Response: `{ "ok": true, "analysis": { summary, keyPoints, risks, topics, confidence, transcript, actions, decisions, analyzedAt, model, steps } }`.
+
+The browser never calls a provider directly. In demo mode the deterministic analyzer in `src/lib/meeting-intelligence.ts` runs locally and the endpoint is not called at all.
 
 ---
 

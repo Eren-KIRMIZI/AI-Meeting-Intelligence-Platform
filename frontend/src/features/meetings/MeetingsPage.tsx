@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   CalendarDays,
   CalendarPlus,
@@ -24,7 +25,6 @@ import { useMeetings } from '@/hooks/use-workspace';
 import { buildMeetingStats, countUpcomingMeetings } from '@/lib/metrics';
 import { cn, formatDate, formatTime } from '@/lib/utils';
 import { CreateMeetingDialog } from './components/create-meeting-dialog';
-import { MeetingBriefDialog } from './components/meeting-brief-dialog';
 import type { Meeting } from '@/types';
 
 const platformLabels: Record<Meeting['platform'], string> = {
@@ -41,8 +41,6 @@ export function MeetingsPage() {
   const [tab, setTab] = useState<MeetingTab>('upcoming');
   const [query, setQuery] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
-  const [selected, setSelected] = useState<Meeting | null>(null);
-  const [briefOpen, setBriefOpen] = useState(false);
 
   const list = meetings.data ?? [];
   const stats = buildMeetingStats(list);
@@ -86,11 +84,6 @@ export function MeetingsPage() {
       />
     );
   }
-
-  const openBrief = (meeting: Meeting) => {
-    setSelected(meeting);
-    setBriefOpen(true);
-  };
 
   const summary = [
     {
@@ -260,14 +253,11 @@ export function MeetingsPage() {
 
                   <div className="flex shrink-0 items-center gap-3 pl-[60px] sm:pl-0">
                     <AvatarStack users={meeting.participants} max={3} size="xs" />
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="h-7 text-[11px]"
-                      onClick={() => openBrief(meeting)}
-                    >
-                      <FileText className="h-3 w-3" />
-                      View brief
+                    <Button asChild variant="outline" size="sm" className="h-7 text-[11px]">
+                      <Link to={`/meetings/${meeting.id}`}>
+                        <FileText className="h-3 w-3" />
+                        {meeting.analysis ? 'Open workspace' : 'View details'}
+                      </Link>
                     </Button>
                   </div>
                 </div>
@@ -278,11 +268,6 @@ export function MeetingsPage() {
       )}
 
       <CreateMeetingDialog open={createOpen} onOpenChange={setCreateOpen} />
-      <MeetingBriefDialog
-        meeting={selected}
-        open={briefOpen}
-        onOpenChange={setBriefOpen}
-      />
     </div>
   );
 }

@@ -24,7 +24,6 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/select-native';
 import {
@@ -35,11 +34,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import {
-  useProjects,
-  useTasks,
-  useToggleTask,
-} from '@/hooks/use-workspace';
+import { useProjects, useTasks } from '@/hooks/use-workspace';
 import {
   cn,
   downloadCsv,
@@ -47,6 +42,8 @@ import {
   isOverdue,
 } from '@/lib/utils';
 import { CreateTaskDialog } from './components/create-task-dialog';
+import { TaskCheckbox } from './components/task-checkbox';
+import { TaskDetailDialog } from './components/task-detail-dialog';
 import type { Task, TaskPriority, TaskStatus } from '@/types';
 
 type ViewMode = 'board' | 'list';
@@ -63,56 +60,30 @@ const columns: Array<{
   { key: 'done', label: 'Done', dot: 'bg-emerald-400', statuses: ['done'] },
 ];
 
-function TaskCheckbox({ task }: { task: Task }) {
-  const toggle = useToggleTask();
-
-  return (
-    <Checkbox
-      checked={task.status === 'done'}
-      disabled={toggle.isPending}
-      aria-label={`Mark “${task.title}” as ${task.status === 'done' ? 'open' : 'done'}`}
-      onCheckedChange={(checked) => {
-        const done = checked === true;
-        toggle.mutate(
-          { id: task.id, done },
-          {
-            onSuccess: () => {
-              toast.success(
-                done
-                  ? `“${task.title}” completed`
-                  : `“${task.title}” reopened`
-              );
-            },
-            onError: (error) => {
-              toast.error(
-                error instanceof Error
-                  ? error.message
-                  : 'Could not update the task'
-              );
-            },
-          }
-        );
-      }}
-    />
-  );
-}
-
-function BoardTaskCard({ task }: { task: Task }) {
+function BoardTaskCard({
+  task,
+  onOpen,
+}: {
+  task: Task;
+  onOpen: (task: Task) => void;
+}) {
   return (
     <div className="rounded-lg border border-border/70 bg-card p-2.5 shadow-sm transition-colors hover:border-border">
       <div className="flex items-start gap-2">
         <TaskCheckbox task={task} />
         <div className="min-w-0 flex-1">
-          <p
+          <button
+            type="button"
+            onClick={() => onOpen(task)}
             className={cn(
-              'line-clamp-2 text-[12px] font-medium leading-snug',
+              'line-clamp-2 text-left text-[12px] font-medium leading-snug transition-colors hover:text-primary',
               task.status === 'done'
                 ? 'text-muted-foreground line-through'
                 : 'text-foreground'
             )}
           >
             {task.title}
-          </p>
+          </button>
           <p className="mt-1 truncate text-[10px] text-muted-foreground">
             {task.projectName}
           </p>
@@ -150,6 +121,7 @@ export function TasksPage() {
   const [priorityFilter, setPriorityFilter] = useState<'all' | TaskPriority>('all');
   const [view, setView] = useState<ViewMode>('board');
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
   useEffect(() => {
     setProjectFilter(searchParams.get('project') ?? 'all');
@@ -451,7 +423,11 @@ export function TasksPage() {
                     </div>
                   ) : (
                     columnTasks.map((task) => (
-                      <BoardTaskCard key={task.id} task={task} />
+                      <BoardTaskCard
+                        key={task.id}
+                        task={task}
+                        onOpen={setSelectedTask}
+                      />
                     ))
                   )}
                 </div>
@@ -480,16 +456,18 @@ export function TasksPage() {
                       <TaskCheckbox task={task} />
                     </TableCell>
                     <TableCell>
-                      <p
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTask(task)}
                         className={cn(
-                          'text-xs font-medium',
+                          'text-left text-xs font-medium transition-colors hover:text-primary',
                           task.status === 'done'
                             ? 'text-muted-foreground line-through'
                             : 'text-foreground'
                         )}
                       >
                         {task.title}
-                      </p>
+                      </button>
                       <p className="mt-0.5 text-[10px] text-muted-foreground">
                         {task.projectName}
                       </p>
@@ -533,6 +511,13 @@ export function TasksPage() {
         onOpenChange={setDialogOpen}
         projects={projectList}
         defaultProjectId={projectFilter === 'all' ? undefined : projectFilter}
+      />
+      <TaskDetailDialog
+        task={selectedTask}
+        open={Boolean(selectedTask)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedTask(null);
+        }}
       />
     </div>
   );

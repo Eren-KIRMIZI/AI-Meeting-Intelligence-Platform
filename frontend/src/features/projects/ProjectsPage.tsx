@@ -186,9 +186,12 @@ export function ProjectsPage() {
                         <FolderKanban className="h-4 w-4" />
                       </span>
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-foreground">
+                        <Link
+                          to={`/projects/${project.id}`}
+                          className="block truncate text-sm font-semibold text-foreground transition-colors hover:text-primary"
+                        >
                           {project.name}
-                        </p>
+                        </Link>
                         <p className="mt-0.5 text-[10px] text-muted-foreground">
                           {project.category} · {formatRelativeTime(project.updatedAt)}
                         </p>
@@ -228,8 +231,8 @@ export function ProjectsPage() {
                       </span>
                     </div>
                     <Button asChild variant="outline" size="sm" className="h-7 text-[11px]">
-                      <Link to={`/tasks?project=${project.id}`}>
-                        Open tasks
+                      <Link to={`/projects/${project.id}`}>
+                        Open project
                         <ArrowRight className="h-3 w-3" />
                       </Link>
                     </Button>

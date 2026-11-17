@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import {
   ArrowUpRight,
   BrainCircuit,
@@ -26,8 +26,7 @@ import { Progress } from '@/components/ui/progress';
 import { useMeetings } from '@/hooks/use-workspace';
 import { aiBrief, seedInsights } from '@/mocks/data';
 import { cn, formatRelativeTime } from '@/lib/utils';
-import { MeetingBriefDialog } from '@/features/meetings/components/meeting-brief-dialog';
-import type { Insight, Meeting } from '@/types';
+import type { Insight } from '@/types';
 
 const insightMeta: Record<
   Insight['kind'],
@@ -82,8 +81,6 @@ const pipeline = [
 
 export function IntelligencePage() {
   const meetings = useMeetings();
-  const [selected, setSelected] = useState<Meeting | null>(null);
-  const [briefOpen, setBriefOpen] = useState(false);
 
   const list = meetings.data ?? [];
   const analyzed = list.filter(
@@ -91,9 +88,18 @@ export function IntelligencePage() {
       meeting.status === 'completed' || meeting.status === 'processing'
   );
   const briefMeeting =
-    list.find((meeting) => meeting.title === aiBrief.meetingTitle) ??
-    analyzed[0] ??
-    null;
+    analyzed.find((meeting) => meeting.analysis) ?? analyzed[0] ?? null;
+  const briefAnalysis = briefMeeting?.analysis;
+  const briefTitle = briefMeeting?.title ?? aiBrief.meetingTitle;
+  const briefSummary = briefAnalysis?.summary ?? aiBrief.summary;
+  const briefUpdatedAt = briefAnalysis?.analyzedAt ?? aiBrief.updatedAt;
+  const briefItems = briefAnalysis
+    ? briefAnalysis.actions.slice(0, 3).map((action) => ({
+        text: action.text,
+        owner: action.owner,
+        tag: 'Action',
+      }))
+    : aiBrief.items;
 
   if (meetings.isLoading) return <PageSkeleton />;
 
@@ -110,11 +116,6 @@ export function IntelligencePage() {
     );
   }
 
-  const openBrief = (meeting: Meeting) => {
-    setSelected(meeting);
-    setBriefOpen(true);
-  };
-
   const averageConfidence = Math.round(
     (seedInsights.reduce((total, insight) => total + insight.confidence, 0) /
       seedInsights.length) *
@@ -129,9 +130,11 @@ export function IntelligencePage() {
         badge={<DataSourceBadge />}
         actions={
           briefMeeting ? (
-            <Button size="sm" onClick={() => openBrief(briefMeeting)}>
-              <FileText className="h-3.5 w-3.5" />
-              Open latest brief
+            <Button asChild size="sm">
+              <Link to={`/meetings/${briefMeeting.id}`}>
+                <FileText className="h-3.5 w-3.5" />
+                Open latest brief
+              </Link>
             </Button>
           ) : null
         }
@@ -148,23 +151,25 @@ export function IntelligencePage() {
                 <span className="text-xs font-medium text-foreground">
                   Latest brief
                 </span>
-                <Badge variant="info">Summary ready</Badge>
+                <Badge variant={briefAnalysis ? 'success' : 'info'}>
+                  {briefAnalysis ? 'Analysis ready' : 'Sample brief'}
+                </Badge>
               </div>
               <span className="text-[10px] text-muted-foreground">
-                Updated {formatRelativeTime(aiBrief.updatedAt)}
+                Updated {formatRelativeTime(briefUpdatedAt)}
               </span>
             </div>
 
             <div className="p-5">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                {aiBrief.meetingTitle}
+                {briefTitle}
               </p>
               <p className="mt-2 max-w-3xl text-sm leading-relaxed text-foreground">
-                {aiBrief.summary}
+                {briefSummary}
               </p>
 
               <div className="mt-4 space-y-2">
-                {aiBrief.items.map((item) => (
+                {briefItems.map((item) => (
                   <div
                     key={item.text}
                     className="flex flex-col gap-1.5 rounded-lg border border-border/60 bg-secondary/25 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between"
@@ -194,13 +199,15 @@ export function IntelligencePage() {
                 </p>
                 {briefMeeting ? (
                   <Button
+                    asChild
                     variant="outline"
                     size="sm"
                     className="h-7 text-[11px]"
-                    onClick={() => openBrief(briefMeeting)}
                   >
-                    Review source
-                    <ArrowUpRight className="h-3 w-3" />
+                    <Link to={`/meetings/${briefMeeting.id}`}>
+                      Review source
+                      <ArrowUpRight className="h-3 w-3" />
+                    </Link>
                   </Button>
                 ) : null}
               </div>
@@ -376,13 +383,15 @@ export function IntelligencePage() {
                       </p>
                     </div>
                     <Button
+                      asChild
                       variant="outline"
                       size="sm"
                       className="h-7 shrink-0 text-[11px]"
-                      onClick={() => openBrief(meeting)}
                     >
-                      <FileText className="h-3 w-3" />
-                      View brief
+                      <Link to={`/meetings/${meeting.id}`}>
+                        <FileText className="h-3 w-3" />
+                        {meeting.analysis ? 'Open workspace' : 'Run analysis'}
+                      </Link>
                     </Button>
                   </div>
                 ))}
@@ -426,12 +435,6 @@ export function IntelligencePage() {
           </CardContent>
         </Card>
       </div>
-
-      <MeetingBriefDialog
-        meeting={selected}
-        open={briefOpen}
-        onOpenChange={setBriefOpen}
-      />
     </div>
   );
 }
