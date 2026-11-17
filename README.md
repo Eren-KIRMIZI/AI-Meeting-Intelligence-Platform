@@ -74,6 +74,22 @@ Open the printed URL (default `http://localhost:5173`). Use **Continue with demo
 | `npm run preview` | Preview the production build |
 | `npm run lint` | ESLint |
 | `npm run typecheck` | Type-check the app only |
+| `npm run test` | Run the Vitest suite once |
+| `npm run test:watch` | Run Vitest in watch mode |
+| `npm run test:coverage` | Run the suite with a V8 coverage report |
+
+### Testing & CI
+
+Tests use Vitest with jsdom, Testing Library and jest-dom. The suite covers pure helpers, metric builders, enum guards, the demo data store, sidebar accessibility, the 404 page and a task-board interaction end to end.
+
+```bash
+cd frontend
+npm run test
+```
+
+`src/test/setup.ts` provides the small browser API shims Radix and Recharts need. Tests never call Supabase or the network — demo mode keeps them deterministic.
+
+GitHub Actions runs `lint → typecheck → test → build` on every push and pull request to `main` (`.github/workflows/ci.yml`).
 
 ---
 
