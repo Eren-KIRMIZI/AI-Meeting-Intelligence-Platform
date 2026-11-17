@@ -5,6 +5,7 @@ node_modules/
 dist/
 dist-ssr/
 *.tsbuildinfo
+coverage/
 
 # Environment — never commit real secrets
 .env

@@ -9,6 +9,7 @@ dist-ssr/
 build/
 *.local
 *.tsbuildinfo
+coverage/
 
 # Environment — never commit real secrets
 .env
