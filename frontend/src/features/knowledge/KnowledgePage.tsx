@@ -1,13 +1,5 @@
 import { useMemo, useState } from 'react';
-import {
-  BookOpen,
-  FileText,
-  Lightbulb,
-  ScrollText,
-  Search,
-  StickyNote,
-  type LucideIcon,
-} from 'lucide-react';
+import { BookOpen, Search } from 'lucide-react';
 import { PageHeader } from '@/components/common/page-header';
 import { PageSkeleton } from '@/components/common/page-skeleton';
 import { ErrorState } from '@/components/common/error-state';
@@ -16,58 +8,13 @@ import { UserAvatar } from '@/components/common/user-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { useKnowledge } from '@/hooks/use-workspace';
 import { cn, formatDate, formatRelativeTime } from '@/lib/utils';
 import type { KnowledgeDocument, KnowledgeKind } from '@/types';
-
-const kindMeta: Record<
-  KnowledgeKind,
-  { label: string; icon: LucideIcon; tone: string }
-> = {
-  meeting_note: {
-    label: 'Meeting note',
-    icon: StickyNote,
-    tone: 'border-blue-500/20 bg-blue-500/10 text-blue-400',
-  },
-  transcript: {
-    label: 'Transcript',
-    icon: ScrollText,
-    tone: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400',
-  },
-  playbook: {
-    label: 'Playbook',
-    icon: BookOpen,
-    tone: 'border-violet-500/20 bg-violet-500/10 text-violet-400',
-  },
-  insight: {
-    label: 'Insight',
-    icon: Lightbulb,
-    tone: 'border-amber-500/20 bg-amber-500/10 text-amber-400',
-  },
-  document: {
-    label: 'Document',
-    icon: FileText,
-    tone: 'border-slate-500/20 bg-slate-500/10 text-slate-400',
-  },
-};
-
-const filters: Array<{ value: 'all' | KnowledgeKind; label: string }> = [
-  { value: 'all', label: 'All' },
-  { value: 'meeting_note', label: 'Meeting notes' },
-  { value: 'transcript', label: 'Transcripts' },
-  { value: 'playbook', label: 'Playbooks' },
-  { value: 'insight', label: 'Insights' },
-  { value: 'document', label: 'Documents' },
-];
+import { KnowledgeReader } from './components/knowledge-reader';
+import { kindMeta, knowledgeFilters } from './knowledge-meta';
 
 export function KnowledgePage() {
   const knowledge = useKnowledge();
@@ -131,7 +78,7 @@ export function KnowledgePage() {
       <Card>
         <CardContent className="flex flex-col gap-2 p-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex flex-wrap items-center gap-1">
-            {filters.map((item) => (
+            {knowledgeFilters.map((item) => (
               <Button
                 key={item.value}
                 variant={filter === item.value ? 'secondary' : 'ghost'}
@@ -221,53 +168,21 @@ export function KnowledgePage() {
       )}
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl gap-0 overflow-hidden p-0">
           {selected ? (
             <>
-              <DialogHeader>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="outline">{kindMeta[selected.kind].label}</Badge>
-                  {selected.sourceMeeting ? (
-                    <Badge variant="info">{selected.sourceMeeting}</Badge>
-                  ) : null}
-                </div>
-                <DialogTitle className="mt-1 text-xl">{selected.title}</DialogTitle>
-                <DialogDescription className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                  <span className="inline-flex items-center gap-1.5">
-                    <UserAvatar user={selected.author} size="xs" />
-                    {selected.author.fullName}
-                  </span>
-                  <span>
-                    Updated{' '}
-                    {formatDate(selected.updatedAt, {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric',
-                    })}
-                  </span>
-                  <span>{selected.readMinutes} min read</span>
-                </DialogDescription>
-              </DialogHeader>
-
-              <ScrollArea className="max-h-[56vh] pr-1">
-                <div className="space-y-4">
-                  <p className="text-sm leading-relaxed text-muted-foreground">
-                    {selected.excerpt}
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {selected.tags.map((tag) => (
-                      <Badge key={tag} variant="outline">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                  <div className="rounded-lg border border-border/70 bg-secondary/20 px-3 py-3 text-xs leading-relaxed text-muted-foreground">
-                    This is a demo excerpt. In live mode the full document content
-                    is loaded from Supabase and stays protected by workspace-level
-                    row security.
-                  </div>
-                </div>
-              </ScrollArea>
+              <DialogTitle className="sr-only">{selected.title}</DialogTitle>
+              <DialogDescription className="sr-only">
+                {kindMeta[selected.kind].label} by {selected.author.fullName},
+                updated {formatDate(selected.updatedAt, { month: 'long', day: 'numeric', year: 'numeric' })}.
+              </DialogDescription>
+              <KnowledgeReader
+                key={selected.id}
+                document={selected}
+                documents={list}
+                query={query}
+                onSelect={setSelected}
+              />
             </>
           ) : null}
         </DialogContent>

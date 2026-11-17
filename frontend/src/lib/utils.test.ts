@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
   avatarColorFor,
+  copyToClipboard,
   downloadCsv,
   formatDueDate,
   getGreeting,
@@ -116,5 +117,47 @@ describe('downloadCsv', () => {
     downloadCsv('empty.csv', []);
 
     expect(createObjectUrl).not.toHaveBeenCalled();
+  });
+});
+
+describe('copyToClipboard', () => {
+  function stubClipboard(writeText: () => Promise<void>) {
+    Object.defineProperty(navigator, 'clipboard', {
+      value: { writeText },
+      configurable: true,
+    });
+  }
+
+  function stubExecCommand(copied: boolean) {
+    const execCommand = vi.fn().mockReturnValue(copied);
+    Object.defineProperty(document, 'execCommand', {
+      value: execCommand,
+      configurable: true,
+    });
+    return execCommand;
+  }
+
+  it('uses the async clipboard API when available', async () => {
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    stubClipboard(writeText);
+
+    await expect(copyToClipboard('hello')).resolves.toBe(true);
+    expect(writeText).toHaveBeenCalledWith('hello');
+  });
+
+  it('falls back to a hidden textarea when the clipboard is denied', async () => {
+    stubClipboard(vi.fn().mockRejectedValue(new Error('denied')));
+    const execCommand = stubExecCommand(true);
+
+    await expect(copyToClipboard('hello')).resolves.toBe(true);
+    expect(execCommand).toHaveBeenCalledWith('copy');
+    expect(document.querySelector('textarea')).toBeNull();
+  });
+
+  it('reports failure when both paths fail', async () => {
+    stubClipboard(vi.fn().mockRejectedValue(new Error('denied')));
+    stubExecCommand(false);
+
+    await expect(copyToClipboard('hello')).resolves.toBe(false);
   });
 });

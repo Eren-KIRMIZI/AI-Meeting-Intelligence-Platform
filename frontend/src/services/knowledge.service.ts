@@ -40,6 +40,7 @@ export async function listKnowledge(
       id: row.id,
       title: row.title,
       excerpt: content.slice(0, 180),
+      content,
       kind: asKnowledgeKind(row.kind),
       tags: row.tags ?? [],
       author:
@@ -53,6 +54,7 @@ export async function listKnowledge(
       sourceMeeting: row.source_meeting_id
         ? meetingTitles.get(row.source_meeting_id)
         : undefined,
+      sourceMeetingId: row.source_meeting_id ?? undefined,
       updatedAt: row.updated_at,
       readMinutes: Math.max(1, Math.round(words / 200)),
     };

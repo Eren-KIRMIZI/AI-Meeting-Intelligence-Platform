@@ -223,10 +223,12 @@ export interface KnowledgeDocument {
   id: string;
   title: string;
   excerpt: string;
+  content: string;
   kind: KnowledgeKind;
   tags: string[];
   author: UserProfile;
   sourceMeeting?: string;
+  sourceMeetingId?: string;
   updatedAt: string;
   readMinutes: number;
 }

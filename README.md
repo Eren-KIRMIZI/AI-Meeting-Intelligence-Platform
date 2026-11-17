@@ -272,5 +272,6 @@ If you rotate keys, update Vercel environment variables and redeploy. Never comm
 - Modules: Overview, Projects, Tasks, Meetings, Decisions, Knowledge, Workflows, Intelligence, Analytics, Team, Settings
 - Workflows expose an inline run log with status, trigger, step outcomes and duration
 - Analytics recomputes KPIs, decision mix, workload and project health for 7, 14 or 30 day windows
+- Knowledge opens a full-document reader with section parsing, search highlighting, related notes and source-meeting links
 
 All interactive controls are wired: create dialogs, task status changes, filters, exports, settings persistence, command palette (`Ctrl/⌘ + K`) and toasts.

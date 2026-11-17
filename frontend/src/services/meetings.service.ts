@@ -421,10 +421,12 @@ export async function commitMeetingAnalysis(
       id: row.id,
       title: row.title,
       excerpt: (row.summary ?? '').slice(0, 180),
+      content: row.content ?? row.summary ?? analysis.summary,
       kind: 'meeting_note',
       tags: row.tags ?? [],
       author: context.user,
       sourceMeeting: meeting.title,
+      sourceMeetingId: meeting.id,
       updatedAt: row.updated_at,
       readMinutes: Math.max(
         2,

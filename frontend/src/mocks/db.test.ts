@@ -262,6 +262,20 @@ describe('mockDb meeting intelligence', () => {
   });
 });
 
+describe('mockDb knowledge content', () => {
+  it('exposes full content and a source meeting id for seeded documents', async () => {
+    const documents = await mockDb.listKnowledge();
+
+    expect(documents.length).toBeGreaterThan(0);
+    expect(documents.every((document) => document.content.trim().length > 0)).toBe(
+      true
+    );
+    expect(documents.some((document) => document.sourceMeetingId === 'm-acme')).toBe(
+      true
+    );
+  });
+});
+
 describe('mockDb workflow runs', () => {
   it('returns runs for a workflow newest first', async () => {
     const runs = await mockDb.listWorkflowRuns('w-01');

@@ -696,10 +696,29 @@ export const seedKnowledge: KnowledgeDocument[] = [
     title: 'Weekly product sync — Nov 9',
     excerpt:
       'Launch cohort, transcript QA as the release blocker, and the navigation critique plan.',
+    content: `## Context
+The weekly product sync focused on the mobile launch cohort, transcript QA and the navigation critique that slipped from last week.
+
+## Decisions
+- Launch the mobile app to a 10% cohort before widening access.
+- Treat transcript QA as the release blocker for onboarding v2.
+
+## Action items
+- Sarah Chen: finalize the onboarding checklist edge cases.
+- Emre Kaya: ship the meeting summary empty state.
+- Ravi Mehta: QA the transcript upload flow for large files and retries.
+
+## Open questions
+- Do we need a second support rotation during the staged rollout?
+- Which metric proves the cohort is ready to expand?
+
+## Next steps
+Review cohort retention at the next sync and decide whether to widen access to 25%.`,
     kind: 'meeting_note',
     tags: ['product', 'launch'],
     author: people.sarah,
     sourceMeeting: 'Product sync — Nov 9',
+    sourceMeetingId: 'm-product-sync-past',
     updatedAt: at(-7, 11),
     readMinutes: 4,
   },
@@ -708,10 +727,27 @@ export const seedKnowledge: KnowledgeDocument[] = [
     title: 'Q4 launch decision brief',
     excerpt:
       'The open question is timing. Brand, demand gen and customer success each need a different lead time.',
+    content: `## The question
+Do we hold the Q4 launch date, or move the brand system review into January?
+
+## What changed
+The visual system needs one more review cycle and the launch assets are not final. Demand gen needs six weeks of lead time; customer success needs two.
+
+## Options
+- Ship on the current date with the existing visual system.
+- Move the brand launch to January and keep the product launch on schedule.
+- Split the launch: product in Q4, brand in January.
+
+## Recommendation
+Split the launch. It protects the product date without shipping unfinished brand work.
+
+## Owner
+Nadia Haddad owns the final call. Lucas Meyer coordinates the channel plan and confirms the new date with demand gen.`,
     kind: 'insight',
     tags: ['marketing', 'decisions'],
     author: people.nadia,
     sourceMeeting: 'Decision review — Q4 launch',
+    sourceMeetingId: 'm-decision-review',
     updatedAt: at(-1, 16),
     readMinutes: 3,
   },
@@ -720,10 +756,28 @@ export const seedKnowledge: KnowledgeDocument[] = [
     title: 'Customer discovery patterns — Acme',
     excerpt:
       'Four hours a week lost to follow-ups, and a strong preference for single-owner action items.',
+    content: `## Research setup
+Six interviews across operations, support and finance, each 30 minutes, recorded with consent.
+
+## What we heard
+- Teams lose roughly four hours a week to follow-ups that never get an owner.
+- Single-owner action items are trusted; shared ownership is where work stalls.
+- People want the decision, not the full transcript, in the recap.
+
+## Signals
+- Five of six participants asked for a weekly digest instead of per-meeting emails.
+- Four of six keep a manual decision log in a spreadsheet today.
+
+## Implications
+Lead with owner clarity in onboarding and make the decision log the second screen a new team sees.
+
+## Quotes
+"We don't need more notes. We need to know who is doing what by Friday."`,
     kind: 'transcript',
     tags: ['research', 'customers'],
     author: people.mina,
     sourceMeeting: 'Customer discovery — Acme',
+    sourceMeetingId: 'm-acme',
     updatedAt: at(-5, 14),
     readMinutes: 8,
   },
@@ -732,6 +786,25 @@ export const seedKnowledge: KnowledgeDocument[] = [
     title: 'How we run decision reviews',
     excerpt:
       'A repeatable 30-minute ritual for surfacing, assigning and closing open decisions.',
+    content: `## Purpose
+Close open decisions in 30 minutes a week so nothing waits on a meeting that never happens.
+
+## Before the review
+- Every proposed decision needs an owner, a deadline and one paragraph of context.
+- The facilitator groups decisions by project and flags anything older than two weeks.
+
+## During the review
+- Read the decision, not the transcript.
+- Confirm the owner out loud.
+- Record accepted, rejected or superseded with a one-line reason.
+
+## After the review
+- Accepted decisions update the project brief automatically.
+- Superseded decisions link to the decision that replaced them.
+- Anything unresolved gets a new deadline, not a new meeting.
+
+## Cadence
+Fridays at 16:00, 30 minutes, six people maximum.`,
     kind: 'playbook',
     tags: ['operations', 'rituals'],
     author: people.ayse,
@@ -743,6 +816,25 @@ export const seedKnowledge: KnowledgeDocument[] = [
     title: 'RLS and tenant isolation notes',
     excerpt:
       'Organization membership is the only source of truth. Every policy resolves through a single helper.',
+    content: `## Principle
+Organization membership is the only source of truth for access. No table trusts an organization id supplied by the client.
+
+## Helpers
+- \`is_org_member(org_id)\` resolves through \`organization_members\` with an active status check.
+- \`is_org_admin(org_id)\` narrows the same lookup to owner and admin roles.
+- Both are \`security definer\` with a pinned \`search_path\`.
+
+## Policies
+- Select policies require membership; write policies require membership or admin depending on the table.
+- Service-role operations bypass RLS by design and stay server-side only.
+
+## Storage
+The \`meeting-assets\` bucket is private and keyed by \`<org-uuid>/<file>\`. The first path segment is checked against membership before any read or write.
+
+## Review checklist
+- Every new table enables RLS in the same migration.
+- Every policy names its role explicitly.
+- No policy reads from a table the caller can mutate.`,
     kind: 'document',
     tags: ['security', 'supabase'],
     author: people.sarah,
@@ -754,10 +846,26 @@ export const seedKnowledge: KnowledgeDocument[] = [
     title: 'Onboarding v2 research readout',
     excerpt:
       'Where new teams stall in week one, and the three changes that shorten time-to-first-insight.',
+    content: `## Where teams stall
+- Day one: the empty workspace gives no hint of what to do first.
+- Day three: the first meeting is imported but nobody commits the action items.
+- Week two: the decision log is still empty, so leaders stop opening the workspace.
+
+## Three changes
+- Seed the first workspace with a sample project and one completed meeting.
+- Put "commit action items" at the end of the analysis flow, not on a separate screen.
+- Show the decision log on the overview as soon as the second decision is accepted.
+
+## Expected impact
+Time-to-first-insight drops from nine days to under three for new teams.
+
+## Risks
+Sample data can feel fake. Keep it clearly labelled and easy to remove.`,
     kind: 'meeting_note',
     tags: ['onboarding', 'research'],
     author: people.emre,
     sourceMeeting: 'Research readout — onboarding friction',
+    sourceMeetingId: 'm-research-readout',
     updatedAt: at(-2, 17),
     readMinutes: 4,
   },

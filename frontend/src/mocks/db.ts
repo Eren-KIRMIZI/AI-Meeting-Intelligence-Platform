@@ -489,10 +489,12 @@ export const mockDb = {
         id: newId('k'),
         title: `${meeting.title} — follow-up brief`,
         excerpt: analysis.summary.slice(0, 180),
+        content: analysis.summary,
         kind: 'meeting_note',
         tags: ['meeting', 'analysis'],
         author: demoUser,
         sourceMeeting: meeting.title,
+        sourceMeetingId: meeting.id,
         updatedAt: new Date().toISOString(),
         readMinutes: Math.max(
           2,
