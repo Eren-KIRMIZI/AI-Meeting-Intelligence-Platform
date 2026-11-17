@@ -20,6 +20,7 @@ import type {
   UpdateTaskInput,
   UserProfile,
   Workflow,
+  WorkflowRun,
 } from '@/types';
 import { analysisSteps, analyzeTranscript } from '@/lib/meeting-intelligence';
 import {
@@ -33,6 +34,7 @@ import {
   seedProjects,
   seedTasks,
   seedTeam,
+  seedWorkflowRuns,
   seedWorkflows,
 } from './data';
 import { sampleTranscriptFor } from './transcripts';
@@ -49,6 +51,7 @@ const decisions: Decision[] = clone(seedDecisions);
 const activities: Activity[] = clone(seedActivities);
 const knowledge: KnowledgeDocument[] = clone(seedKnowledge);
 let workflows: Workflow[] = clone(seedWorkflows);
+const workflowRuns: WorkflowRun[] = clone(seedWorkflowRuns);
 const integrations: Integration[] = clone(seedIntegrations);
 let team: TeamMember[] = clone(seedTeam);
 let notifications: AppNotification[] = clone(seedNotifications);
@@ -565,6 +568,18 @@ export const mockDb = {
     if (!workflow) throw new Error('Workflow not found');
     workflow.isActive = isActive;
     return clone(workflow);
+  },
+
+  async listWorkflowRuns(workflowId: string) {
+    await wait(120);
+    return clone(
+      workflowRuns
+        .filter((run) => run.workflowId === workflowId)
+        .sort(
+          (a, b) =>
+            new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime()
+        )
+    );
   },
 
   async listIntegrations() {

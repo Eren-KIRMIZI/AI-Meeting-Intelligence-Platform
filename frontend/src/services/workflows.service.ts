@@ -1,11 +1,18 @@
 import { isSupabaseConfigured } from '@/lib/env';
 import { mockDb } from '@/mocks/db';
-import type { CreateWorkflowInput, UserProfile, Workflow } from '@/types';
+import type {
+  CreateWorkflowInput,
+  UserProfile,
+  Workflow,
+  WorkflowRun,
+  WorkflowRunStatus,
+} from '@/types';
 import { asAccent } from './enum-guards';
 import {
   assertOrg,
   getClient,
   type WorkflowRow,
+  type WorkflowRunRow,
 } from './supabase-helpers';
 
 interface WorkflowContext {
@@ -25,6 +32,27 @@ function mapWorkflow(row: WorkflowRow): Workflow {
     runCount: row.run_count ?? 0,
     lastRunAt: row.last_run_at,
     accent: asAccent(row.accent),
+  };
+}
+
+function asRunStatus(value: string): WorkflowRunStatus {
+  if (value === 'failed' || value === 'skipped') return value;
+  return 'success';
+}
+
+function mapWorkflowRun(row: WorkflowRunRow): WorkflowRun {
+  return {
+    id: row.id,
+    workflowId: row.workflow_id,
+    status: asRunStatus(row.status),
+    trigger: row.trigger_label ?? 'Manual run',
+    summary: row.summary ?? '',
+    startedAt: row.started_at,
+    durationMs: row.duration_ms ?? 0,
+    steps: (row.steps ?? []).map((step) => ({
+      label: step.label,
+      status: asRunStatus(step.status),
+    })),
   };
 }
 
@@ -94,4 +122,26 @@ export async function setWorkflowActive(
 
   if (error) throw new Error(error.message);
   return mapWorkflow(data);
+}
+
+export async function listWorkflowRuns(
+  workflowId: string,
+  orgId: string | null
+): Promise<WorkflowRun[]> {
+  if (!isSupabaseConfigured) return mockDb.listWorkflowRuns(workflowId);
+
+  const client = getClient();
+  const organizationId = assertOrg(orgId);
+
+  const { data, error } = await client
+    .from('workflow_runs')
+    .select('*')
+    .eq('workflow_id', workflowId)
+    .eq('organization_id', organizationId)
+    .order('started_at', { ascending: false })
+    .limit(20)
+    .returns<WorkflowRunRow[]>();
+
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(mapWorkflowRun);
 }

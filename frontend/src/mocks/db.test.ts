@@ -261,3 +261,29 @@ describe('mockDb meeting intelligence', () => {
     expect(second.knowledge).toBeNull();
   });
 });
+
+describe('mockDb workflow runs', () => {
+  it('returns runs for a workflow newest first', async () => {
+    const runs = await mockDb.listWorkflowRuns('w-01');
+
+    expect(runs.length).toBeGreaterThan(1);
+    expect(runs.every((run) => run.workflowId === 'w-01')).toBe(true);
+
+    const timestamps = runs.map((run) => new Date(run.startedAt).getTime());
+    expect(timestamps).toEqual([...timestamps].sort((a, b) => b - a));
+    expect(runs.some((run) => run.status === 'failed')).toBe(true);
+  });
+
+  it('keeps run history isolated per workflow', async () => {
+    const first = await mockDb.listWorkflowRuns('w-01');
+    const second = await mockDb.listWorkflowRuns('w-03');
+
+    expect(first.every((run) => run.workflowId === 'w-01')).toBe(true);
+    expect(second.every((run) => run.workflowId === 'w-03')).toBe(true);
+    expect(first[0].id).not.toBe(second[0].id);
+  });
+
+  it('returns an empty log for an unknown workflow', async () => {
+    await expect(mockDb.listWorkflowRuns('w-missing')).resolves.toEqual([]);
+  });
+});

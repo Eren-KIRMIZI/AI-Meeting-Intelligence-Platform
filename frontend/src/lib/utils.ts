@@ -77,6 +77,16 @@ export function formatRelativeTime(value: string | Date) {
   return formatDate(date, { month: 'short', day: 'numeric' });
 }
 
+export function formatDuration(durationMs: number) {
+  if (!Number.isFinite(durationMs) || durationMs < 0) return '—';
+  if (durationMs < 1000) return `${Math.round(durationMs)}ms`;
+  if (durationMs < 60_000) return `${(durationMs / 1000).toFixed(1)}s`;
+
+  const minutes = Math.floor(durationMs / 60_000);
+  const seconds = Math.round((durationMs % 60_000) / 1000);
+  return `${minutes}m ${seconds}s`;
+}
+
 export function isOverdue(value: string | null) {
   if (!value) return false;
   return new Date(value).getTime() < Date.now();

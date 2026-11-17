@@ -34,13 +34,25 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import {
   useDecisions,
+  useMeetings,
   useProjects,
   useTasks,
   useTeam,
 } from '@/hooks/use-workspace';
-import { analyticsKpis, executionSeries } from '@/mocks/data';
+import { executionSeries } from '@/mocks/data';
 import { cn, downloadCsv } from '@/lib/utils';
 import type { DecisionStatus } from '@/types';
+import {
+  ANALYTICS_RANGES,
+  RANGE_DAYS,
+  buildAnalyticsKpis,
+  buildExecutionSeries,
+  buildProjectHealth,
+  buildWorkload,
+  decisionsInRange,
+  formatRangeLabel,
+  type AnalyticsRange,
+} from './analytics-insights';
 
 const decisionColors: Record<DecisionStatus, string> = {
   accepted: '#34D399',
@@ -56,42 +68,49 @@ const decisionLabels: Record<DecisionStatus, string> = {
   superseded: 'Superseded',
 };
 
-type Range = '7d' | '14d';
+type Range = AnalyticsRange;
 
 export function AnalyticsPage() {
   const projects = useProjects();
   const tasks = useTasks();
   const team = useTeam();
   const decisions = useDecisions();
+  const meetings = useMeetings();
   const [range, setRange] = useState<Range>('14d');
 
   const projectList = useMemo(() => projects.data ?? [], [projects.data]);
   const taskList = useMemo(() => tasks.data ?? [], [tasks.data]);
   const teamList = useMemo(() => team.data ?? [], [team.data]);
   const decisionList = useMemo(() => decisions.data ?? [], [decisions.data]);
+  const meetingList = useMemo(() => meetings.data ?? [], [meetings.data]);
 
   const series = useMemo(
-    () => (range === '7d' ? executionSeries.slice(-7) : executionSeries),
+    () => buildExecutionSeries(executionSeries, range),
     [range]
   );
 
-  const workload = useMemo(
+  const kpis = useMemo(
     () =>
-      teamList
-        .map((member) => {
-          const assigned = taskList.filter(
-            (task) =>
-              task.assignee?.id === member.id && task.status !== 'done'
-          ).length;
-          return {
-            member,
-            assigned,
-            capacity: 8,
-            utilization: Math.min(100, Math.round((assigned / 8) * 100)),
-          };
-        })
-        .sort((a, b) => b.utilization - a.utilization),
-    [taskList, teamList]
+      buildAnalyticsKpis(
+        { meetings: meetingList, tasks: taskList, decisions: decisionList },
+        range
+      ),
+    [decisionList, meetingList, range, taskList]
+  );
+
+  const scopedDecisions = useMemo(
+    () => decisionsInRange(decisionList, range),
+    [decisionList, range]
+  );
+
+  const workload = useMemo(
+    () => buildWorkload(teamList, taskList, range),
+    [range, taskList, teamList]
+  );
+
+  const projectHealth = useMemo(
+    () => buildProjectHealth(projectList, taskList, range),
+    [projectList, range, taskList]
   );
 
   const decisionMix = useMemo(
@@ -100,21 +119,24 @@ export function AnalyticsPage() {
         .map((status) => ({
           status,
           name: decisionLabels[status],
-          value: decisionList.filter((decision) => decision.status === status)
-            .length,
+          value: scopedDecisions.filter(
+            (decision) => decision.status === status
+          ).length,
           color: decisionColors[status],
         }))
         .filter((item) => item.value > 0),
-    [decisionList]
+    [scopedDecisions]
   );
 
   const isLoading =
     projects.isLoading ||
     tasks.isLoading ||
     team.isLoading ||
-    decisions.isLoading;
+    decisions.isLoading ||
+    meetings.isLoading;
 
-  const error = projects.error ?? tasks.error ?? team.error ?? decisions.error;
+  const error =
+    projects.error ?? tasks.error ?? team.error ?? decisions.error ?? meetings.error;
 
   if (isLoading) return <PageSkeleton />;
 
@@ -129,13 +151,14 @@ export function AnalyticsPage() {
           void tasks.refetch();
           void team.refetch();
           void decisions.refetch();
+          void meetings.refetch();
         }}
       />
     );
   }
 
-  const totalDecisions = decisionList.length;
-  const accepted = decisionList.filter(
+  const totalDecisions = scopedDecisions.length;
+  const accepted = scopedDecisions.filter(
     (decision) => decision.status === 'accepted'
   ).length;
   const averageUtilization = Math.round(
@@ -147,6 +170,8 @@ export function AnalyticsPage() {
     0
   );
   const createdTotal = series.reduce((total, point) => total + point.created, 0);
+  const rangeLabel = formatRangeLabel(range);
+  const rangeDays = RANGE_DAYS[range];
 
   const exportAnalytics = () => {
     downloadCsv(
@@ -168,21 +193,21 @@ export function AnalyticsPage() {
         description="Execution velocity, meeting output and the capacity behind every commitment."
         badge={
           <Badge variant="outline" className="bg-secondary/30">
-            Last {range === '7d' ? '7' : '14'} days
+            Last {rangeDays} days
           </Badge>
         }
         actions={
           <>
             <div className="flex items-center gap-1 rounded-lg border border-border/70 bg-secondary/30 p-0.5">
-              {(['7d', '14d'] as Range[]).map((value) => (
+              {ANALYTICS_RANGES.map((item) => (
                 <Button
-                  key={value}
-                  variant={range === value ? 'secondary' : 'ghost'}
+                  key={item.value}
+                  variant={range === item.value ? 'secondary' : 'ghost'}
                   size="sm"
                   className="h-7 px-2.5 text-[11px]"
-                  onClick={() => setRange(value)}
+                  onClick={() => setRange(item.value)}
                 >
-                  {value === '7d' ? '7 days' : '14 days'}
+                  {item.label}
                 </Button>
               ))}
             </div>
@@ -195,7 +220,7 @@ export function AnalyticsPage() {
       />
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {analyticsKpis.map((stat) => (
+        {kpis.map((stat) => (
           <StatCard key={stat.id} stat={stat} />
         ))}
       </div>
@@ -359,7 +384,8 @@ export function AnalyticsPage() {
             <div>
               <CardTitle>Team workload</CardTitle>
               <p className="mt-1 text-xs text-muted-foreground">
-                Open assignments against an 8-task planning capacity.
+                Open assignments created in the selected window, against an
+                8-task planning capacity.
               </p>
             </div>
             <Badge variant={averageUtilization > 85 ? 'warning' : 'neutral'}>
@@ -409,7 +435,7 @@ export function AnalyticsPage() {
             <div>
               <CardTitle>Project health</CardTitle>
               <p className="mt-1 text-xs text-muted-foreground">
-                Delivery progress across the active portfolio.
+                Delivery progress for work due inside the selected window.
               </p>
             </div>
             <Button asChild variant="ghost" size="sm" className="h-7 text-[11px]">
@@ -420,25 +446,31 @@ export function AnalyticsPage() {
             </Button>
           </CardHeader>
           <CardContent className="space-y-3">
-            {projectList.length === 0 ? (
+            {projectHealth.length === 0 ? (
               <p className="py-8 text-center text-xs text-muted-foreground">
-                No projects yet.
+                No project work is due in this window.
               </p>
             ) : (
-              projectList.map((project) => (
-                <div key={project.id} className="rounded-lg border border-border/60 bg-secondary/20 px-3 py-2.5">
+              projectHealth.map((item) => (
+                <div
+                  key={item.project.id}
+                  className="rounded-lg border border-border/60 bg-secondary/20 px-3 py-2.5"
+                >
                   <div className="flex items-center justify-between gap-2">
                     <p className="truncate text-xs font-medium text-foreground">
-                      {project.name}
+                      {item.project.name}
                     </p>
-                    <ProjectStatusBadge status={project.status} />
+                    <ProjectStatusBadge status={item.project.status} />
                   </div>
                   <div className="mt-2 flex items-center gap-2">
-                    <Progress value={project.progress} className="h-1" />
+                    <Progress value={item.progress} className="h-1" />
                     <span className="w-9 shrink-0 text-right text-[10px] tabular text-muted-foreground">
-                      {project.progress}%
+                      {item.progress}%
                     </span>
                   </div>
+                  <p className="mt-1.5 text-[10px] text-muted-foreground">
+                    {item.completed} of {item.total} due tasks complete
+                  </p>
                 </div>
               ))
             )}
@@ -449,8 +481,7 @@ export function AnalyticsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 bg-secondary/20 px-3 py-2.5 text-[10px] text-muted-foreground">
         <span className="inline-flex items-center gap-1.5">
           <Gauge className="h-3 w-3" />
-          Metrics are derived from workspace records and refresh with the
-          dashboard queries.
+          Metrics are derived from workspace records for {rangeLabel}.
         </span>
         <span className="tabular">
           {taskList.length} tasks · {projectList.length} projects ·{' '}

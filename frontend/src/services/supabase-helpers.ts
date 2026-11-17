@@ -114,6 +114,17 @@ export interface WorkflowRow {
   accent: string | null;
 }
 
+export interface WorkflowRunRow {
+  id: string;
+  workflow_id: string;
+  status: string;
+  trigger_label: string | null;
+  summary: string | null;
+  started_at: string;
+  duration_ms: number | null;
+  steps: Array<{ label: string; status: string }> | null;
+}
+
 export interface IntegrationRow {
   id: string;
   provider: string;

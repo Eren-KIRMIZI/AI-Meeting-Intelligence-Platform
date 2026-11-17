@@ -19,6 +19,7 @@ import { listActivities } from '@/services/activity.service';
 import { listKnowledge } from '@/services/knowledge.service';
 import {
   createWorkflow,
+  listWorkflowRuns,
   listWorkflows,
   setWorkflowActive,
 } from '@/services/workflows.service';
@@ -117,6 +118,18 @@ export function useWorkflows(options: QueryOptions = {}) {
     queryKey: ['workflows', orgId],
     queryFn: () => listWorkflows(orgId),
     enabled: options.enabled ?? true,
+  });
+}
+
+export function useWorkflowRuns(
+  workflowId: string | null,
+  options: QueryOptions = {}
+) {
+  const { orgId } = useAuth();
+  return useQuery({
+    queryKey: ['workflow-runs', workflowId, orgId],
+    queryFn: () => listWorkflowRuns(workflowId as string, orgId),
+    enabled: (options.enabled ?? true) && Boolean(workflowId),
   });
 }
 

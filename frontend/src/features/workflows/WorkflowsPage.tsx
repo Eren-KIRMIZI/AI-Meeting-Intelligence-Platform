@@ -2,6 +2,8 @@ import { useState } from 'react';
 import {
   ArrowRight,
   Activity,
+  ChevronDown,
+  History,
   Plus,
   Workflow as WorkflowIcon,
   Zap,
@@ -22,11 +24,13 @@ import {
 import { accentConfig } from '@/lib/status';
 import { cn, formatRelativeTime } from '@/lib/utils';
 import { CreateWorkflowDialog } from './components/create-workflow-dialog';
+import { WorkflowRunHistory } from './components/workflow-run-history';
 import type { Workflow } from '@/types';
 
 function WorkflowRow({ workflow }: { workflow: Workflow }) {
   const toggle = useToggleWorkflow();
   const accent = accentConfig[workflow.accent];
+  const [expanded, setExpanded] = useState(false);
 
   const handleToggle = (active: boolean) => {
     toggle.mutate(
@@ -49,66 +53,97 @@ function WorkflowRow({ workflow }: { workflow: Workflow }) {
   };
 
   return (
-    <div className="flex flex-col gap-3 px-4 py-4 transition-colors hover:bg-secondary/15 lg:flex-row lg:items-center">
-      <div className="flex min-w-0 flex-1 items-start gap-3">
-        <span
-          className={cn(
-            'icon-tile h-9 w-9 border',
-            accent.bg,
-            accent.border,
-            accent.text
-          )}
-        >
-          <WorkflowIcon className="h-4 w-4" />
-        </span>
-        <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-2">
-            <p className="truncate text-sm font-medium text-foreground">
-              {workflow.name}
+    <div>
+      <div className="flex flex-col gap-3 px-4 py-4 transition-colors hover:bg-secondary/15 lg:flex-row lg:items-center">
+        <div className="flex min-w-0 flex-1 items-start gap-3">
+          <span
+            className={cn(
+              'icon-tile h-9 w-9 border',
+              accent.bg,
+              accent.border,
+              accent.text
+            )}
+          >
+            <WorkflowIcon className="h-4 w-4" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <p className="truncate text-sm font-medium text-foreground">
+                {workflow.name}
+              </p>
+              <Badge variant={workflow.isActive ? 'success' : 'neutral'}>
+                {workflow.isActive ? 'Active' : 'Paused'}
+              </Badge>
+            </div>
+            <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
+              {workflow.description || 'No description yet.'}
             </p>
-            <Badge variant={workflow.isActive ? 'success' : 'neutral'}>
-              {workflow.isActive ? 'Active' : 'Paused'}
-            </Badge>
-          </div>
-          <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
-            {workflow.description || 'No description yet.'}
-          </p>
 
-          <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[10px]">
-            <span className="inline-flex items-center gap-1 rounded-md border border-border/70 bg-secondary/30 px-2 py-1 text-muted-foreground">
-              <Zap className="h-3 w-3 text-amber-400" />
-              {workflow.triggerLabel}
-            </span>
-            {workflow.actionLabels.map((action) => (
-              <span key={action} className="inline-flex items-center gap-1">
-                <ArrowRight className="h-3 w-3 text-muted-foreground/50" />
-                <span className="rounded-md border border-border/70 bg-secondary/30 px-2 py-1 text-muted-foreground">
-                  {action}
-                </span>
+            <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[10px]">
+              <span className="inline-flex items-center gap-1 rounded-md border border-border/70 bg-secondary/30 px-2 py-1 text-muted-foreground">
+                <Zap className="h-3 w-3 text-amber-400" />
+                {workflow.triggerLabel}
               </span>
-            ))}
+              {workflow.actionLabels.map((action) => (
+                <span key={action} className="inline-flex items-center gap-1">
+                  <ArrowRight className="h-3 w-3 text-muted-foreground/50" />
+                  <span className="rounded-md border border-border/70 bg-secondary/30 px-2 py-1 text-muted-foreground">
+                    {action}
+                  </span>
+                </span>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        <div className="flex shrink-0 items-center justify-between gap-4 pl-12 lg:pl-0">
+          <div className="text-right">
+            <p className="text-xs font-medium tabular text-foreground">
+              {workflow.runCount} runs
+            </p>
+            <p className="mt-0.5 text-[10px] text-muted-foreground">
+              {workflow.lastRunAt
+                ? `Last run ${formatRelativeTime(workflow.lastRunAt)}`
+                : 'Not run yet'}
+            </p>
+          </div>
+          <div className="flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 gap-1 px-2 text-[11px]"
+              aria-expanded={expanded}
+              aria-controls={`workflow-runs-${workflow.id}`}
+              aria-label={`${expanded ? 'Hide' : 'Show'} run history for ${workflow.name}`}
+              onClick={() => setExpanded((value) => !value)}
+            >
+              <History className="h-3.5 w-3.5" />
+              History
+              <ChevronDown
+                className={cn(
+                  'h-3 w-3 transition-transform',
+                  expanded && 'rotate-180'
+                )}
+              />
+            </Button>
+            <Switch
+              checked={workflow.isActive}
+              disabled={toggle.isPending}
+              onCheckedChange={handleToggle}
+              aria-label={`${workflow.isActive ? 'Pause' : 'Activate'} ${workflow.name}`}
+            />
           </div>
         </div>
       </div>
 
-      <div className="flex shrink-0 items-center justify-between gap-4 pl-12 lg:pl-0">
-        <div className="text-right">
-          <p className="text-xs font-medium tabular text-foreground">
-            {workflow.runCount} runs
-          </p>
-          <p className="mt-0.5 text-[10px] text-muted-foreground">
-            {workflow.lastRunAt
-              ? `Last run ${formatRelativeTime(workflow.lastRunAt)}`
-              : 'Not run yet'}
-          </p>
+      {expanded ? (
+        <div
+          id={`workflow-runs-${workflow.id}`}
+          className="border-t border-border/60 bg-secondary/10 px-4 py-3 lg:pl-16"
+        >
+          <WorkflowRunHistory workflowId={workflow.id} />
         </div>
-        <Switch
-          checked={workflow.isActive}
-          disabled={toggle.isPending}
-          onCheckedChange={handleToggle}
-          aria-label={`${workflow.isActive ? 'Pause' : 'Activate'} ${workflow.name}`}
-        />
-      </div>
+      ) : null}
     </div>
   );
 }

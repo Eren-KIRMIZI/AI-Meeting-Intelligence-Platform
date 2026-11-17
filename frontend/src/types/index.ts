@@ -244,6 +244,24 @@ export interface Workflow {
   accent: AccentColor;
 }
 
+export type WorkflowRunStatus = 'success' | 'failed' | 'skipped';
+
+export interface WorkflowRunStep {
+  label: string;
+  status: WorkflowRunStatus;
+}
+
+export interface WorkflowRun {
+  id: string;
+  workflowId: string;
+  status: WorkflowRunStatus;
+  trigger: string;
+  summary: string;
+  startedAt: string;
+  durationMs: number;
+  steps: WorkflowRunStep[];
+}
+
 export type IntegrationStatus = 'connected' | 'available' | 'error';
 
 export type IntegrationIcon = 'calendar' | 'video' | 'chat' | 'mail' | 'storage';

@@ -346,6 +346,62 @@ begin
     )
   on conflict (id) do nothing;
 
+  -- Workflow run history --------------------------------------------------
+  insert into public.workflow_runs (
+    id, organization_id, workflow_id, status, trigger_label, summary,
+    started_at, duration_ms, steps
+  )
+  values
+    (
+      '0a300000-0000-4000-8000-000000000001', seed_org,
+      '0a200000-0000-4000-8000-000000000001', 'success',
+      'Weekly product sync completed',
+      'Summary drafted · 3 action items created',
+      now() - interval '2 hours', 18400,
+      '[{"label":"Summarize transcript","status":"success"},{"label":"Create action item drafts","status":"success"}]'::jsonb
+    ),
+    (
+      '0a300000-0000-4000-8000-000000000002', seed_org,
+      '0a200000-0000-4000-8000-000000000001', 'failed',
+      'Customer discovery — Acme',
+      'Transcript too short to summarize',
+      now() - interval '4 days', 3200,
+      '[{"label":"Summarize transcript","status":"failed"},{"label":"Create action item drafts","status":"skipped"}]'::jsonb
+    ),
+    (
+      '0a300000-0000-4000-8000-000000000003', seed_org,
+      '0a200000-0000-4000-8000-000000000002', 'success',
+      'Decision accepted · Launch mobile app to a 10% cohort first',
+      'Project brief updated · Sarah Chen notified',
+      now() - interval '1 day', 5400,
+      '[{"label":"Update project brief","status":"success"},{"label":"Notify decision owner","status":"success"}]'::jsonb
+    ),
+    (
+      '0a300000-0000-4000-8000-000000000004', seed_org,
+      '0a200000-0000-4000-8000-000000000003', 'failed',
+      'Overdue task · Publish security review notes',
+      'Slack channel #delivery is not connected',
+      now() - interval '4 days', 1500,
+      '[{"label":"Notify assignee","status":"success"},{"label":"Post in #delivery","status":"failed"}]'::jsonb
+    ),
+    (
+      '0a300000-0000-4000-8000-000000000005', seed_org,
+      '0a200000-0000-4000-8000-000000000004', 'success',
+      'Transcript ready · Product sync — Nov 9',
+      'Knowledge note created · 2 decisions linked',
+      now() - interval '6 days', 8900,
+      '[{"label":"Extract summary","status":"success"},{"label":"File in knowledge","status":"success"}]'::jsonb
+    ),
+    (
+      '0a300000-0000-4000-8000-000000000006', seed_org,
+      '0a200000-0000-4000-8000-000000000004', 'skipped',
+      'Transcript ready · Research synthesis',
+      'Document already indexed — run skipped',
+      now() - interval '9 days', 600,
+      '[{"label":"Extract summary","status":"skipped"},{"label":"File in knowledge","status":"skipped"}]'::jsonb
+    )
+  on conflict (id) do nothing;
+
   -- Integrations ----------------------------------------------------------
   insert into public.integrations (
     id, organization_id, provider, name, description, status, category, icon, connected_at

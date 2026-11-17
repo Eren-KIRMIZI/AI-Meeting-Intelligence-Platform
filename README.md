@@ -48,6 +48,7 @@ Nova turns meetings into execution: every conversation becomes a brief with deci
 └─ supabase/
    ├─ migrations/0001_init.sql                 schema, triggers, RLS, storage, bootstrap
    ├─ migrations/0002_meeting_intelligence.sql transcript + analysis columns
+   ├─ migrations/0003_workflow_runs.sql        workflow execution history
    └─ seed.sql                                 idempotent demo workspace
 ```
 
@@ -82,7 +83,7 @@ Open the printed URL (default `http://localhost:5173`). Use **Continue with demo
 
 ### Testing & CI
 
-Tests use Vitest with jsdom, Testing Library and jest-dom. The suite covers pure helpers, metric builders, enum guards, the transcript analyzer, the demo data store and its meeting pipeline (analyze → commit), sidebar accessibility, the 404 page and a task-board interaction end to end.
+Tests use Vitest with jsdom, Testing Library and jest-dom. The suite covers pure helpers, metric builders, range-derived analytics, enum guards, the transcript analyzer, the demo data store and its meeting pipeline (analyze → commit) and workflow run log, sidebar accessibility, the 404 page and a task-board interaction end to end.
 
 ```bash
 cd frontend
@@ -107,7 +108,8 @@ Open the SQL editor and run, in order:
 
 1. `supabase/migrations/0001_init.sql`
 2. `supabase/migrations/0002_meeting_intelligence.sql`
-3. `supabase/seed.sql` — optional demo workspace. Requires at least one auth user; sign up once first.
+3. `supabase/migrations/0003_workflow_runs.sql`
+4. `supabase/seed.sql` — optional demo workspace. Requires at least one auth user; sign up once first.
 
 Or with the Supabase CLI:
 
@@ -122,12 +124,15 @@ The migration creates:
 - `projects`, `project_members`, `tasks`
 - `meetings`, `meeting_participants`, `decisions`
 - `activities`, `knowledge_documents`, `workflows`, `integrations`, `notifications`
+- `workflow_runs` (added in `0003`) for workflow execution history
 - `handle_new_user` trigger, `set_updated_at` triggers, indexes
 - RLS helpers: `is_org_member`, `is_org_admin`, `shares_org_with`
 - `bootstrap_workspace()` for first-run onboarding
 - A private `meeting-assets` storage bucket with org-scoped policies
 
 The second migration adds `transcript`, `analysis`, `analysis_error`, `analysis_confidence`, `analyzed_at` and `analysis_model` to `meetings`. Existing RLS already scopes those columns to active workspace members.
+
+The third migration adds `workflow_runs`, scoped to workspace members for reads. Automation writes stay on the service role, so no authenticated insert or update policy is granted.
 
 ### 3. Configure environment
 
@@ -265,5 +270,7 @@ If you rotate keys, update Vercel environment variables and redeploy. Never comm
 - Mobile drawer navigation, accessible labels and keyboard support
 - Dark surfaces, Manrope/Inter typography, restrained blue accent — no gradients or glow effects
 - Modules: Overview, Projects, Tasks, Meetings, Decisions, Knowledge, Workflows, Intelligence, Analytics, Team, Settings
+- Workflows expose an inline run log with status, trigger, step outcomes and duration
+- Analytics recomputes KPIs, decision mix, workload and project health for 7, 14 or 30 day windows
 
 All interactive controls are wired: create dialogs, task status changes, filters, exports, settings persistence, command palette (`Ctrl/⌘ + K`) and toasts.
