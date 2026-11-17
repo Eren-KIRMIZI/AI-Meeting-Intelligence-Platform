@@ -4,11 +4,14 @@ import type {
   AppNotification,
   CommitMeetingInput,
   CommitMeetingResult,
+  ConvertInsightToDecisionInput,
+  ConvertInsightToTaskInput,
   CreateMeetingInput,
   CreateProjectInput,
   CreateTaskInput,
   CreateWorkflowInput,
   Decision,
+  Insight,
   Integration,
   InviteMemberInput,
   KnowledgeDocument,
@@ -19,6 +22,7 @@ import type {
   OrgRole,
   Project,
   SaveMeetingRecordingInput,
+  SetInsightStatusInput,
   Task,
   TeamMember,
   UpdateDecisionInput,
@@ -32,6 +36,10 @@ import { liveMeetingNote } from '@/lib/live/intelligence';
 import { baseMimeType } from '@/lib/recordings';
 import { decisionActivityTitle } from '@/lib/decisions';
 import {
+  buildInsightCandidates,
+  insightStatusTitle,
+} from '@/lib/insights';
+import {
   canAssignProjects,
   canChangeMemberRole,
   canRemoveMember,
@@ -44,6 +52,7 @@ import {
   demoUser,
   seedActivities,
   seedDecisions,
+  seedInsights,
   seedIntegrations,
   seedKnowledge,
   seedMeetings,
@@ -72,6 +81,7 @@ const workflowRuns: WorkflowRun[] = clone(seedWorkflowRuns);
 const integrations: Integration[] = clone(seedIntegrations);
 let team: TeamMember[] = clone(seedTeam);
 let notifications: AppNotification[] = clone(seedNotifications);
+let insights: Insight[] = clone(seedInsights);
 
 function recalculateProject(projectId: string) {
   const project = projects.find((item) => item.id === projectId);
@@ -125,7 +135,7 @@ function pushNotification(input: {
 }
 
 function emitDemoResource(
-  resource: 'tasks' | 'decisions' | 'meetings' | 'knowledge' | 'team'
+  resource: 'tasks' | 'decisions' | 'meetings' | 'knowledge' | 'team' | 'insights'
 ) {
   emitWorkspaceEvent({ resource, orgId: demoOrg.id });
 }
@@ -190,6 +200,137 @@ function participantFor(
     findParticipant(meeting, name) ??
     demoUser
   );
+}
+
+function insightOwner(
+  meeting: Meeting,
+  name?: string,
+  id?: string | null
+): UserProfile {
+  if (id) {
+    const byId: UserProfile | undefined =
+      meeting.participants.find((participant) => participant.id === id) ??
+      team.find((member) => member.id === id);
+    if (byId) return byId;
+  }
+
+  if (name) {
+    const byName = findParticipant(meeting, name);
+    if (byName) return byName;
+  }
+
+  return meeting.participants[0] ?? demoUser;
+}
+
+const insightKey = (kind: string, title: string) =>
+  `${kind}:${title.trim().toLowerCase()}`;
+
+/**
+ * Reconciles the insight queue with a meeting analysis.
+ *
+ * - Accepted, dismissed and converted insights keep the owner's decision.
+ * - Generated open insights are rebuilt so a re-run never duplicates a signal.
+ * - Action/decision insights that already produced a task or decision become
+ *   `converted` and keep the deep link to that object.
+ */
+function syncMeetingInsights(
+  meeting: Meeting,
+  analysis: MeetingAnalysis
+) {
+  const now = analysis.analyzedAt ?? new Date().toISOString();
+  let changed = false;
+
+  const link = (
+    kind: 'action' | 'decision',
+    title: string,
+    targetId: string,
+    field: 'taskId' | 'decisionId'
+  ) => {
+    for (const insight of insights) {
+      if (
+        insight.meetingId !== meeting.id ||
+        !insight.generated ||
+        insight.kind !== kind ||
+        insight.status === 'converted'
+      ) {
+        continue;
+      }
+      if (insightKey(insight.kind, insight.title) !== insightKey(kind, title)) {
+        continue;
+      }
+      insight.status = 'converted';
+      insight[field] = targetId;
+      insight.updatedAt = now;
+      changed = true;
+    }
+  };
+
+  for (const action of analysis.actions) {
+    if (action.taskId) link('action', action.text, action.taskId, 'taskId');
+  }
+  for (const decision of analysis.decisions) {
+    if (decision.decisionId) {
+      link('decision', decision.title, decision.decisionId, 'decisionId');
+    }
+  }
+
+  const before = insights.length;
+  insights = insights.filter(
+    (insight) =>
+      !(
+        insight.meetingId === meeting.id &&
+        insight.generated &&
+        insight.status === 'open'
+      )
+  );
+  if (insights.length !== before) changed = true;
+
+  const candidates = buildInsightCandidates({
+    meeting,
+    analysis,
+    ownerFor: (name, id) => insightOwner(meeting, name, id),
+  });
+
+  const existing = new Set(
+    insights
+      .filter(
+        (insight) => insight.meetingId === meeting.id && insight.generated
+      )
+      .map((insight) => insightKey(insight.kind, insight.title))
+  );
+
+  for (const candidate of candidates) {
+    const key = insightKey(candidate.kind, candidate.title);
+    if (existing.has(key)) continue;
+    existing.add(key);
+
+    const converted = Boolean(candidate.taskId || candidate.decisionId);
+    insights.unshift({
+      id: newId('ins'),
+      kind: candidate.kind,
+      status: converted ? 'converted' : 'open',
+      title: candidate.title,
+      summary: candidate.summary,
+      meetingId: meeting.id,
+      meetingTitle: meeting.title,
+      projectId: meeting.projectId ?? null,
+      projectName: meeting.projectName,
+      owner: candidate.owner,
+      dueDate: candidate.dueDate ?? null,
+      confidence: candidate.confidence,
+      sourceExcerpt: candidate.sourceExcerpt,
+      items: candidate.items,
+      taskId: candidate.taskId ?? null,
+      decisionId: candidate.decisionId ?? null,
+      generated: true,
+      createdAt: now,
+      updatedAt: now,
+    });
+    changed = true;
+  }
+
+  if (changed) emitDemoResource('insights');
+  return changed;
 }
 
 /**
@@ -524,6 +665,8 @@ export const mockDb = {
 
     meetings = [meeting, ...meetings];
 
+    syncMeetingInsights(meeting, analysis);
+
     const note = liveMeetingNote(input);
     knowledge.unshift({
       id: newId('k'),
@@ -670,6 +813,8 @@ export const mockDb = {
     meeting.status = 'completed';
     meeting.transcriptReady = true;
     meeting.analysisError = undefined;
+
+    syncMeetingInsights(meeting, analysis);
 
     pushActivity({
       type: 'meeting',
@@ -820,6 +965,8 @@ export const mockDb = {
     );
     meeting.decisions = analysis.decisions.map((decision) => decision.title);
 
+    syncMeetingInsights(meeting, analysis);
+
     return clone({
       tasks: createdTasks,
       decisions: createdDecisions,
@@ -871,6 +1018,189 @@ export const mockDb = {
     emitDemoResource('decisions');
 
     return clone(decision);
+  },
+
+  async listInsights() {
+    await wait();
+    return clone(insights);
+  },
+
+  async setInsightStatus(
+    insightId: string,
+    input: SetInsightStatusInput,
+    actor: UserProfile = demoUser
+  ) {
+    await wait(160);
+
+    if (teamRoleFor(actor) === 'viewer') {
+      throw new Error('Viewers have read-only access to insights.');
+    }
+
+    const insight = insights.find((item) => item.id === insightId);
+    if (!insight) throw new Error('Insight not found');
+    if (insight.status === 'converted') {
+      throw new Error('Converted insights cannot change status.');
+    }
+    if (insight.status === input.status) return clone(insight);
+
+    const note = input.note?.trim();
+    insight.status = input.status;
+    insight.updatedAt = new Date().toISOString();
+
+    pushActivity({
+      actor,
+      type: 'insight',
+      title: insightStatusTitle(input.status),
+      description: `“${insight.title}” was marked ${input.status}${
+        note ? `: ${note}` : '.'
+      }`,
+    });
+    pushNotification({
+      type: 'mention',
+      title: insightStatusTitle(input.status),
+      body: `“${insight.title}” is now ${input.status}.`,
+      link: `/intelligence?insight=${insight.id}`,
+    });
+    emitDemoResource('insights');
+
+    return clone(insight);
+  },
+
+  async convertInsightToTask(
+    insightId: string,
+    input: ConvertInsightToTaskInput,
+    actor: UserProfile = demoUser
+  ) {
+    await wait(220);
+
+    if (teamRoleFor(actor) === 'viewer') {
+      throw new Error('Viewers have read-only access to insights.');
+    }
+
+    const insight = insights.find((item) => item.id === insightId);
+    if (!insight) throw new Error('Insight not found');
+    if (insight.status === 'converted') {
+      throw new Error('This insight has already been converted.');
+    }
+
+    const projectId = input.projectId ?? insight.projectId ?? '';
+    const project = projectId
+      ? projects.find((item) => item.id === projectId)
+      : undefined;
+    if (projectId && !project) throw new Error('Project not found');
+
+    const assignee =
+      (input.assigneeId
+        ? team.find((member) => member.id === input.assigneeId)
+        : null) ?? insight.owner;
+
+    const dueDate = input.dueDate
+      ? new Date(input.dueDate).toISOString()
+      : insight.dueDate ?? null;
+
+    const task: Task = {
+      id: newId('t'),
+      title: insight.title,
+      description: `Converted from an insight in “${insight.meetingTitle}”.\n\n${insight.summary}`,
+      status: 'todo',
+      priority: input.priority,
+      projectId: project?.id ?? '',
+      projectName: project?.name ?? 'Unassigned',
+      assignee,
+      dueDate,
+      tags: ['insight', 'meeting-follow-up'],
+      createdAt: new Date().toISOString(),
+      completedAt: null,
+      sourceMeetingId: insight.meetingId ?? undefined,
+    };
+
+    tasks = [task, ...tasks];
+    recalculateProject(task.projectId);
+
+    insight.status = 'converted';
+    insight.taskId = task.id;
+    insight.projectId = project?.id ?? insight.projectId ?? null;
+    insight.projectName = project?.name ?? insight.projectName;
+    insight.updatedAt = new Date().toISOString();
+
+    pushActivity({
+      actor,
+      type: 'insight',
+      title: 'Insight converted to task',
+      description: `“${insight.title}” became a task assigned to ${assignee.fullName}.`,
+    });
+    pushNotification({
+      type: 'task',
+      title: 'Insight converted to task',
+      body: `“${insight.title}” is now a task assigned to ${assignee.fullName}.`,
+      link: `/tasks?task=${task.id}`,
+    });
+    emitDemoResource('tasks');
+    emitDemoResource('insights');
+
+    return clone(insight);
+  },
+
+  async convertInsightToDecision(
+    insightId: string,
+    input: ConvertInsightToDecisionInput,
+    actor: UserProfile = demoUser
+  ) {
+    await wait(220);
+
+    if (teamRoleFor(actor) === 'viewer') {
+      throw new Error('Viewers have read-only access to insights.');
+    }
+
+    const insight = insights.find((item) => item.id === insightId);
+    if (!insight) throw new Error('Insight not found');
+    if (insight.status === 'converted') {
+      throw new Error('This insight has already been converted.');
+    }
+
+    const now = new Date().toISOString();
+    const decision: Decision = {
+      id: newId('d'),
+      title: insight.title,
+      context: insight.summary,
+      status: 'proposed',
+      owner: insight.owner,
+      meetingTitle: insight.meetingTitle,
+      decidedAt: now,
+      impact: input.impact,
+      projectName: insight.projectName,
+      history: [
+        {
+          id: newId('de'),
+          status: 'proposed',
+          actor,
+          createdAt: now,
+        },
+      ],
+    };
+
+    decisions.unshift(decision);
+
+    insight.status = 'converted';
+    insight.decisionId = decision.id;
+    insight.updatedAt = now;
+
+    pushActivity({
+      actor,
+      type: 'insight',
+      title: 'Insight converted to decision',
+      description: `“${insight.title}” was added to the decision log for review.`,
+    });
+    pushNotification({
+      type: 'decision',
+      title: 'Insight converted to decision',
+      body: `“${insight.title}” is now a proposed decision.`,
+      link: `/decisions?decision=${decision.id}`,
+    });
+    emitDemoResource('decisions');
+    emitDemoResource('insights');
+
+    return clone(insight);
   },
 
   async listActivities() {

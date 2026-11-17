@@ -2,6 +2,8 @@ import type {
   AccentColor,
   ActivityType,
   DecisionStatus,
+  InsightKind,
+  InsightStatus,
   IntegrationIcon,
   IntegrationStatus,
   KnowledgeKind,
@@ -45,8 +47,18 @@ export const asAccent = (value: string | null) =>
 export const asActivityType = (value: string) =>
   pick<ActivityType>(
     value,
-    ['task', 'comment', 'meeting', 'decision', 'assignment', 'project'],
+    ['task', 'comment', 'meeting', 'decision', 'assignment', 'project', 'insight'],
     'task'
+  );
+
+export const asInsightKind = (value: string) =>
+  pick<InsightKind>(value, ['summary', 'decision', 'action', 'risk'], 'summary');
+
+export const asInsightStatus = (value: string) =>
+  pick<InsightStatus>(
+    value,
+    ['open', 'accepted', 'dismissed', 'converted'],
+    'open'
   );
 
 export const asKnowledgeKind = (value: string) =>

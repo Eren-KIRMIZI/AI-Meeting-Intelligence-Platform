@@ -18,6 +18,7 @@ const resourceQueryKeys: Record<WorkspaceEventResource, string[]> = {
   knowledge: ['knowledge'],
   activities: ['activities'],
   team: ['team', 'projects'],
+  insights: ['insights', 'tasks', 'decisions'],
 };
 
 function invalidateResource(
@@ -51,6 +52,11 @@ const realtimeTables: Array<{
   {
     table: 'knowledge_documents',
     resource: 'knowledge',
+    organizationScoped: true,
+  },
+  {
+    table: 'meeting_insights',
+    resource: 'insights',
     organizationScoped: true,
   },
   {

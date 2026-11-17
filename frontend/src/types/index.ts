@@ -319,7 +319,8 @@ export type ActivityType =
   | 'meeting'
   | 'decision'
   | 'assignment'
-  | 'project';
+  | 'project'
+  | 'insight';
 
 export interface Activity {
   id: string;
@@ -439,15 +440,46 @@ export interface AiBrief {
   items: AiBriefItem[];
 }
 
+export type InsightKind = 'summary' | 'decision' | 'action' | 'risk';
+
+export type InsightStatus = 'open' | 'accepted' | 'dismissed' | 'converted';
+
 export interface Insight {
   id: string;
+  kind: InsightKind;
+  status: InsightStatus;
   title: string;
   summary: string;
+  meetingId: string | null;
   meetingTitle: string;
+  projectId?: string | null;
+  projectName?: string;
+  owner: UserProfile;
+  dueDate?: string | null;
   confidence: number;
-  createdAt: string;
+  sourceExcerpt?: string;
   items: string[];
-  kind: 'summary' | 'decision' | 'action' | 'risk';
+  taskId?: string | null;
+  decisionId?: string | null;
+  generated: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SetInsightStatusInput {
+  status: Exclude<InsightStatus, 'converted'>;
+  note?: string;
+}
+
+export interface ConvertInsightToTaskInput {
+  projectId?: string | null;
+  priority: TaskPriority;
+  dueDate?: string | null;
+  assigneeId?: string | null;
+}
+
+export interface ConvertInsightToDecisionInput {
+  impact: 'low' | 'medium' | 'high';
 }
 
 export interface SeriesPoint {

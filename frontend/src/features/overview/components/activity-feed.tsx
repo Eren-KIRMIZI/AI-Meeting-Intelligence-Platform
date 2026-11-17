@@ -4,6 +4,7 @@ import {
   GitBranch,
   ListTodo,
   MessageSquare,
+  Sparkles,
   UserRound,
   type LucideIcon,
 } from 'lucide-react';
@@ -26,6 +27,7 @@ const activityIcons: Record<ActivityType, LucideIcon> = {
   decision: GitBranch,
   assignment: UserRound,
   project: FolderKanban,
+  insight: Sparkles,
 };
 
 const activityTones: Record<ActivityType, string> = {
@@ -35,6 +37,7 @@ const activityTones: Record<ActivityType, string> = {
   decision: 'border-violet-500/20 bg-violet-500/10 text-violet-400',
   assignment: 'border-cyan-500/20 bg-cyan-500/10 text-cyan-400',
   project: 'border-slate-500/20 bg-slate-500/10 text-slate-400',
+  insight: 'border-fuchsia-500/20 bg-fuchsia-500/10 text-fuchsia-400',
 };
 
 export function ActivityFeed({ activities }: { activities: Activity[] }) {

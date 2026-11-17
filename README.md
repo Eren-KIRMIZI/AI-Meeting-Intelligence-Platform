@@ -55,6 +55,7 @@ Nova turns meetings into execution: every conversation becomes a brief with deci
    ├─ migrations/0006_meeting_recordings.sql   recording archive + private bucket
    ├─ migrations/0007_notifications_realtime.sql notifications, RPC and Realtime
    ├─ migrations/0008_team_management.sql      roles, removals and project access
+   ├─ migrations/0009_meeting_insights.sql     insight queue, review RPCs and Realtime
    └─ seed.sql                                 idempotent demo workspace
 ```
 
@@ -89,7 +90,7 @@ Open the printed URL (default `http://localhost:5173`). Use **Continue with demo
 
 ### Testing & CI
 
-Tests use Vitest with jsdom, Testing Library and jest-dom. The suite covers pure helpers, metric builders, range-derived analytics, enum guards, the transcript analyzer, the live-meeting intelligence and Knowledge note, the demo data store and its meeting pipeline (analyze → commit), Nova Live persistence, recording formatting and archive storage, notification preference filtering and deep-link safety, the demo workspace event bus, action-driven notification delivery, team role hierarchy rules, member removal and project-access sync, the workflow run log, sidebar accessibility, the 404 page and a task-board interaction end to end.
+Tests use Vitest with jsdom, Testing Library and jest-dom. The suite covers pure helpers, metric builders, range-derived analytics, enum guards, the transcript analyzer, the live-meeting intelligence and Knowledge note, the demo data store and its meeting pipeline (analyze → commit), Nova Live persistence, recording formatting and archive storage, notification preference filtering and deep-link safety, the demo workspace event bus, action-driven notification delivery, team role hierarchy rules, member removal and project-access sync, the insight review queue and its task/decision conversion, the workflow run log, sidebar accessibility, the 404 page and a task-board interaction end to end.
 
 ```bash
 cd frontend
@@ -120,7 +121,8 @@ Open the SQL editor and run, in order:
 6. `supabase/migrations/0006_meeting_recordings.sql`
 7. `supabase/migrations/0007_notifications_realtime.sql`
 8. `supabase/migrations/0008_team_management.sql`
-9. `supabase/seed.sql` — optional demo workspace. Requires at least one auth user; sign up once first.
+9. `supabase/migrations/0009_meeting_insights.sql`
+10. `supabase/seed.sql` — optional demo workspace. Requires at least one auth user; sign up once first.
 
 Or with the Supabase CLI:
 
@@ -304,6 +306,19 @@ Nova Live runs the meeting inside the workspace: video/audio, screen sharing, ch
 
 ---
 
+## AI Intelligence
+
+AI Intelligence is a reviewed queue, not a second meeting summary. Every signal keeps the meeting it came from, an owner, a confidence score and an optional source excerpt.
+
+- **One queue, four kinds.** `summary`, `decision`, `action` and `risk` insights land in `/intelligence`. The page has KPI counts, kind and status filters, search across title, owner, meeting and project, and a detail panel opened through `/intelligence?insight=<id>` so notifications and links land on the exact signal.
+- **Review actions.** Owners, admins and members can accept, dismiss or reopen a signal with an optional note. Viewers can read the queue but the write controls are hidden and the RPCs reject the change.
+- **Convert to work.** An accepted signal can become a task (project, priority, due date, assignee) or a proposed decision (impact). The insight becomes `converted`, keeps a deep link to the new record, and the task or decision opens from the card or the detail panel.
+- **Demo and live parity.** Both paths build candidates with `buildInsightCandidates` in `src/lib/insights.ts`. Demo mode applies the rules in `mocks/db.ts`; live mode sends the same candidates to the `0009` security-definer RPCs, which validate membership and enforce the viewer guard. Re-analysis preserves accepted, dismissed and converted signals and rebuilds only the generated open ones.
+- **Notifications.** Accept/dismiss/reopen uses the `mentions` preference with a `/intelligence?insight=<id>` link. Converting to a task notifies the assignee, and converting to a decision notifies the workspace through the existing notification audiences.
+- **Realtime.** `meeting_insights` is published to Supabase Realtime, so a review in one tab refreshes the queue in another. Demo mode uses the same workspace event bus as the rest of the app.
+
+---
+
 ## Notifications & realtime
 
 Notifications are produced by workspace actions, not by a scheduled job that guesses what happened. The bell in the header is a filtered, deep-linked inbox.
@@ -312,7 +327,7 @@ Notifications are produced by workspace actions, not by a scheduled job that gue
 - **Audiences.** Decision changes go to every active member except the actor; meeting events go to the meeting's participants; task events go to the assignee. The audience is resolved by the `notify_workspace()` RPC, so the client never writes rows for another user.
 - **Preferences actually filter.** Each notification type maps to one switch in **Settings → Notifications** (`meetingBriefs`, `actionItems`, `decisionReviews`, `weeklyDigest`, `mentions`). The mapping lives in `src/lib/notifications.ts`, so the bell badge, the list and the settings page cannot drift. Switching a type off hides it from the menu and from the unread count immediately; the menu says how many items are hidden and links to the settings tab.
 - **Deep links.** Every notification carries a `link` to the object that produced it, for example `/decisions?decision=d-03`, `/tasks?task=<id>` or `/meetings/<id>`. Links are validated in the UI and by a database check constraint: only single-slash internal paths are accepted, everything else falls back to the module landing page.
-- **Live delivery.** `use-workspace-realtime.ts` subscribes to Supabase Realtime for `notifications`, `tasks`, `decisions`, `meetings`, `meeting_recordings`, `knowledge_documents`, `organization_members` and `project_members`. Notification inserts show a toast and refresh the bell; other tables invalidate the matching TanStack Query keys. Notification and task channels are filtered by `user_id` / `organization_id`, and RLS still applies to every payload.
+- **Live delivery.** `use-workspace-realtime.ts` subscribes to Supabase Realtime for `notifications`, `tasks`, `decisions`, `meetings`, `meeting_recordings`, `meeting_insights`, `knowledge_documents`, `organization_members` and `project_members`. Notification inserts show a toast and refresh the bell; other tables invalidate the matching TanStack Query keys. Notification and task channels are filtered by `user_id` / `organization_id`, and RLS still applies to every payload.
 - **Demo delivery.** Without credentials the same hook subscribes to the `BroadcastChannel` bus in `src/lib/workspace-events.ts`. Open the app in two tabs: an action in one tab shows a toast, updates the bell and refreshes the list in the other. Only notifications carry their payload across tabs; other demo resources invalidate queries because each tab keeps its own in-memory store.
 - **Settings deep link.** Settings tabs are URL-controlled (`/settings?tab=notifications`), so the bell footer and the empty-state hint land on the right panel.
 
@@ -352,6 +367,7 @@ The Team directory is a working permission surface. Clicking a member card opens
 - **Server-side fan-out.** `notify_workspace()` is `security definer` with a pinned `search_path`, verifies the caller is an active member, validates the type and link, resolves the audience itself and excludes the actor. The existing `notifications_insert` policy stays admin-only, so members cannot forge notifications for each other.
 - **Realtime respects RLS.** Published tables keep row-level security; notification subscriptions filter by the signed-in user and workspace, and replica identity `full` only changes how much of a row is echoed, not who may read it.
 - **Team hierarchy.** Membership writes go through `security definer` RPCs with a pinned `search_path`; direct authenticated writes to `organization_members` are disabled and `project_members` writes are limited to owners/admins. The RPCs reject owner demotion/removal, self-changes, admin-on-admin changes and assigning the owner role, so the UI rules are also enforced server-side.
+- **Insight review.** `meeting_insights` is select-only for authenticated clients. Accepting, dismissing, converting and syncing all run through `0009` security-definer RPCs that verify active membership, reject viewers, keep converted links consistent and write the activity and notification in the same transaction.
 - **Input validation.** API routes validate email, role and UUID formats and cap request bodies.
 - **Abuse control.** Optional Upstash rate limiting on invitations.
 

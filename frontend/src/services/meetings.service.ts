@@ -16,6 +16,7 @@ import type {
   UserProfile,
 } from '@/types';
 import { asMeetingPlatform, asMeetingStatus } from './enum-guards';
+import { syncMeetingInsights } from './intelligence.service';
 import { dispatchWorkspaceNotification } from './notifications.service';
 import { listMeetingRecordings } from './recordings.service';
 import {
@@ -378,6 +379,8 @@ export async function saveLiveMeeting(
 
   const saved = await getMeeting(meetingRow.id, context.orgId);
 
+  await syncMeetingInsights(saved, context.orgId);
+
   await dispatchWorkspaceNotification(context.orgId, {
     type: 'meeting',
     title: 'Meeting saved',
@@ -446,6 +449,8 @@ export async function analyzeMeeting(
   if (error) throw new Error(error.message);
 
   const analyzed = await getMeeting(input.meetingId, context.orgId);
+
+  await syncMeetingInsights(analyzed, context.orgId);
 
   await dispatchWorkspaceNotification(context.orgId, {
     type: 'meeting',
@@ -710,6 +715,8 @@ export async function commitMeetingAnalysis(
     .eq('organization_id', organizationId);
 
   if (updateError) throw new Error(updateError.message);
+
+  await syncMeetingInsights({ ...meeting, analysis: nextAnalysis }, context.orgId);
 
   if (createdTasks.length > 0 || createdDecisions.length > 0) {
     await dispatchWorkspaceNotification(context.orgId, {

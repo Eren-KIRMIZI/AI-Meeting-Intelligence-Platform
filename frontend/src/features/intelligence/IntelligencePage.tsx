@@ -1,16 +1,15 @@
-import { Link } from 'react-router-dom';
+import { useMemo, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   ArrowUpRight,
   BrainCircuit,
   CheckCircle2,
   FileText,
-  GitBranch,
-  ListChecks,
-  ScanText,
+  Search,
   ShieldCheck,
   Sparkles,
-  TriangleAlert,
-  Workflow as WorkflowIcon,
+  X,
+  type LucideIcon,
 } from 'lucide-react';
 import { PageHeader } from '@/components/common/page-header';
 import { DataSourceBadge } from '@/components/common/data-source-badge';
@@ -19,51 +18,32 @@ import { MeetingStatusBadge } from '@/components/common/status-badges';
 import { PageSkeleton } from '@/components/common/page-skeleton';
 import { ErrorState } from '@/components/common/error-state';
 import { EmptyState } from '@/components/common/empty-state';
+import { UserAvatar } from '@/components/common/user-avatar';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { useMeetings } from '@/hooks/use-workspace';
-import { aiBrief, seedInsights } from '@/mocks/data';
+import { NativeSelect } from '@/components/ui/select-native';
+import { useInsights, useMeetings } from '@/hooks/use-workspace';
+import { isSupabaseConfigured } from '@/lib/env';
+import {
+  insightConversionLink,
+  insightKindLabels,
+  insightStatusMeta,
+} from '@/lib/insights';
+import { aiBrief } from '@/mocks/data';
 import { cn, formatRelativeTime } from '@/lib/utils';
-import type { Insight } from '@/types';
-
-const insightMeta: Record<
-  Insight['kind'],
-  { label: string; icon: typeof Sparkles; tone: string; badge: 'warning' | 'violet' | 'info' | 'success' }
-> = {
-  risk: {
-    label: 'Risk signal',
-    icon: TriangleAlert,
-    tone: 'text-amber-400',
-    badge: 'warning',
-  },
-  decision: {
-    label: 'Decision',
-    icon: GitBranch,
-    tone: 'text-violet-400',
-    badge: 'violet',
-  },
-  action: {
-    label: 'Action pattern',
-    icon: ListChecks,
-    tone: 'text-blue-400',
-    badge: 'info',
-  },
-  summary: {
-    label: 'Summary',
-    icon: FileText,
-    tone: 'text-emerald-400',
-    badge: 'success',
-  },
-};
+import type { Insight, InsightKind, InsightStatus } from '@/types';
+import { InsightDetailDialog } from './components/insight-detail-dialog';
+import { insightKindMeta } from './insight-meta';
 
 const pipeline = [
   {
     title: 'Capture',
     description:
       'Transcripts and agendas arrive from Meet, Teams or Zoom and are stored against the meeting record.',
-    icon: ScanText,
+    icon: Sparkles,
   },
   {
     title: 'Extract',
@@ -75,14 +55,127 @@ const pipeline = [
     title: 'Act',
     description:
       'Owners confirm the output, tasks land in the project, and the decision log keeps the record.',
-    icon: WorkflowIcon,
+    icon: CheckCircle2,
   },
 ];
 
+const kindFilters: Array<{ value: 'all' | InsightKind; label: string }> = [
+  { value: 'all', label: 'All kinds' },
+  { value: 'summary', label: insightKindLabels.summary },
+  { value: 'decision', label: insightKindLabels.decision },
+  { value: 'action', label: insightKindLabels.action },
+  { value: 'risk', label: insightKindLabels.risk },
+];
+
+const statusFilters: Array<{ value: 'all' | InsightStatus; label: string }> = [
+  { value: 'all', label: 'All statuses' },
+  { value: 'open', label: 'Open' },
+  { value: 'accepted', label: 'Accepted' },
+  { value: 'dismissed', label: 'Dismissed' },
+  { value: 'converted', label: 'Converted' },
+];
+
+function InsightCard({
+  insight,
+  onOpen,
+}: {
+  insight: Insight;
+  onOpen: () => void;
+}) {
+  const meta = insightKindMeta[insight.kind];
+  const Icon = meta.icon;
+  const status = insightStatusMeta[insight.status];
+  const conversion = insightConversionLink(insight);
+  const confidence = Math.round(insight.confidence * 100);
+
+  return (
+    <Card
+      className="flex cursor-pointer flex-col transition-colors hover:border-primary/40 hover:bg-secondary/20"
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          onOpen();
+        }
+      }}
+    >
+      <CardContent className="flex flex-1 flex-col p-4">
+        <div className="flex flex-wrap items-center gap-1.5">
+          <Badge variant={meta.badge}>
+            <Icon className="h-3 w-3" />
+            {meta.label}
+          </Badge>
+          <Badge variant={status.tone}>{status.label}</Badge>
+          <span className="ml-auto text-[10px] text-muted-foreground">
+            {formatRelativeTime(insight.createdAt)}
+          </span>
+        </div>
+
+        <p className="mt-3 text-sm font-semibold leading-snug text-foreground">
+          {insight.title}
+        </p>
+        <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+          {insight.summary}
+        </p>
+
+        {insight.items.length > 0 ? (
+          <ul className="mt-3 space-y-1.5">
+            {insight.items.slice(0, 3).map((item) => (
+              <li
+                key={item}
+                className="flex items-start gap-2 text-[11px] leading-snug text-muted-foreground"
+              >
+                <CheckCircle2
+                  className={cn('mt-0.5 h-3 w-3 shrink-0', meta.tone)}
+                />
+                {item}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+
+        <div className="mt-auto pt-4">
+          <div className="flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
+            <span className="flex min-w-0 items-center gap-1.5">
+              <UserAvatar user={insight.owner} size="xs" />
+              <span className="truncate">{insight.owner.fullName}</span>
+            </span>
+            <span className="tabular text-foreground">{confidence}%</span>
+          </div>
+          <Progress value={confidence} className="mt-1.5" />
+
+          <div className="mt-2 flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
+            <span className="truncate">{insight.meetingTitle}</span>
+            {conversion ? (
+              <Link
+                to={conversion.href}
+                className="inline-flex shrink-0 items-center gap-1 text-primary hover:underline"
+                onClick={(event) => event.stopPropagation()}
+              >
+                {conversion.label}
+                <ArrowUpRight className="h-3 w-3" />
+              </Link>
+            ) : null}
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export function IntelligencePage() {
   const meetings = useMeetings();
+  const insights = useInsights();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [kindFilter, setKindFilter] = useState<'all' | InsightKind>('all');
+  const [statusFilter, setStatusFilter] = useState<'all' | InsightStatus>('all');
+  const [query, setQuery] = useState('');
 
   const list = meetings.data ?? [];
+  const insightList = useMemo(() => insights.data ?? [], [insights.data]);
+
   const analyzed = list.filter(
     (meeting) =>
       meeting.status === 'completed' || meeting.status === 'processing'
@@ -101,26 +194,113 @@ export function IntelligencePage() {
       }))
     : aiBrief.items;
 
-  if (meetings.isLoading) return <PageSkeleton />;
+  const filtered = useMemo(() => {
+    const needle = query.trim().toLowerCase();
+    return insightList.filter((insight) => {
+      if (kindFilter !== 'all' && insight.kind !== kindFilter) return false;
+      if (statusFilter !== 'all' && insight.status !== statusFilter) return false;
+      if (!needle) return true;
+      return (
+        insight.title.toLowerCase().includes(needle) ||
+        insight.summary.toLowerCase().includes(needle) ||
+        insight.meetingTitle.toLowerCase().includes(needle) ||
+        insight.owner.fullName.toLowerCase().includes(needle) ||
+        (insight.projectName ?? '').toLowerCase().includes(needle)
+      );
+    });
+  }, [insightList, kindFilter, statusFilter, query]);
 
-  if (meetings.error) {
+  const openCount = insightList.filter(
+    (insight) => insight.status === 'open'
+  ).length;
+  const acceptedCount = insightList.filter(
+    (insight) => insight.status === 'accepted'
+  ).length;
+  const convertedCount = insightList.filter(
+    (insight) => insight.status === 'converted'
+  ).length;
+  const averageConfidence =
+    insightList.length === 0
+      ? 0
+      : Math.round(
+          (insightList.reduce(
+            (total, insight) => total + insight.confidence,
+            0
+          ) /
+            insightList.length) *
+            100
+        );
+
+  const kpis: Array<{
+    label: string;
+    value: string | number;
+    tone: string;
+    icon: LucideIcon;
+  }> = [
+    {
+      label: 'Open queue',
+      value: openCount,
+      tone: 'text-amber-400',
+      icon: Sparkles,
+    },
+    {
+      label: 'Accepted',
+      value: acceptedCount,
+      tone: 'text-emerald-400',
+      icon: CheckCircle2,
+    },
+    {
+      label: 'Converted',
+      value: convertedCount,
+      tone: 'text-blue-400',
+      icon: ArrowUpRight,
+    },
+    {
+      label: 'Avg confidence',
+      value: `${averageConfidence}%`,
+      tone: 'text-violet-400',
+      icon: BrainCircuit,
+    },
+  ];
+
+  const selectedId = searchParams.get('insight');
+  const selectedInsight =
+    insightList.find((insight) => insight.id === selectedId) ?? null;
+
+  const openInsight = (id: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set('insight', id);
+    setSearchParams(next, { replace: true });
+  };
+
+  const handleInsightOpenChange = (open: boolean) => {
+    if (open) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete('insight');
+    setSearchParams(next, { replace: true });
+  };
+
+  if (meetings.isLoading || insights.isLoading) return <PageSkeleton />;
+
+  if (meetings.error || insights.error) {
+    const error = meetings.error ?? insights.error;
     return (
       <ErrorState
         description={
-          meetings.error instanceof Error
-            ? meetings.error.message
+          error instanceof Error
+            ? error.message
             : 'Intelligence could not be loaded.'
         }
-        onRetry={() => void meetings.refetch()}
+        onRetry={() => {
+          void meetings.refetch();
+          void insights.refetch();
+        }}
       />
     );
   }
 
-  const averageConfidence = Math.round(
-    (seedInsights.reduce((total, insight) => total + insight.confidence, 0) /
-      seedInsights.length) *
-      100
-  );
+  const hasFilters =
+    kindFilter !== 'all' || statusFilter !== 'all' || query.trim().length > 0;
 
   return (
     <div className="space-y-5">
@@ -139,6 +319,34 @@ export function IntelligencePage() {
           ) : null
         }
       />
+
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        {kpis.map((kpi) => {
+          const Icon = kpi.icon;
+          return (
+            <Card key={kpi.label}>
+              <CardContent className="flex items-center justify-between gap-3 p-4">
+                <div className="min-w-0">
+                  <p className="font-display text-2xl font-semibold leading-none tabular">
+                    {kpi.value}
+                  </p>
+                  <p className="mt-1.5 truncate text-[10px] text-muted-foreground">
+                    {kpi.label}
+                  </p>
+                </div>
+                <span
+                  className={cn(
+                    'grid h-8 w-8 shrink-0 place-items-center rounded-lg border border-border/60 bg-secondary/30',
+                    kpi.tone
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                </span>
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
         <Card className="overflow-hidden">
@@ -234,14 +442,18 @@ export function IntelligencePage() {
 
             <div className="grid grid-cols-2 gap-2">
               {[
-                { label: 'Insights', value: seedInsights.length },
-                { label: 'Actions', value: aiBrief.items.length },
+                { label: 'Insights', value: insightList.length },
+                {
+                  label: 'Actions',
+                  value: insightList.filter(
+                    (insight) => insight.kind === 'action'
+                  ).length,
+                },
                 {
                   label: 'Decisions',
-                  value: list.reduce(
-                    (total, meeting) => total + meeting.decisions.length,
-                    0
-                  ),
+                  value: insightList.filter(
+                    (insight) => insight.kind === 'decision'
+                  ).length,
                 },
                 {
                   label: 'Transcripts',
@@ -276,71 +488,104 @@ export function IntelligencePage() {
 
       <section className="space-y-3">
         <SectionHeader
-          title="Insights across recent meetings"
-          description="Patterns that repeated often enough to be worth acting on."
+          title="Insight queue"
+          description="Review the signal, accept what matters and turn the rest into owned work."
           action={
             <Badge variant="outline" className="bg-secondary/30">
-              {seedInsights.length} signals
+              {filtered.length} of {insightList.length} signals
             </Badge>
           }
         />
 
-        <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          {seedInsights.map((insight) => {
-            const meta = insightMeta[insight.kind];
-            const Icon = meta.icon;
-            const confidence = Math.round(insight.confidence * 100);
+        <Card>
+          <CardContent className="flex flex-col gap-2 p-3 lg:flex-row lg:items-center">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search title, owner, meeting or project"
+                aria-label="Search insights"
+                className="h-8 pl-8 text-xs"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-2 lg:w-80">
+              <NativeSelect
+                value={kindFilter}
+                onChange={(event) =>
+                  setKindFilter(event.target.value as 'all' | InsightKind)
+                }
+                aria-label="Filter by kind"
+                className="h-8 text-xs"
+              >
+                {kindFilters.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </NativeSelect>
+              <NativeSelect
+                value={statusFilter}
+                onChange={(event) =>
+                  setStatusFilter(event.target.value as 'all' | InsightStatus)
+                }
+                aria-label="Filter by status"
+                className="h-8 text-xs"
+              >
+                {statusFilters.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </NativeSelect>
+            </div>
+            {hasFilters ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-8 shrink-0 text-[11px]"
+                onClick={() => {
+                  setKindFilter('all');
+                  setStatusFilter('all');
+                  setQuery('');
+                }}
+              >
+                <X className="h-3.5 w-3.5" />
+                Clear
+              </Button>
+            ) : null}
+          </CardContent>
+        </Card>
 
-            return (
-              <Card key={insight.id} className="flex flex-col">
-                <CardContent className="flex flex-1 flex-col p-4">
-                  <div className="flex items-center justify-between gap-2">
-                    <Badge variant={meta.badge}>
-                      <Icon className="h-3 w-3" />
-                      {meta.label}
-                    </Badge>
-                    <span className="text-[10px] text-muted-foreground">
-                      {formatRelativeTime(insight.createdAt)}
-                    </span>
-                  </div>
-
-                  <p className="mt-3 text-sm font-semibold leading-snug text-foreground">
-                    {insight.title}
-                  </p>
-                  <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
-                    {insight.summary}
-                  </p>
-
-                  <ul className="mt-3 space-y-1.5">
-                    {insight.items.map((item) => (
-                      <li
-                        key={item}
-                        className="flex items-start gap-2 text-[11px] leading-snug text-muted-foreground"
-                      >
-                        <CheckCircle2
-                          className={cn('mt-0.5 h-3 w-3 shrink-0', meta.tone)}
-                        />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-
-                  <div className="mt-auto pt-4">
-                    <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                      <span className="truncate">
-                        {insight.meetingTitle}
-                      </span>
-                      <span className="tabular text-foreground">
-                        {confidence}%
-                      </span>
-                    </div>
-                    <Progress value={confidence} className="mt-1.5" />
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
+        {filtered.length === 0 ? (
+          <Card>
+            <CardContent className="p-5">
+              <EmptyState
+                icon={Sparkles}
+                title={
+                  insightList.length === 0
+                    ? 'No insights yet'
+                    : 'No insights match these filters'
+                }
+                description={
+                  insightList.length === 0
+                    ? 'Analyze a meeting and its summary, decisions, actions and risks will land here for review.'
+                    : 'Clear the search or pick another kind or status to see the rest of the queue.'
+                }
+              />
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+            {filtered.map((insight) => (
+              <InsightCard
+                key={insight.id}
+                insight={insight}
+                onOpen={() => openInsight(insight.id)}
+              />
+            ))}
+          </div>
+        )}
       </section>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
@@ -428,13 +673,20 @@ export function IntelligencePage() {
                 </div>
               );
             })}
-            <div className="rounded-lg border border-border/60 bg-secondary/20 px-3 py-2.5 text-[10px] leading-relaxed text-muted-foreground">
-              This workspace is running in demo mode. The extraction layer uses
-              prepared sample output until a provider is connected.
-            </div>
+            {!isSupabaseConfigured ? (
+              <div className="rounded-lg border border-border/60 bg-secondary/20 px-3 py-2.5 text-[10px] leading-relaxed text-muted-foreground">
+                This workspace is running in demo mode. The extraction layer
+                uses prepared sample output until a provider is connected.
+              </div>
+            ) : null}
           </CardContent>
         </Card>
       </div>
+
+      <InsightDetailDialog
+        insight={selectedInsight}
+        onOpenChange={handleInsightOpenChange}
+      />
     </div>
   );
 }

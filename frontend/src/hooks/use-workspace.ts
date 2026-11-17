@@ -16,6 +16,12 @@ import {
   saveLiveMeeting,
 } from '@/services/meetings.service';
 import { listDecisions, updateDecisionStatus } from '@/services/decisions.service';
+import {
+  convertInsightToDecision,
+  convertInsightToTask,
+  listInsights,
+  setInsightStatus,
+} from '@/services/intelligence.service';
 import { saveMeetingRecording } from '@/services/recordings.service';
 import { listActivities } from '@/services/activity.service';
 import { listKnowledge } from '@/services/knowledge.service';
@@ -44,6 +50,8 @@ import {
 import type {
   AnalyzeMeetingInput,
   CommitMeetingInput,
+  ConvertInsightToDecisionInput,
+  ConvertInsightToTaskInput,
   CreateMeetingInput,
   CreateProjectInput,
   CreateTaskInput,
@@ -51,6 +59,7 @@ import type {
   InviteMemberInput,
   LiveMeetingInput,
   SaveMeetingRecordingInput,
+  SetInsightStatusInput,
   SetMemberProjectsInput,
   Task,
   UpdateDecisionInput,
@@ -103,6 +112,15 @@ export function useDecisions(options: QueryOptions = {}) {
   return useQuery({
     queryKey: ['decisions', orgId],
     queryFn: () => listDecisions(orgId),
+    enabled: options.enabled ?? true,
+  });
+}
+
+export function useInsights(options: QueryOptions = {}) {
+  const { orgId } = useAuth();
+  return useQuery({
+    queryKey: ['insights', orgId],
+    queryFn: () => listInsights(orgId),
     enabled: options.enabled ?? true,
   });
 }
@@ -489,6 +507,86 @@ export function useSetMemberProjects() {
     },
     onSuccess: () => {
       for (const key of ['team', 'projects', 'activities']) {
+        void queryClient.invalidateQueries({ queryKey: [key] });
+      }
+    },
+  });
+}
+
+export function useSetInsightStatus() {
+  const queryClient = useQueryClient();
+  const { orgId, user } = useAuth();
+
+  return useMutation({
+    mutationFn: ({
+      insightId,
+      input,
+    }: {
+      insightId: string;
+      input: SetInsightStatusInput;
+    }) => {
+      if (!user) throw new Error('A signed-in user is required.');
+      return setInsightStatus(insightId, input, { orgId, user });
+    },
+    onSuccess: () => {
+      for (const key of ['insights', 'activities', 'notifications']) {
+        void queryClient.invalidateQueries({ queryKey: [key] });
+      }
+    },
+  });
+}
+
+export function useConvertInsightToTask() {
+  const queryClient = useQueryClient();
+  const { orgId, user } = useAuth();
+
+  return useMutation({
+    mutationFn: ({
+      insightId,
+      input,
+    }: {
+      insightId: string;
+      input: ConvertInsightToTaskInput;
+    }) => {
+      if (!user) throw new Error('A signed-in user is required.');
+      return convertInsightToTask(insightId, input, { orgId, user });
+    },
+    onSuccess: () => {
+      for (const key of [
+        'insights',
+        'tasks',
+        'projects',
+        'activities',
+        'notifications',
+      ]) {
+        void queryClient.invalidateQueries({ queryKey: [key] });
+      }
+    },
+  });
+}
+
+export function useConvertInsightToDecision() {
+  const queryClient = useQueryClient();
+  const { orgId, user } = useAuth();
+
+  return useMutation({
+    mutationFn: ({
+      insightId,
+      input,
+    }: {
+      insightId: string;
+      input: ConvertInsightToDecisionInput;
+    }) => {
+      if (!user) throw new Error('A signed-in user is required.');
+      return convertInsightToDecision(insightId, input, { orgId, user });
+    },
+    onSuccess: () => {
+      for (const key of [
+        'insights',
+        'decisions',
+        'activities',
+        'notifications',
+      ]) {
         void queryClient.invalidateQueries({ queryKey: [key] });
       }
     },

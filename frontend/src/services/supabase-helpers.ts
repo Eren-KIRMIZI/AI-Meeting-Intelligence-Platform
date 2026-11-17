@@ -103,6 +103,28 @@ export interface DecisionEventRow {
   created_at: string;
 }
 
+export interface InsightRow {
+  id: string;
+  organization_id: string;
+  meeting_id: string | null;
+  project_id: string | null;
+  kind: string;
+  status: string;
+  title: string;
+  summary: string;
+  source_excerpt: string | null;
+  owner_id: string | null;
+  due_date: string | null;
+  confidence: number | string | null;
+  items: string[] | null;
+  task_id: string | null;
+  decision_id: string | null;
+  generated: boolean;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface ActivityRow {
   id: string;
   actor_id: string | null;

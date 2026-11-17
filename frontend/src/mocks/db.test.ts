@@ -4,7 +4,7 @@ import { demoUser } from './data';
 import { sampleTranscriptFor } from './transcripts';
 import { demoDialogue } from '@/lib/live/demo-dialogue';
 import { buildLiveInsights, formatTranscript } from '@/lib/live/intelligence';
-import type { LiveMeetingInput } from '@/types';
+import type { LiveMeetingInput, UserProfile } from '@/types';
 
 /**
  * The mock database keeps module-level state on purpose so the demo
@@ -767,5 +767,223 @@ describe('mockDb action notifications', () => {
       list.filter((item) => item.id === notification.id)
     ).toHaveLength(1);
     expect(list[0].id).toBe(notification.id);
+  });
+});
+
+describe('mockDb insights', () => {
+  const viewer: UserProfile = {
+    id: 'u-viewer',
+    fullName: 'Vera Viewer',
+    email: 'viewer@novalabs.io',
+    initials: 'VV',
+    avatarColor: '#64748B',
+    workspaceRole: 'viewer',
+  };
+
+  it('lists seeded insights with kinds and statuses', async () => {
+    const insights = await mockDb.listInsights();
+
+    expect(insights.length).toBeGreaterThanOrEqual(8);
+    expect(insights.some((insight) => insight.kind === 'risk')).toBe(true);
+    expect(insights.some((insight) => insight.status === 'converted')).toBe(
+      true
+    );
+    expect(
+      insights.every(
+        (insight) =>
+          Boolean(insight.owner) &&
+          typeof insight.confidence === 'number' &&
+          Boolean(insight.meetingTitle)
+      )
+    ).toBe(true);
+  });
+
+  it('accepts, dismisses and reopens a signal with an audit trail', async () => {
+    const open = (await mockDb.listInsights()).find(
+      (insight) => insight.status === 'open'
+    );
+    expect(open).toBeDefined();
+
+    const accepted = await mockDb.setInsightStatus(
+      open!.id,
+      { status: 'accepted', note: 'Confirmed in the review.' },
+      demoUser
+    );
+    expect(accepted.status).toBe('accepted');
+
+    const [notification] = await mockDb.listNotifications();
+    expect(notification).toMatchObject({
+      type: 'mention',
+      link: `/intelligence?insight=${open!.id}`,
+    });
+
+    const activities = await mockDb.listActivities();
+    expect(activities[0]).toMatchObject({
+      type: 'insight',
+      title: 'Insight accepted',
+    });
+
+    const dismissed = await mockDb.setInsightStatus(
+      open!.id,
+      { status: 'dismissed' },
+      demoUser
+    );
+    expect(dismissed.status).toBe('dismissed');
+
+    const reopened = await mockDb.setInsightStatus(
+      open!.id,
+      { status: 'open' },
+      demoUser
+    );
+    expect(reopened.status).toBe('open');
+  });
+
+  it('keeps viewers read-only', async () => {
+    const open = (await mockDb.listInsights()).find(
+      (insight) => insight.status === 'open'
+    );
+    expect(open).toBeDefined();
+
+    await expect(
+      mockDb.setInsightStatus(open!.id, { status: 'accepted' }, viewer)
+    ).rejects.toThrow('read-only');
+    await expect(
+      mockDb.convertInsightToTask(open!.id, { priority: 'medium' }, viewer)
+    ).rejects.toThrow('read-only');
+    await expect(
+      mockDb.convertInsightToDecision(open!.id, { impact: 'medium' }, viewer)
+    ).rejects.toThrow('read-only');
+  });
+
+  it('refuses to change an already converted insight', async () => {
+    const converted = (await mockDb.listInsights()).find(
+      (insight) => insight.status === 'converted'
+    );
+    expect(converted).toBeDefined();
+
+    await expect(
+      mockDb.setInsightStatus(
+        converted!.id,
+        { status: 'open' },
+        demoUser
+      )
+    ).rejects.toThrow('Converted insights');
+  });
+
+  it('converts an insight into an owned task', async () => {
+    const before = await mockDb.listTasks();
+    const source = (await mockDb.listInsights()).find(
+      (insight) => insight.id === 'ins-03'
+    );
+    expect(source).toBeDefined();
+
+    const updated = await mockDb.convertInsightToTask(
+      'ins-03',
+      {
+        projectId: 'p-insight',
+        priority: 'high',
+        dueDate: null,
+        assigneeId: 'u-ravi',
+      },
+      demoUser
+    );
+
+    expect(updated.status).toBe('converted');
+    expect(updated.taskId).toBeTruthy();
+
+    const tasks = await mockDb.listTasks();
+    expect(tasks).toHaveLength(before.length + 1);
+
+    const created = tasks.find((task) => task.id === updated.taskId);
+    expect(created).toMatchObject({
+      title: source!.title,
+      priority: 'high',
+      projectId: 'p-insight',
+      assignee: { id: 'u-ravi' },
+    });
+
+    const [notification] = await mockDb.listNotifications();
+    expect(notification).toMatchObject({
+      type: 'task',
+      link: `/tasks?task=${updated.taskId}`,
+    });
+  });
+
+  it('converts an insight into a proposed decision', async () => {
+    const before = await mockDb.listDecisions();
+    const source = (await mockDb.listInsights()).find(
+      (insight) => insight.id === 'ins-08'
+    );
+    expect(source).toBeDefined();
+
+    const updated = await mockDb.convertInsightToDecision(
+      'ins-08',
+      { impact: 'high' },
+      demoUser
+    );
+
+    expect(updated.status).toBe('converted');
+    expect(updated.decisionId).toBeTruthy();
+
+    const decisions = await mockDb.listDecisions();
+    expect(decisions).toHaveLength(before.length + 1);
+
+    const created = decisions.find(
+      (decision) => decision.id === updated.decisionId
+    );
+    expect(created).toMatchObject({
+      title: source!.title,
+      status: 'proposed',
+      impact: 'high',
+    });
+
+    const [notification] = await mockDb.listNotifications();
+    expect(notification).toMatchObject({
+      type: 'decision',
+      link: `/decisions?decision=${updated.decisionId}`,
+    });
+  });
+
+  it('generates insights from a meeting analysis without duplicating them', async () => {
+    const meeting = await mockDb.createMeeting({
+      title: 'Insight generation check',
+      startsAt: new Date().toISOString(),
+      durationMinutes: 30,
+      platform: 'zoom',
+      agenda: ['Review'],
+    });
+
+    await mockDb.analyzeMeeting({
+      meetingId: meeting.id,
+      transcript: sampleTranscriptFor(meeting.id),
+    });
+
+    const first = (await mockDb.listInsights()).filter(
+      (insight) => insight.meetingId === meeting.id
+    );
+    expect(first.length).toBeGreaterThan(0);
+    expect(first.every((insight) => insight.generated)).toBe(true);
+
+    const accepted = first.find((insight) => insight.status === 'open');
+    expect(accepted).toBeDefined();
+    await mockDb.setInsightStatus(
+      accepted!.id,
+      { status: 'accepted' },
+      demoUser
+    );
+
+    await mockDb.analyzeMeeting({
+      meetingId: meeting.id,
+      transcript: sampleTranscriptFor(meeting.id),
+    });
+
+    const second = (await mockDb.listInsights()).filter(
+      (insight) => insight.meetingId === meeting.id
+    );
+    expect(second).toHaveLength(first.length);
+    expect(second.some((insight) => insight.id === accepted!.id)).toBe(true);
+    expect(
+      second.find((insight) => insight.id === accepted!.id)?.status
+    ).toBe('accepted');
   });
 });
