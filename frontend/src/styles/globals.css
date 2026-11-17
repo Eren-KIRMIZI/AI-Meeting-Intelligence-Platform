@@ -1,0 +1,169 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    color-scheme: dark;
+
+    --background: 220 16% 4%;
+    --foreground: 210 20% 96%;
+
+    --card: 220 12% 7%;
+    --card-foreground: 210 20% 96%;
+
+    --popover: 220 12% 8%;
+    --popover-foreground: 210 20% 96%;
+
+    --primary: 217 91% 60%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 9% 12%;
+    --secondary-foreground: 210 16% 90%;
+
+    --muted: 220 9% 12%;
+    --muted-foreground: 218 8% 58%;
+
+    --accent: 220 9% 15%;
+    --accent-foreground: 210 20% 96%;
+
+    --destructive: 0 72% 55%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 9% 15%;
+    --input: 220 9% 18%;
+    --ring: 217 91% 60%;
+
+    --sidebar: 210 6% 7.5%;
+    --surface: 220 12% 7.5%;
+    --surface-raised: 220 10% 10%;
+
+    --radius: 0.625rem;
+  }
+
+  * {
+    @apply border-border;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    margin: 0;
+    min-width: 320px;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.28);
+    color: hsl(var(--foreground));
+  }
+
+  :focus-visible {
+    outline: none;
+  }
+
+  /* Compact, dark scrollbars that stay out of the way. */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(220 8% 24%) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  *::-webkit-scrollbar-thumb {
+    background-color: hsl(220 8% 22%);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+
+  *::-webkit-scrollbar-thumb:hover {
+    background-color: hsl(220 8% 30%);
+  }
+}
+
+@layer components {
+  .surface-panel {
+    @apply rounded-xl border border-border bg-card shadow-panel;
+  }
+
+  .hairline {
+    @apply border-border;
+  }
+
+  .page-container {
+    @apply mx-auto w-full max-w-[1560px] px-4 py-6 sm:px-6 lg:px-8 lg:py-8;
+  }
+
+  .text-meta {
+    @apply text-[11px] font-medium tracking-wide text-muted-foreground;
+  }
+
+  .icon-tile {
+    @apply grid shrink-0 place-items-center rounded-lg border border-border/70 bg-secondary/60;
+  }
+
+  .kbd {
+    @apply inline-flex h-5 min-w-5 items-center justify-center rounded border border-border bg-secondary px-1.5 font-sans text-[10px] font-medium text-muted-foreground;
+  }
+
+  .grid-pattern {
+    background-image: radial-gradient(hsl(220 8% 30% / 0.18) 1px, transparent 1px);
+    background-size: 22px 22px;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Recharts resets */
+.recharts-cartesian-axis-tick-value {
+  fill: hsl(var(--muted-foreground));
+  font-size: 11px;
+}
+
+.recharts-cartesian-grid line {
+  stroke: hsl(var(--border));
+}
+
+.recharts-tooltip-wrapper {
+  outline: none;
+}
+
+.recharts-default-tooltip {
+  border-radius: 8px !important;
+}
+
+input[type='date'],
+input[type='time'] {
+  color-scheme: dark;
+}
