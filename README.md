@@ -52,6 +52,8 @@ Nova turns meetings into execution: every conversation becomes a brief with deci
    ├─ migrations/0003_workflow_runs.sql        workflow execution history
    ├─ migrations/0004_decision_events.sql      decision status audit trail
    ├─ migrations/0005_live_meetings.sql        Nova Live sessions, transcript and chat
+   ├─ migrations/0006_meeting_recordings.sql   recording archive + private bucket
+   ├─ migrations/0007_notifications_realtime.sql notifications, RPC and Realtime
    └─ seed.sql                                 idempotent demo workspace
 ```
 
@@ -86,7 +88,7 @@ Open the printed URL (default `http://localhost:5173`). Use **Continue with demo
 
 ### Testing & CI
 
-Tests use Vitest with jsdom, Testing Library and jest-dom. The suite covers pure helpers, metric builders, range-derived analytics, enum guards, the transcript analyzer, the live-meeting intelligence and Knowledge note, the demo data store and its meeting pipeline (analyze → commit), Nova Live persistence, recording formatting and archive storage, the workflow run log, sidebar accessibility, the 404 page and a task-board interaction end to end.
+Tests use Vitest with jsdom, Testing Library and jest-dom. The suite covers pure helpers, metric builders, range-derived analytics, enum guards, the transcript analyzer, the live-meeting intelligence and Knowledge note, the demo data store and its meeting pipeline (analyze → commit), Nova Live persistence, recording formatting and archive storage, notification preference filtering and deep-link safety, the demo workspace event bus, action-driven notification delivery, the workflow run log, sidebar accessibility, the 404 page and a task-board interaction end to end.
 
 ```bash
 cd frontend
@@ -115,7 +117,8 @@ Open the SQL editor and run, in order:
 4. `supabase/migrations/0004_decision_events.sql`
 5. `supabase/migrations/0005_live_meetings.sql`
 6. `supabase/migrations/0006_meeting_recordings.sql`
-7. `supabase/seed.sql` — optional demo workspace. Requires at least one auth user; sign up once first.
+7. `supabase/migrations/0007_notifications_realtime.sql`
+8. `supabase/seed.sql` — optional demo workspace. Requires at least one auth user; sign up once first.
 
 Or with the Supabase CLI:
 
@@ -135,6 +138,8 @@ The migration creates:
 - `meeting_sessions`, `meeting_transcript_segments` and `meeting_chat_messages`
   (added in `0005`) for Nova Live rooms, plus the `nova_live` platform value
 - `meeting_recordings` (added in `0006`) for archived recordings
+- `notifications.link`, the `digest` type, `notify_workspace()` and Realtime
+  publication (added in `0007`) for action-driven, live notifications
 - `handle_new_user` trigger, `set_updated_at` triggers, indexes
 - RLS helpers: `is_org_member`, `is_org_admin`, `shares_org_with`
 - `bootstrap_workspace()` for first-run onboarding
@@ -150,6 +155,8 @@ The fourth migration adds `decision_events`, an append-only audit trail for the 
 The fifth migration extends the `meetings.platform` check with `nova_live` and adds the room-level tables: one `meeting_sessions` row per room, ordered `meeting_transcript_segments` and the room `meeting_chat_messages`. Members can read and insert rows for their own workspace. Demo mode keeps the same shapes in memory.
 
 The sixth migration adds `meeting_recordings` and the private `meeting-recordings` bucket (500 MB per file, video/audio mime types only). Members can read and add recordings for their workspace; the uploader or a workspace admin can delete them. Playback requests a one-hour signed URL, so recording files are never public.
+
+The seventh migration adds `notifications.link` and the `digest` notification type, then creates the `notify_workspace()` security-definer RPC. The RPC resolves the audience (`workspace`, `meeting` or `assignee`), excludes the actor and inserts one row per recipient, so client code never writes notifications for other people. It also publishes `notifications`, `tasks`, `decisions`, `decision_events`, `meetings`, `meeting_recordings` and `knowledge_documents` to `supabase_realtime` with replica identity `full`.
 
 ### 3. Configure environment
 
@@ -291,7 +298,19 @@ Nova Live runs the meeting inside the workspace: video/audio, screen sharing, ch
 
 ---
 
-## Deployment — Vercel
+## Notifications & realtime
+
+Notifications are produced by workspace actions, not by a scheduled job that guesses what happened. The bell in the header is a filtered, deep-linked inbox.
+
+- **Action-driven.** Completing or updating a task, changing a decision status, saving or analyzing a meeting, creating follow-ups and archiving a recording all raise a notification through `dispatchWorkspaceNotification`. Demo mode mirrors this in `mocks/db.ts`, so the flow is testable without credentials.
+- **Audiences.** Decision changes go to every active member except the actor; meeting events go to the meeting's participants; task events go to the assignee. The audience is resolved by the `notify_workspace()` RPC, so the client never writes rows for another user.
+- **Preferences actually filter.** Each notification type maps to one switch in **Settings → Notifications** (`meetingBriefs`, `actionItems`, `decisionReviews`, `weeklyDigest`, `mentions`). The mapping lives in `src/lib/notifications.ts`, so the bell badge, the list and the settings page cannot drift. Switching a type off hides it from the menu and from the unread count immediately; the menu says how many items are hidden and links to the settings tab.
+- **Deep links.** Every notification carries a `link` to the object that produced it, for example `/decisions?decision=d-03`, `/tasks?task=<id>` or `/meetings/<id>`. Links are validated in the UI and by a database check constraint: only single-slash internal paths are accepted, everything else falls back to the module landing page.
+- **Live delivery.** `use-workspace-realtime.ts` subscribes to Supabase Realtime for `notifications`, `tasks`, `decisions`, `meetings`, `meeting_recordings` and `knowledge_documents`. Notification inserts show a toast and refresh the bell; other tables invalidate the matching TanStack Query keys. Notification and task channels are filtered by `user_id` / `organization_id`, and RLS still applies to every payload.
+- **Demo delivery.** Without credentials the same hook subscribes to the `BroadcastChannel` bus in `src/lib/workspace-events.ts`. Open the app in two tabs: an action in one tab shows a toast, updates the bell and refreshes the list in the other. Only notifications carry their payload across tabs; other demo resources invalidate queries because each tab keeps its own in-memory store.
+- **Settings deep link.** Settings tabs are URL-controlled (`/settings?tab=notifications`), so the bell footer and the empty-state hint land on the right panel.
+
+---
 
 1. Import the repository.
 2. Set **Root Directory** to `frontend`.
@@ -309,6 +328,8 @@ Nova Live runs the meeting inside the workspace: video/audio, screen sharing, ch
 - **Least privilege.** Invites and admin operations run only in serverless functions with the service-role key; the browser uses the publishable key.
 - **No secret leakage.** `.env` is git-ignored; `.env.example` lists names with empty values; only `VITE_*` variables reach the client.
 - **Storage isolation.** The `meeting-assets` and `meeting-recordings` buckets are private and keyed by organization folder (`<org-uuid>/<file>`). Recordings are served through one-hour signed URLs and never through public links.
+- **Server-side fan-out.** `notify_workspace()` is `security definer` with a pinned `search_path`, verifies the caller is an active member, validates the type and link, resolves the audience itself and excludes the actor. The existing `notifications_insert` policy stays admin-only, so members cannot forge notifications for each other.
+- **Realtime respects RLS.** Published tables keep row-level security; notification subscriptions filter by the signed-in user and workspace, and replica identity `full` only changes how much of a row is echoed, not who may read it.
 - **Input validation.** API routes validate email, role and UUID formats and cap request bodies.
 - **Abuse control.** Optional Upstash rate limiting on invitations.
 
@@ -320,6 +341,7 @@ If you rotate keys, update Vercel environment variables and redeploy. Never comm
 
 - 68px fixed icon sidebar (`#111315`) with 40×40 blue active tiles and right-side tooltips
 - Fixed header with breadcrumb, centered search, notifications and avatar menu
+- Notification bell with preference-filtered list, unread badge, safe deep links and a footer that opens the matching settings tab
 - Mobile drawer navigation, accessible labels and keyboard support
 - Dark surfaces, Manrope/Inter typography, restrained blue accent — no gradients or glow effects
 - Modules: Overview, Projects, Tasks, Meetings, Nova Live, Decisions, Knowledge, Workflows, Intelligence, Analytics, Team, Settings

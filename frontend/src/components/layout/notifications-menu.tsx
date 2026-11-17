@@ -6,6 +6,8 @@ import {
   GitBranch,
   ListTodo,
   MessageSquare,
+  Settings2,
+  Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
@@ -20,10 +22,16 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn, formatRelativeTime } from '@/lib/utils';
 import {
+  filterNotificationsByPreferences,
+  notificationPath,
+  unreadNotificationCount,
+} from '@/lib/notifications';
+import {
   useMarkNotificationRead,
   useMarkNotificationsRead,
   useNotifications,
 } from '@/hooks/use-workspace';
+import { usePreferencesStore } from '@/stores/preferences-store';
 import { toast } from 'sonner';
 import type { AppNotification } from '@/types';
 
@@ -32,6 +40,7 @@ const notificationIcons = {
   task: ListTodo,
   decision: GitBranch,
   mention: MessageSquare,
+  digest: Sparkles,
 } as const;
 
 const notificationTones = {
@@ -39,14 +48,8 @@ const notificationTones = {
   task: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400',
   decision: 'border-violet-500/20 bg-violet-500/10 text-violet-400',
   mention: 'border-amber-500/20 bg-amber-500/10 text-amber-400',
+  digest: 'border-sky-500/20 bg-sky-500/10 text-sky-400',
 } as const;
-
-const notificationPaths: Record<AppNotification['type'], string> = {
-  meeting: '/meetings',
-  task: '/tasks',
-  decision: '/decisions',
-  mention: '/overview',
-};
 
 function NotificationRow({
   notification,
@@ -95,13 +98,18 @@ function NotificationRow({
 export function NotificationsMenu() {
   const navigate = useNavigate();
   const { data, isLoading } = useNotifications();
+  const preferences = usePreferencesStore((state) => state.notifications);
   const markAllRead = useMarkNotificationsRead();
   const markRead = useMarkNotificationRead();
-  const unread = (data ?? []).filter((notification) => !notification.read).length;
+
+  const all = data ?? [];
+  const visible = filterNotificationsByPreferences(all, preferences);
+  const hidden = all.length - visible.length;
+  const unread = unreadNotificationCount(all, preferences);
 
   const openNotification = (notification: AppNotification) => {
     if (!notification.read) markRead.mutate(notification.id);
-    navigate(notificationPaths[notification.type]);
+    navigate(notificationPath(notification));
   };
 
   return (
@@ -158,13 +166,28 @@ export function NotificationsMenu() {
                 </div>
               ))}
             </div>
-          ) : (data ?? []).length === 0 ? (
-            <div className="px-4 py-8 text-center text-xs text-muted-foreground">
-              You are all caught up.
+          ) : visible.length === 0 ? (
+            <div className="px-4 py-8 text-center">
+              <p className="text-xs text-muted-foreground">
+                {all.length === 0
+                  ? 'You are all caught up.'
+                  : 'No notifications match your preferences.'}
+              </p>
+              {hidden > 0 ? (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="mt-2 h-7 text-[10px]"
+                  onClick={() => navigate('/settings?tab=notifications')}
+                >
+                  <Settings2 className="h-3 w-3" />
+                  Review notification settings
+                </Button>
+              ) : null}
             </div>
           ) : (
             <div className="divide-y divide-border/70">
-              {(data ?? []).map((notification) => (
+              {visible.map((notification) => (
                 <NotificationRow
                   key={notification.id}
                   notification={notification}
@@ -175,14 +198,36 @@ export function NotificationsMenu() {
           )}
         </ScrollArea>
 
+        {hidden > 0 && visible.length > 0 ? (
+          <button
+            type="button"
+            onClick={() => navigate('/settings?tab=notifications')}
+            className="flex w-full items-center gap-1.5 border-t border-border/70 px-3 py-2 text-left text-[10px] text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Settings2 className="h-3 w-3" />
+            {hidden} notification{hidden === 1 ? '' : 's'} hidden by your
+            preferences
+          </button>
+        ) : null}
+
         <DropdownMenuSeparator className="m-0" />
-        <button
-          type="button"
-          onClick={() => navigate('/overview')}
-          className="flex w-full items-center justify-center gap-1 px-3 py-2.5 text-[11px] font-medium text-blue-400 transition-colors hover:bg-secondary/40"
-        >
-          View workspace activity
-        </button>
+        <div className="flex items-center justify-between px-3 py-2">
+          <button
+            type="button"
+            onClick={() => navigate('/settings?tab=notifications')}
+            className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+          >
+            <Settings2 className="h-3 w-3" />
+            Notification settings
+          </button>
+          <button
+            type="button"
+            onClick={() => navigate('/overview')}
+            className="flex items-center gap-1 text-[10px] font-medium text-blue-400 transition-colors hover:text-blue-300"
+          >
+            View workspace activity
+          </button>
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   );

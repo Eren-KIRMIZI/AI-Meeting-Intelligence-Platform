@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   CheckCircle2,
   ChevronRight,
@@ -35,12 +36,24 @@ import { decisionFilters, decisionImpactVariant } from './decision-meta';
 
 export function DecisionsPage() {
   const decisions = useDecisions();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [filter, setFilter] = useState<'all' | DecisionStatus>('all');
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const list = decisions.data ?? [];
-  const selected = list.find((decision) => decision.id === selectedId) ?? null;
+  const linkedId = searchParams.get('decision');
+  const selected =
+    list.find((decision) => decision.id === (selectedId ?? linkedId)) ?? null;
+
+  const closeSelected = () => {
+    setSelectedId(null);
+    if (searchParams.has('decision')) {
+      const next = new URLSearchParams(searchParams);
+      next.delete('decision');
+      setSearchParams(next, { replace: true });
+    }
+  };
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -259,7 +272,7 @@ export function DecisionsPage() {
         key={selected?.id ?? 'closed'}
         decision={selected}
         onOpenChange={(open) => {
-          if (!open) setSelectedId(null);
+          if (!open) closeSelected();
         }}
       />
     </div>

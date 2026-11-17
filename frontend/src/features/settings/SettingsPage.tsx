@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Bell,
   Building2,
@@ -88,7 +88,20 @@ const notificationOptions: Array<{
 
 export function SettingsPage() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, orgName, orgRole, isDemo, signOut } = useAuth();
+
+  const requestedTab = searchParams.get('tab');
+  const activeTab = tabs.some((tab) => tab.value === requestedTab)
+    ? (requestedTab as string)
+    : 'profile';
+
+  const handleTabChange = (value: string) => {
+    const next = new URLSearchParams(searchParams);
+    if (value === 'profile') next.delete('tab');
+    else next.set('tab', value);
+    setSearchParams(next, { replace: true });
+  };
 
   const preferences = usePreferencesStore();
   const [displayName, setDisplayName] = useState(
@@ -198,7 +211,12 @@ export function SettingsPage() {
         }
       />
 
-      <Tabs defaultValue="profile" orientation="vertical" className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]">
+      <Tabs
+        value={activeTab}
+        onValueChange={handleTabChange}
+        orientation="vertical"
+        className="grid gap-4 lg:grid-cols-[220px_minmax(0,1fr)]"
+      >
         <TabsList className="flex h-auto w-full flex-col items-stretch justify-start gap-1 p-1 lg:self-start">
           {tabs.map((tab) => {
             const Icon = tab.icon;
@@ -411,8 +429,9 @@ export function SettingsPage() {
                   </div>
                 ))}
                 <p className="px-5 py-3 text-[10px] text-muted-foreground">
-                  Preferences are stored in this browser. Email delivery is
-                  configured when a live workspace is connected.
+                  These switches filter the notification menu immediately and
+                  are stored in this browser. Email delivery is configured when
+                  a live workspace is connected.
                 </p>
               </CardContent>
             </Card>

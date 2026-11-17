@@ -1333,6 +1333,7 @@ export const seedNotifications: AppNotification[] = [
     createdAt: hoursAgo(0.15),
     read: false,
     type: 'meeting',
+    link: '/meetings/m-product-sync-past',
   },
   {
     id: 'n-02',
@@ -1341,6 +1342,7 @@ export const seedNotifications: AppNotification[] = [
     createdAt: hoursAgo(0.7),
     read: false,
     type: 'decision',
+    link: '/decisions?decision=d-03',
   },
   {
     id: 'n-03',
@@ -1349,6 +1351,7 @@ export const seedNotifications: AppNotification[] = [
     createdAt: hoursAgo(2.4),
     read: false,
     type: 'mention',
+    link: '/overview',
   },
   {
     id: 'n-04',
@@ -1356,7 +1359,8 @@ export const seedNotifications: AppNotification[] = [
     body: 'Delivery is up 12% and two decisions are still open.',
     createdAt: hoursAgo(26),
     read: true,
-    type: 'task',
+    type: 'digest',
+    link: '/analytics',
   },
 ];
 

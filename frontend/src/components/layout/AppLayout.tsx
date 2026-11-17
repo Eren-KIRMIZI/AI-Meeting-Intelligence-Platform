@@ -3,9 +3,11 @@ import { Outlet, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { CommandPalette } from './CommandPalette';
+import { useWorkspaceRealtime } from '@/hooks/use-workspace-realtime';
 
 export function AppLayout() {
   const location = useLocation();
+  useWorkspaceRealtime();
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });

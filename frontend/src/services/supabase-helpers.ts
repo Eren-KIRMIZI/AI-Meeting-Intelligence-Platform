@@ -169,6 +169,7 @@ export interface NotificationRow {
   title: string;
   body: string | null;
   type: string;
+  link: string | null;
   read_at: string | null;
   created_at: string;
 }

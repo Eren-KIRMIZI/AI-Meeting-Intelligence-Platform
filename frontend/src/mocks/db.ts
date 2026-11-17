@@ -31,7 +31,9 @@ import { liveMeetingNote } from '@/lib/live/intelligence';
 import { baseMimeType } from '@/lib/recordings';
 import { decisionActivityTitle } from '@/lib/decisions';
 import { decisionStatusMeta } from '@/lib/status';
+import { emitWorkspaceEvent } from '@/lib/workspace-events';
 import {
+  demoOrg,
   demoUser,
   seedActivities,
   seedDecisions,
@@ -86,6 +88,39 @@ function pushActivity(activity: Omit<Activity, 'id' | 'createdAt' | 'actor'> & {
     title: activity.title,
     description: activity.description,
   });
+  emitWorkspaceEvent({ resource: 'activities', orgId: demoOrg.id });
+}
+
+function pushNotification(input: {
+  title: string;
+  body: string;
+  type: AppNotification['type'];
+  link?: string;
+}) {
+  const notification: AppNotification = {
+    id: newId('n'),
+    title: input.title,
+    body: input.body,
+    createdAt: new Date().toISOString(),
+    read: false,
+    type: input.type,
+    link: input.link,
+  };
+
+  notifications = [notification, ...notifications];
+  emitWorkspaceEvent({
+    resource: 'notifications',
+    orgId: demoOrg.id,
+    notification,
+  });
+
+  return notification;
+}
+
+function emitDemoResource(
+  resource: 'tasks' | 'decisions' | 'meetings' | 'knowledge'
+) {
+  emitWorkspaceEvent({ resource, orgId: demoOrg.id });
 }
 
 function findTeamMember(name: string): UserProfile | null {
@@ -261,6 +296,13 @@ export const mockDb = {
       title: 'Task created',
       description: `Created “${task.title}” in ${task.projectName}.`,
     });
+    pushNotification({
+      type: 'task',
+      title: 'Action item created',
+      body: `“${task.title}” was added to ${task.projectName}.`,
+      link: `/tasks?task=${task.id}`,
+    });
+    emitDemoResource('tasks');
     return clone(task);
   },
 
@@ -278,6 +320,13 @@ export const mockDb = {
       title: done ? 'Task completed' : 'Task reopened',
       description: `${done ? 'Completed' : 'Reopened'} “${task.title}” in ${task.projectName}.`,
     });
+    pushNotification({
+      type: 'task',
+      title: done ? 'Task completed' : 'Task reopened',
+      body: `“${task.title}” in ${task.projectName}.`,
+      link: `/tasks?task=${task.id}`,
+    });
+    emitDemoResource('tasks');
 
     return clone(task);
   },
@@ -319,6 +368,13 @@ export const mockDb = {
       title: 'Task updated',
       description: `Updated “${task.title}” in ${task.projectName}.`,
     });
+    pushNotification({
+      type: 'task',
+      title: 'Task updated',
+      body: `“${task.title}” in ${task.projectName} changed.`,
+      link: `/tasks?task=${task.id}`,
+    });
+    emitDemoResource('tasks');
 
     return clone(task);
   },
@@ -357,6 +413,13 @@ export const mockDb = {
       title: 'Meeting scheduled',
       description: `Scheduled “${meeting.title}”.`,
     });
+    pushNotification({
+      type: 'meeting',
+      title: 'Meeting scheduled',
+      body: `“${meeting.title}” is on the calendar.`,
+      link: `/meetings/${meeting.id}`,
+    });
+    emitDemoResource('meetings');
     return clone(meeting);
   },
 
@@ -460,6 +523,14 @@ export const mockDb = {
         input.insights.actions.length
       } action item${input.insights.actions.length === 1 ? '' : 's'}.`,
     });
+    pushNotification({
+      type: 'meeting',
+      title: 'Meeting saved',
+      body: `“${meeting.title}” and its transcript are ready.`,
+      link: `/meetings/${meeting.id}`,
+    });
+    emitDemoResource('meetings');
+    emitDemoResource('knowledge');
 
     return clone(meeting);
   },
@@ -505,6 +576,13 @@ export const mockDb = {
       title: 'Recording archived',
       description: `Attached “${recording.filename}” to “${meeting.title}”.`,
     });
+    pushNotification({
+      type: 'meeting',
+      title: 'Recording archived',
+      body: `“${recording.filename}” is attached to “${meeting.title}”.`,
+      link: `/meetings/${meeting.id}`,
+    });
+    emitDemoResource('meetings');
 
     return clone(recording);
   },
@@ -574,6 +652,15 @@ export const mockDb = {
         analysis.decisions.length === 1 ? '' : 's'
       } from “${meeting.title}”.`,
     });
+    pushNotification({
+      type: 'meeting',
+      title: 'Meeting analysis ready',
+      body: `“${meeting.title}” now has ${analysis.actions.length} action item${
+        analysis.actions.length === 1 ? '' : 's'
+      } to review.`,
+      link: `/meetings/${meeting.id}`,
+    });
+    emitDemoResource('meetings');
 
     return clone(meeting);
   },
@@ -684,6 +771,20 @@ export const mockDb = {
           createdDecisions.length === 1 ? '' : 's'
         } from “${meeting.title}”.`,
       });
+      pushNotification({
+        type: 'meeting',
+        title: 'Follow-ups ready',
+        body: `“${meeting.title}” produced ${createdTasks.length} task${
+          createdTasks.length === 1 ? '' : 's'
+        } and ${createdDecisions.length} decision${
+          createdDecisions.length === 1 ? '' : 's'
+        }.`,
+        link: `/meetings/${meeting.id}`,
+      });
+      emitDemoResource('tasks');
+      emitDemoResource('decisions');
+      emitDemoResource('knowledge');
+      emitDemoResource('meetings');
     }
 
     meeting.actionItems = analysis.actions.map(
@@ -731,6 +832,15 @@ export const mockDb = {
         input.status
       ].label.toLowerCase()}${note ? `: ${note}` : '.'}`,
     });
+    pushNotification({
+      type: 'decision',
+      title: decisionActivityTitle(input.status),
+      body: `“${decision.title}” is now ${decisionStatusMeta[
+        input.status
+      ].label.toLowerCase()}.`,
+      link: `/decisions?decision=${decision.id}`,
+    });
+    emitDemoResource('decisions');
 
     return clone(decision);
   },
@@ -834,6 +944,18 @@ export const mockDb = {
   async listNotifications() {
     await wait(100);
     return clone(notifications);
+  },
+
+  /**
+   * Cross-tab demo delivery. Another tab broadcasts the notification payload;
+   * this tab adds it to its own in-memory store before the query invalidates.
+   */
+  receiveNotification(notification: AppNotification) {
+    if (notifications.some((item) => item.id === notification.id)) {
+      return clone(notification);
+    }
+    notifications = [clone(notification), ...notifications];
+    return clone(notification);
   },
 
   async markNotificationsRead() {

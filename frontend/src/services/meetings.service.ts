@@ -16,6 +16,7 @@ import type {
   UserProfile,
 } from '@/types';
 import { asMeetingPlatform, asMeetingStatus } from './enum-guards';
+import { dispatchWorkspaceNotification } from './notifications.service';
 import { listMeetingRecordings } from './recordings.service';
 import {
   assertOrg,
@@ -375,7 +376,18 @@ export async function saveLiveMeeting(
     }.`,
   });
 
-  return getMeeting(meetingRow.id, context.orgId);
+  const saved = await getMeeting(meetingRow.id, context.orgId);
+
+  await dispatchWorkspaceNotification(context.orgId, {
+    type: 'meeting',
+    title: 'Meeting saved',
+    body: `“${saved.title}” and its transcript are ready.`,
+    link: `/meetings/${saved.id}`,
+    audience: 'meeting',
+    meetingId: saved.id,
+  });
+
+  return saved;
 }
 
 export async function analyzeMeeting(
@@ -433,7 +445,22 @@ export async function analyzeMeeting(
 
   if (error) throw new Error(error.message);
 
-  return getMeeting(input.meetingId, context.orgId);
+  const analyzed = await getMeeting(input.meetingId, context.orgId);
+
+  await dispatchWorkspaceNotification(context.orgId, {
+    type: 'meeting',
+    title: 'Meeting analysis ready',
+    body: `“${analyzed.title}” now has ${
+      analyzed.analysis?.actions.length ?? 0
+    } action item${
+      (analyzed.analysis?.actions.length ?? 0) === 1 ? '' : 's'
+    } to review.`,
+    link: `/meetings/${analyzed.id}`,
+    audience: 'meeting',
+    meetingId: analyzed.id,
+  });
+
+  return analyzed;
 }
 
 export async function commitMeetingAnalysis(
@@ -683,6 +710,21 @@ export async function commitMeetingAnalysis(
     .eq('organization_id', organizationId);
 
   if (updateError) throw new Error(updateError.message);
+
+  if (createdTasks.length > 0 || createdDecisions.length > 0) {
+    await dispatchWorkspaceNotification(context.orgId, {
+      type: 'meeting',
+      title: 'Follow-ups ready',
+      body: `“${meeting.title}” produced ${createdTasks.length} task${
+        createdTasks.length === 1 ? '' : 's'
+      } and ${createdDecisions.length} decision${
+        createdDecisions.length === 1 ? '' : 's'
+      }.`,
+      link: `/meetings/${meeting.id}`,
+      audience: 'meeting',
+      meetingId: meeting.id,
+    });
+  }
 
   return { tasks: createdTasks, decisions: createdDecisions, knowledge };
 }

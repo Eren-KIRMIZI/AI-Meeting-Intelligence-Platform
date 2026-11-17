@@ -2,6 +2,7 @@ import { isSupabaseConfigured } from '@/lib/env';
 import { mockDb } from '@/mocks/db';
 import type { CreateTaskInput, Task, UpdateTaskInput, UserProfile } from '@/types';
 import { asTaskPriority, asTaskStatus } from './enum-guards';
+import { dispatchWorkspaceNotification } from './notifications.service';
 import {
   assertOrg,
   fetchProfileMap,
@@ -129,7 +130,7 @@ export async function setTaskDone(
     fetchProfileMap(),
   ]);
 
-  return {
+  const task: Task = {
     id: data.id,
     title: data.title,
     description: data.description ?? undefined,
@@ -146,6 +147,17 @@ export async function setTaskDone(
     completedAt: data.completed_at,
     sourceMeetingId: data.source_meeting_id,
   };
+
+  await dispatchWorkspaceNotification(orgId, {
+    type: 'task',
+    title: done ? 'Task completed' : 'Task reopened',
+    body: `“${task.title}” in ${task.projectName}.`,
+    link: `/tasks?task=${task.id}`,
+    audience: 'assignee',
+    userId: task.assignee?.id ?? null,
+  });
+
+  return task;
 }
 
 export async function updateTask(
@@ -194,7 +206,7 @@ export async function updateTask(
     fetchProfileMap(),
   ]);
 
-  return {
+  const task: Task = {
     id: data.id,
     title: data.title,
     description: data.description ?? undefined,
@@ -211,4 +223,15 @@ export async function updateTask(
     completedAt: data.completed_at,
     sourceMeetingId: data.source_meeting_id,
   };
+
+  await dispatchWorkspaceNotification(orgId, {
+    type: 'task',
+    title: 'Task updated',
+    body: `“${task.title}” in ${task.projectName} changed.`,
+    link: `/tasks?task=${task.id}`,
+    audience: 'assignee',
+    userId: task.assignee?.id ?? null,
+  });
+
+  return task;
 }

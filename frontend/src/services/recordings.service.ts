@@ -9,6 +9,7 @@ import type {
   SaveMeetingRecordingInput,
   UserProfile,
 } from '@/types';
+import { dispatchWorkspaceNotification } from './notifications.service';
 import {
   assertOrg,
   fetchProfileMap,
@@ -164,6 +165,15 @@ export async function saveMeetingRecording(
     type: 'meeting',
     title: 'Recording archived',
     description: `Attached “${row.filename}” to a meeting.`,
+  });
+
+  await dispatchWorkspaceNotification(context.orgId, {
+    type: 'meeting',
+    title: 'Recording archived',
+    body: `“${row.filename}” was attached to a meeting you attended.`,
+    link: `/meetings/${meetingId}`,
+    audience: 'meeting',
+    meetingId,
   });
 
   const profiles = await fetchProfileMap();

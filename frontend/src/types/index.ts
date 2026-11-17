@@ -395,13 +395,22 @@ export interface Integration {
   icon: IntegrationIcon;
 }
 
+export type NotificationType =
+  | 'meeting'
+  | 'task'
+  | 'decision'
+  | 'mention'
+  | 'digest';
+
 export interface AppNotification {
   id: string;
   title: string;
   body: string;
   createdAt: string;
   read: boolean;
-  type: 'meeting' | 'task' | 'decision' | 'mention';
+  type: NotificationType;
+  /** In-app deep link. Only same-origin paths are accepted by the UI. */
+  link?: string;
 }
 
 export interface DashboardStat {

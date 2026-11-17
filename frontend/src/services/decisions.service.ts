@@ -9,6 +9,7 @@ import type {
   UserProfile,
 } from '@/types';
 import { asDecisionStatus, asImpact } from './enum-guards';
+import { dispatchWorkspaceNotification } from './notifications.service';
 import {
   assertOrg,
   fetchMeetingTitleMap,
@@ -192,6 +193,16 @@ export async function updateDecisionStatus(
 
   if (eventResult.error) throw new Error(eventResult.error.message);
   if (activityResult.error) throw new Error(activityResult.error.message);
+
+  await dispatchWorkspaceNotification(organizationId, {
+    type: 'decision',
+    title: decisionActivityTitle(input.status),
+    body: `“${data.title}” is now ${decisionStatusMeta[
+      input.status
+    ].label.toLowerCase()}.`,
+    link: `/decisions?decision=${decisionId}`,
+    audience: 'workspace',
+  });
 
   const [profiles, meetingTitles, projectNames, eventRows] = await Promise.all([
     fetchProfileMap(),

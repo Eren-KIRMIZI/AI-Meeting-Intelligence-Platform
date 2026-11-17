@@ -576,3 +576,86 @@ describe('mockDb workflow runs', () => {
     await expect(mockDb.listWorkflowRuns('w-missing')).resolves.toEqual([]);
   });
 });
+
+describe('mockDb action notifications', () => {
+  it('creates a deep-linked task notification when an action item is added', async () => {
+    const task = await mockDb.createTask({
+      title: 'Notify the launch crew',
+      projectId: 'p-pulse',
+      priority: 'high',
+      dueDate: '',
+      status: 'todo',
+    });
+
+    const [notification] = await mockDb.listNotifications();
+
+    expect(notification).toMatchObject({
+      type: 'task',
+      title: 'Action item created',
+      read: false,
+      link: `/tasks?task=${task.id}`,
+    });
+    expect(notification.body).toContain(task.title);
+  });
+
+  it('creates a decision notification that deep-links to the decision log', async () => {
+    const before = await mockDb.listDecisions();
+    const target = before.find((decision) => decision.status === 'proposed');
+    expect(target).toBeDefined();
+
+    await mockDb.updateDecisionStatus(
+      target!.id,
+      { status: 'accepted', note: 'Confirmed by the notification test.' },
+      demoUser
+    );
+
+    const [notification] = await mockDb.listNotifications();
+
+    expect(notification).toMatchObject({
+      type: 'decision',
+      read: false,
+      link: `/decisions?decision=${target!.id}`,
+    });
+    expect(notification.body).toContain(target!.title);
+  });
+
+  it('creates a meeting notification when an analysis finishes', async () => {
+    const meetingId = 'm-research-readout';
+    const meeting = await mockDb.getMeeting(meetingId);
+
+    await mockDb.analyzeMeeting({
+      meetingId,
+      transcript: sampleTranscriptFor(meetingId),
+    });
+
+    const [notification] = await mockDb.listNotifications();
+
+    expect(notification).toMatchObject({
+      type: 'meeting',
+      title: 'Meeting analysis ready',
+      read: false,
+      link: `/meetings/${meeting.id}`,
+    });
+  });
+
+  it('accepts a notification broadcast by another demo tab once', async () => {
+    const notification = {
+      id: 'n-cross-tab',
+      title: 'Task completed',
+      body: '“Cross-tab task” was completed.',
+      createdAt: new Date().toISOString(),
+      read: false,
+      type: 'task' as const,
+      link: '/tasks?task=t-cross-tab',
+    };
+
+    mockDb.receiveNotification(notification);
+    mockDb.receiveNotification(notification);
+
+    const list = await mockDb.listNotifications();
+    expect(
+      list.filter((item) => item.id === notification.id)
+    ).toHaveLength(1);
+    expect(list[0].id).toBe(notification.id);
+  });
+});
