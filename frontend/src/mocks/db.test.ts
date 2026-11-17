@@ -452,6 +452,105 @@ describe('mockDb knowledge content', () => {
   });
 });
 
+describe('mockDb meeting recordings', () => {
+  const createMeeting = () =>
+    mockDb.createMeeting({
+      title: 'Recording archive test',
+      startsAt: '2026-06-01T09:00:00.000Z',
+      durationMinutes: 30,
+      platform: 'nova_live',
+      agenda: ['Confirm the archive flow'],
+    });
+
+  it('attaches a browser-local recording to the meeting', async () => {
+    const meeting = await createMeeting();
+    const blob = new Blob(['nova-recording'], { type: 'video/webm' });
+
+    const saved = await mockDb.saveMeetingRecording(meeting.id, {
+      blob,
+      filename: 'nova-live-test.webm',
+      mimeType: 'video/webm',
+      durationSeconds: 75.4,
+      localUrl: 'blob:nova-demo',
+    });
+
+    expect(saved).toMatchObject({
+      meetingId: meeting.id,
+      filename: 'nova-live-test.webm',
+      mimeType: 'video/webm',
+      sizeBytes: blob.size,
+      durationSeconds: 75,
+      storage: 'local',
+      url: expect.stringMatching(/^blob:/),
+      uploadedBy: demoUser,
+    });
+
+    const detail = await mockDb.getMeeting(meeting.id);
+    expect(detail.recordings).toHaveLength(1);
+    expect(detail.recordings?.[0].id).toBe(saved.id);
+  });
+
+  it('lists recordings newest first and keeps them per meeting', async () => {
+    const meeting = await createMeeting();
+    const other = await createMeeting();
+    const blob = new Blob(['clip'], { type: 'audio/webm' });
+
+    const first = await mockDb.saveMeetingRecording(meeting.id, {
+      blob,
+      filename: 'first.webm',
+      mimeType: 'audio/webm',
+      durationSeconds: 10,
+      localUrl: 'blob:first',
+    });
+    const second = await mockDb.saveMeetingRecording(meeting.id, {
+      blob,
+      filename: 'second.webm',
+      mimeType: 'audio/webm',
+      durationSeconds: 20,
+      localUrl: 'blob:second',
+    });
+
+    const list = await mockDb.listMeetingRecordings(meeting.id);
+    expect(list.map((recording) => recording.id)).toEqual([second.id, first.id]);
+
+    await expect(mockDb.listMeetingRecordings(other.id)).resolves.toEqual([]);
+  });
+
+  it('records an activity when a recording is archived', async () => {
+    const meeting = await createMeeting();
+    const before = await mockDb.listActivities();
+
+    await mockDb.saveMeetingRecording(meeting.id, {
+      blob: new Blob(['clip'], { type: 'video/webm' }),
+      filename: 'activity.webm',
+      mimeType: 'video/webm',
+      durationSeconds: 5,
+      localUrl: 'blob:activity',
+    });
+
+    const after = await mockDb.listActivities();
+    expect(after).toHaveLength(before.length + 1);
+    expect(after[0].title).toBe('Recording archived');
+    expect(after[0].description).toContain('activity.webm');
+  });
+
+  it('rejects recordings for unknown meetings', async () => {
+    const input = {
+      blob: new Blob(['clip'], { type: 'video/webm' }),
+      filename: 'missing.webm',
+      mimeType: 'video/webm',
+      durationSeconds: 5,
+    };
+
+    await expect(
+      mockDb.saveMeetingRecording('m-missing', input)
+    ).rejects.toThrow('Meeting not found');
+    await expect(mockDb.listMeetingRecordings('m-missing')).rejects.toThrow(
+      'Meeting not found'
+    );
+  });
+});
+
 describe('mockDb workflow runs', () => {
   it('returns runs for a workflow newest first', async () => {
     const runs = await mockDb.listWorkflowRuns('w-01');

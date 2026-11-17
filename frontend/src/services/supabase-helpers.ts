@@ -68,6 +68,19 @@ export interface MeetingParticipantRow {
   user_id: string | null;
 }
 
+export interface RecordingRow {
+  id: string;
+  organization_id: string;
+  meeting_id: string;
+  storage_path: string;
+  filename: string;
+  mime_type: string;
+  size_bytes: number;
+  duration_seconds: number;
+  uploaded_by: string | null;
+  created_at: string;
+}
+
 export interface DecisionRow {
   id: string;
   title: string;

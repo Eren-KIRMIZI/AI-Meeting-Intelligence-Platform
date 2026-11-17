@@ -86,7 +86,7 @@ Open the printed URL (default `http://localhost:5173`). Use **Continue with demo
 
 ### Testing & CI
 
-Tests use Vitest with jsdom, Testing Library and jest-dom. The suite covers pure helpers, metric builders, range-derived analytics, enum guards, the transcript analyzer, the live-meeting intelligence and Knowledge note, the demo data store and its meeting pipeline (analyze → commit), Nova Live persistence, the workflow run log, sidebar accessibility, the 404 page and a task-board interaction end to end.
+Tests use Vitest with jsdom, Testing Library and jest-dom. The suite covers pure helpers, metric builders, range-derived analytics, enum guards, the transcript analyzer, the live-meeting intelligence and Knowledge note, the demo data store and its meeting pipeline (analyze → commit), Nova Live persistence, recording formatting and archive storage, the workflow run log, sidebar accessibility, the 404 page and a task-board interaction end to end.
 
 ```bash
 cd frontend
@@ -114,7 +114,8 @@ Open the SQL editor and run, in order:
 3. `supabase/migrations/0003_workflow_runs.sql`
 4. `supabase/migrations/0004_decision_events.sql`
 5. `supabase/migrations/0005_live_meetings.sql`
-6. `supabase/seed.sql` — optional demo workspace. Requires at least one auth user; sign up once first.
+6. `supabase/migrations/0006_meeting_recordings.sql`
+7. `supabase/seed.sql` — optional demo workspace. Requires at least one auth user; sign up once first.
 
 Or with the Supabase CLI:
 
@@ -133,10 +134,12 @@ The migration creates:
 - `decision_events` (added in `0004`) for the append-only decision status log
 - `meeting_sessions`, `meeting_transcript_segments` and `meeting_chat_messages`
   (added in `0005`) for Nova Live rooms, plus the `nova_live` platform value
+- `meeting_recordings` (added in `0006`) for archived recordings
 - `handle_new_user` trigger, `set_updated_at` triggers, indexes
 - RLS helpers: `is_org_member`, `is_org_admin`, `shares_org_with`
 - `bootstrap_workspace()` for first-run onboarding
-- A private `meeting-assets` storage bucket with org-scoped policies
+- Private `meeting-assets` and `meeting-recordings` storage buckets with
+  org-scoped policies
 
 The second migration adds `transcript`, `analysis`, `analysis_error`, `analysis_confidence`, `analyzed_at` and `analysis_model` to `meetings`. Existing RLS already scopes those columns to active workspace members.
 
@@ -145,6 +148,8 @@ The third migration adds `workflow_runs`, scoped to workspace members for reads.
 The fourth migration adds `decision_events`, an append-only audit trail for the decision log. Members can read and insert events for their own workspace; history is never updated or deleted.
 
 The fifth migration extends the `meetings.platform` check with `nova_live` and adds the room-level tables: one `meeting_sessions` row per room, ordered `meeting_transcript_segments` and the room `meeting_chat_messages`. Members can read and insert rows for their own workspace. Demo mode keeps the same shapes in memory.
+
+The sixth migration adds `meeting_recordings` and the private `meeting-recordings` bucket (500 MB per file, video/audio mime types only). Members can read and add recordings for their workspace; the uploader or a workspace admin can delete them. Playback requests a one-hour signed URL, so recording files are never public.
 
 ### 3. Configure environment
 
@@ -279,7 +284,7 @@ Nova Live runs the meeting inside the workspace: video/audio, screen sharing, ch
 - **Demo mode works with no credentials.** Rooms connect tabs in the same browser and the scripted `demo-dialogue.ts` feeds captions and the AI pipeline without a microphone. Every demo segment is labelled **Demo** in the transcript.
 - **Live mode uses LiveKit Cloud.** Set the four `*_LIVEKIT*` variables; the client requests a token from `/api/live/token`, and no media server runs on Vercel. The mesh is not suitable for real cross-device calls because it needs TURN in restrictive networks.
 - **Captions.** `use-live-captions.ts` wraps the Web Speech API (Chrome/Edge), records speaker, text, timestamp and confidence, and stops cleanly on permission errors. The demo dialogue remains available everywhere.
-- **Recording.** `use-local-recording.ts` records the local camera/mic with `MediaRecorder` and offers a `.webm` download. It is explicitly browser-local: nothing is uploaded.
+- **Recording.** `use-local-recording.ts` records the local camera/mic with `MediaRecorder`. The `.webm` stays in the browser until the user presses **Save to meeting** on the ended screen, which uploads it to private workspace storage and attaches it to the saved meeting. Demo mode keeps the file browser-local and labels it **This browser only**; live mode plays it back through signed URLs.
 - **Consent first.** The pre-join screen explains transcription and optional recording and requires a KVKK/GDPR acknowledgement before anyone joins.
 - **Persistence.** Ending a room saves a completed `nova_live` meeting with its analysis, transcript, chat and participants, then writes a Knowledge note. Follow-ups are created only after review through the existing `commitMeetingAnalysis` step.
 - **Routes.** `/live` is the lobby inside the app shell; `/live/:roomId` runs full-screen. Start a room in one tab and open the invite link in another to test the mesh as two participants.
@@ -303,7 +308,7 @@ Nova Live runs the meeting inside the workspace: video/audio, screen sharing, ch
 - **RLS everywhere.** Every tenant table is scoped through `organization_members`; helpers are `security definer` with a pinned `search_path`.
 - **Least privilege.** Invites and admin operations run only in serverless functions with the service-role key; the browser uses the publishable key.
 - **No secret leakage.** `.env` is git-ignored; `.env.example` lists names with empty values; only `VITE_*` variables reach the client.
-- **Storage isolation.** The `meeting-assets` bucket is private and keyed by organization folder (`<org-uuid>/<file>`).
+- **Storage isolation.** The `meeting-assets` and `meeting-recordings` buckets are private and keyed by organization folder (`<org-uuid>/<file>`). Recordings are served through one-hour signed URLs and never through public links.
 - **Input validation.** API routes validate email, role and UUID formats and cap request bodies.
 - **Abuse control.** Optional Upstash rate limiting on invitations.
 
@@ -318,7 +323,8 @@ If you rotate keys, update Vercel environment variables and redeploy. Never comm
 - Mobile drawer navigation, accessible labels and keyboard support
 - Dark surfaces, Manrope/Inter typography, restrained blue accent — no gradients or glow effects
 - Modules: Overview, Projects, Tasks, Meetings, Nova Live, Decisions, Knowledge, Workflows, Intelligence, Analytics, Team, Settings
-- Nova Live opens a pre-join check (devices, display name, consent), a full-screen room with captions, chat, copilot and people panels, then an ended-meeting summary with the report
+- Nova Live opens a pre-join check (devices, display name, consent), a full-screen room with captions, chat, copilot and people panels, then an ended-meeting summary with the report and the optional recording archive
+- Meeting detail shows archived recordings with an inline player, size, duration and a download action
 - Workflows expose an inline run log with status, trigger, step outcomes and duration
 - Analytics recomputes KPIs, decision mix, workload and project health for 7, 14 or 30 day windows
 - Decisions open a detail panel with accept, reject, supersede and reopen actions, a reason note and an append-only status history

@@ -1,14 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 
-interface LocalRecording {
+export interface LocalRecordingClip {
   url: string;
   filename: string;
+  blob: Blob;
+  mimeType: string;
+  sizeBytes: number;
+  durationSeconds: number;
 }
 
 /**
  * Records the local camera/microphone track with MediaRecorder. It is a
- * browser-local recording: nothing is uploaded, which keeps demo mode honest
- * about where the file lives.
+ * browser-local recording: nothing is uploaded until the user explicitly saves
+ * it to the meeting archive, which keeps demo mode honest about where the file
+ * lives.
  */
 export function useLocalRecording(stream: MediaStream | null) {
   const supported =
@@ -17,11 +22,12 @@ export function useLocalRecording(stream: MediaStream | null) {
   const [recording, setRecording] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [clip, setClip] = useState<LocalRecording | null>(null);
+  const [clip, setClip] = useState<LocalRecordingClip | null>(null);
 
   const recorderRef = useRef<MediaRecorder | null>(null);
   const chunksRef = useRef<Blob[]>([]);
-  const clipRef = useRef<LocalRecording | null>(null);
+  const clipRef = useRef<LocalRecordingClip | null>(null);
+  const startedAtRef = useRef<number>(0);
 
   useEffect(() => {
     clipRef.current = clip;
@@ -59,6 +65,7 @@ export function useLocalRecording(stream: MediaStream | null) {
     try {
       const recorder = new MediaRecorder(stream);
       chunksRef.current = [];
+      startedAtRef.current = Date.now();
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) chunksRef.current.push(event.data);
       };
@@ -71,6 +78,13 @@ export function useLocalRecording(stream: MediaStream | null) {
         setClip({
           url: URL.createObjectURL(blob),
           filename: `nova-live-${stamp}.webm`,
+          blob,
+          mimeType: type,
+          sizeBytes: blob.size,
+          durationSeconds: Math.max(
+            1,
+            Math.round((Date.now() - startedAtRef.current) / 1000)
+          ),
         });
         setRecording(false);
       };

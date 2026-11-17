@@ -105,6 +105,36 @@ export interface Meeting {
   transcriptReady: boolean;
   analysis?: MeetingAnalysis;
   analysisError?: string;
+  recordings?: MeetingRecording[];
+}
+
+/**
+ * Where a recording lives. `local` means the file never left the browser (demo
+ * mode); `workspace` means it was uploaded to private workspace storage.
+ */
+export type RecordingStorage = 'local' | 'workspace';
+
+export interface MeetingRecording {
+  id: string;
+  meetingId: string;
+  filename: string;
+  mimeType: string;
+  sizeBytes: number;
+  durationSeconds: number;
+  storage: RecordingStorage;
+  /** Playable URL: an object URL in demo mode, a signed URL in live mode. */
+  url?: string;
+  createdAt: string;
+  uploadedBy: UserProfile;
+}
+
+export interface SaveMeetingRecordingInput {
+  blob: Blob;
+  filename: string;
+  mimeType: string;
+  durationSeconds: number;
+  /** Browser-local URL, used only when the demo store cannot mint its own. */
+  localUrl?: string;
 }
 
 export interface TranscriptLine {

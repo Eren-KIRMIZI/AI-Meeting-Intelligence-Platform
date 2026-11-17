@@ -38,6 +38,7 @@ import {
 } from '@/hooks/use-workspace';
 import { cn, formatDate, formatRelativeTime, formatTime } from '@/lib/utils';
 import { AnalyzeMeetingDialog } from './components/analyze-meeting-dialog';
+import { MeetingRecordingCard } from './components/meeting-recording-card';
 import type { Meeting, UserProfile } from '@/types';
 
 const platformLabels: Record<Meeting['platform'], string> = {
@@ -320,6 +321,10 @@ export function MeetingDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      {meeting.recordings && meeting.recordings.length > 0 ? (
+        <MeetingRecordingCard recordings={meeting.recordings} />
+      ) : null}
 
       {analysis ? (
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">

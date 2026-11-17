@@ -15,7 +15,9 @@ import type {
   LiveMeetingInput,
   Meeting,
   MeetingAnalysis,
+  MeetingRecording,
   Project,
+  SaveMeetingRecordingInput,
   Task,
   TeamMember,
   UpdateDecisionInput,
@@ -26,6 +28,7 @@ import type {
 } from '@/types';
 import { analysisSteps, analyzeTranscript } from '@/lib/meeting-intelligence';
 import { liveMeetingNote } from '@/lib/live/intelligence';
+import { baseMimeType } from '@/lib/recordings';
 import { decisionActivityTitle } from '@/lib/decisions';
 import { decisionStatusMeta } from '@/lib/status';
 import {
@@ -459,6 +462,58 @@ export const mockDb = {
     });
 
     return clone(meeting);
+  },
+
+  /**
+   * Demo-mode recording archive. The blob never leaves the browser: it becomes
+   * an object URL that stays valid for this session, and the meeting carries the
+   * metadata so the detail page can play it back.
+   */
+  async saveMeetingRecording(
+    meetingId: string,
+    input: SaveMeetingRecordingInput
+  ): Promise<MeetingRecording> {
+    await wait(240);
+    const meeting = meetings.find((item) => item.id === meetingId);
+    if (!meeting) throw new Error('Meeting not found');
+
+    // The archive owns its own object URL. The live-room clip URL is revoked
+    // when the room unmounts, so reusing it would break playback on the
+    // meeting detail page.
+    const url =
+      typeof URL !== 'undefined' && typeof URL.createObjectURL === 'function'
+        ? URL.createObjectURL(input.blob)
+        : input.localUrl;
+
+    const recording: MeetingRecording = {
+      id: newId('rec'),
+      meetingId,
+      filename: input.filename,
+      mimeType: baseMimeType(input.mimeType),
+      sizeBytes: input.blob.size,
+      durationSeconds: Math.max(0, Math.round(input.durationSeconds)),
+      storage: 'local',
+      url,
+      createdAt: new Date().toISOString(),
+      uploadedBy: demoUser,
+    };
+
+    meeting.recordings = [recording, ...(meeting.recordings ?? [])];
+
+    pushActivity({
+      type: 'meeting',
+      title: 'Recording archived',
+      description: `Attached “${recording.filename}” to “${meeting.title}”.`,
+    });
+
+    return clone(recording);
+  },
+
+  async listMeetingRecordings(meetingId: string): Promise<MeetingRecording[]> {
+    await wait(120);
+    const meeting = meetings.find((item) => item.id === meetingId);
+    if (!meeting) throw new Error('Meeting not found');
+    return clone(meeting.recordings ?? []);
   },
 
   async analyzeMeeting(input: AnalyzeMeetingInput) {

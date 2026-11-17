@@ -16,6 +16,7 @@ import type {
   UserProfile,
 } from '@/types';
 import { asMeetingPlatform, asMeetingStatus } from './enum-guards';
+import { listMeetingRecordings } from './recordings.service';
 import {
   assertOrg,
   fetchProfileMap,
@@ -134,6 +135,15 @@ export async function getMeeting(
   const meetings = await listMeetings(orgId);
   const meeting = meetings.find((item) => item.id === meetingId);
   if (!meeting) throw new Error('Meeting not found');
+
+  // Recordings are only needed on the detail page, so they are fetched here
+  // instead of on every list request.
+  meeting.recordings = await listMeetingRecordings(
+    meetingId,
+    orgId,
+    meeting.participants[0]
+  );
+
   return meeting;
 }
 

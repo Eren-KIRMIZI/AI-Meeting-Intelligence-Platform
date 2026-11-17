@@ -7,6 +7,7 @@ import {
   CheckCircle2,
   Copy,
   Download,
+  Film,
   Info,
   Loader2,
   Lock,
@@ -16,6 +17,7 @@ import {
   PhoneOff,
   ShieldCheck,
   Sparkles,
+  Upload,
   Video,
   VideoOff,
   Wifi,
@@ -38,14 +40,16 @@ import { Input } from '@/components/ui/input';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useLiveRoom } from '@/hooks/use-live-room';
 import { useLocalRecording } from '@/hooks/use-local-recording';
-import { useCommitMeetingAnalysis, useSaveLiveMeeting } from '@/hooks/use-workspace';
+import { useCommitMeetingAnalysis, useSaveLiveMeeting, useSaveMeetingRecording } from '@/hooks/use-workspace';
 import { formatDuration, roomLink } from '@/lib/live/room';
+import { formatBytes, formatRecordingLength } from '@/lib/recordings';
 import { cn } from '@/lib/utils';
 import type {
   CommitMeetingResult,
   LiveMeetingInput,
   LiveRoomMode,
   Meeting,
+  MeetingRecording,
 } from '@/types';
 import { LiveControls } from './components/live-controls';
 import { LiveReportDialog } from './components/live-report-dialog';
@@ -114,7 +118,9 @@ export function LiveRoomPage() {
 
   const saveLive = useSaveLiveMeeting();
   const commit = useCommitMeetingAnalysis();
+  const archiveRecording = useSaveMeetingRecording();
   const recording = useLocalRecording(controller.localStream);
+  const [archived, setArchived] = useState<MeetingRecording | null>(null);
 
   useEffect(() => {
     if (controller.phase !== 'prejoin') return;
@@ -228,12 +234,45 @@ export function LiveRoomPage() {
 
   const handleEnd = () => {
     setConfirmEnd(false);
+    if (recording.recording) recording.stop();
     const input = controller.endMeeting();
     if (input) {
       persist(input);
     } else {
       toast.error('The meeting could not be finalised.');
     }
+  };
+
+  const handleArchiveRecording = () => {
+    const clip = recording.clip;
+    const meeting = savedMeeting;
+    if (!clip || !meeting) return;
+
+    archiveRecording.mutate(
+      {
+        meetingId: meeting.id,
+        recording: {
+          blob: clip.blob,
+          filename: clip.filename,
+          mimeType: clip.mimeType,
+          durationSeconds: clip.durationSeconds,
+          localUrl: clip.url,
+        },
+      },
+      {
+        onSuccess: (saved) => {
+          setArchived(saved);
+          toast.success('Recording archived on the meeting');
+        },
+        onError: (error) => {
+          toast.error(
+            error instanceof Error
+              ? error.message
+              : 'The recording could not be archived.'
+          );
+        },
+      }
+    );
   };
 
   const handleHostEndedSave = () => {
@@ -689,6 +728,63 @@ export function LiveRoomPage() {
             </div>
           )}
         </main>
+
+        {recording.clip ? (
+          <section className="relative mx-auto w-full max-w-3xl px-4 pb-10 sm:px-6">
+            <div className="rounded-xl border border-white/8 bg-card/70 p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="inline-flex items-center gap-2 text-xs font-medium">
+                    <Film className="h-3.5 w-3.5 text-rose-400" />
+                    Recording ready
+                  </p>
+                  <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+                    {formatBytes(recording.clip.sizeBytes)} ·{' '}
+                    {formatRecordingLength(recording.clip.durationSeconds)} ·{' '}
+                    {recording.clip.filename}
+                  </p>
+                  <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground/80">
+                    {archived
+                      ? 'Archived on the meeting. Everyone with workspace access can play it there.'
+                      : savedMeeting
+                        ? 'The file is still only in this browser. Archiving uploads it to private workspace storage.'
+                        : 'Save the meeting first, then archive the recording on it.'}
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button asChild variant="outline" size="sm">
+                    <a href={recording.clip.url} download={recording.clip.filename}>
+                      <Download className="h-3.5 w-3.5" />
+                      Download
+                    </a>
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={handleArchiveRecording}
+                    disabled={
+                      !savedMeeting ||
+                      Boolean(archived) ||
+                      archiveRecording.isPending
+                    }
+                  >
+                    {archiveRecording.isPending ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    ) : archived ? (
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                    ) : (
+                      <Upload className="h-3.5 w-3.5" />
+                    )}
+                    {archiveRecording.isPending
+                      ? 'Archiving…'
+                      : archived
+                        ? 'Archived'
+                        : 'Save to meeting'}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          </section>
+        ) : null}
 
         <LiveReportDialog
           open={reportOpen}
