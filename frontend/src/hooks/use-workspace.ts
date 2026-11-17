@@ -5,9 +5,13 @@ import {
   createTask,
   listTasks,
   setTaskDone,
+  updateTask,
 } from '@/services/tasks.service';
 import {
+  analyzeMeeting,
+  commitMeetingAnalysis,
   createMeeting,
+  getMeeting,
   listMeetings,
 } from '@/services/meetings.service';
 import { listDecisions } from '@/services/decisions.service';
@@ -28,12 +32,15 @@ import {
   markAllNotificationsRead,
 } from '@/services/notifications.service';
 import type {
+  AnalyzeMeetingInput,
+  CommitMeetingInput,
   CreateMeetingInput,
   CreateProjectInput,
   CreateTaskInput,
   CreateWorkflowInput,
   InviteMemberInput,
   Task,
+  UpdateTaskInput,
 } from '@/types';
 
 interface QueryOptions {
@@ -64,6 +71,15 @@ export function useMeetings(options: QueryOptions = {}) {
     queryKey: ['meetings', orgId],
     queryFn: () => listMeetings(orgId),
     enabled: options.enabled ?? true,
+  });
+}
+
+export function useMeeting(meetingId: string | undefined) {
+  const { orgId } = useAuth();
+  return useQuery({
+    queryKey: ['meeting', orgId, meetingId],
+    queryFn: () => getMeeting(meetingId as string, orgId),
+    enabled: Boolean(meetingId),
   });
 }
 
@@ -202,6 +218,21 @@ export function useToggleTask() {
   });
 }
 
+export function useUpdateTask() {
+  const queryClient = useQueryClient();
+  const { orgId } = useAuth();
+
+  return useMutation({
+    mutationFn: ({ id, input }: { id: string; input: UpdateTaskInput }) =>
+      updateTask(id, input, orgId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      void queryClient.invalidateQueries({ queryKey: ['projects'] });
+      void queryClient.invalidateQueries({ queryKey: ['activities'] });
+    },
+  });
+}
+
 export function useCreateMeeting() {
   const queryClient = useQueryClient();
   const { orgId, user } = useAuth();
@@ -213,6 +244,53 @@ export function useCreateMeeting() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['meetings'] });
+      void queryClient.invalidateQueries({ queryKey: ['activities'] });
+    },
+  });
+}
+
+export function useAnalyzeMeeting() {
+  const queryClient = useQueryClient();
+  const { orgId, user, session } = useAuth();
+
+  return useMutation({
+    mutationFn: (input: AnalyzeMeetingInput) => {
+      if (!user) throw new Error('A signed-in user is required.');
+      return analyzeMeeting(input, {
+        orgId,
+        user,
+        accessToken: session?.access_token ?? null,
+      });
+    },
+    onSuccess: (meeting) => {
+      void queryClient.invalidateQueries({ queryKey: ['meeting'] });
+      void queryClient.invalidateQueries({ queryKey: ['meetings'] });
+      void queryClient.invalidateQueries({ queryKey: ['activities'] });
+      queryClient.setQueryData(['meeting', orgId, meeting.id], meeting);
+    },
+  });
+}
+
+export function useCommitMeetingAnalysis() {
+  const queryClient = useQueryClient();
+  const { orgId, user, session } = useAuth();
+
+  return useMutation({
+    mutationFn: (input: CommitMeetingInput) => {
+      if (!user) throw new Error('A signed-in user is required.');
+      return commitMeetingAnalysis(input, {
+        orgId,
+        user,
+        accessToken: session?.access_token ?? null,
+      });
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['meeting'] });
+      void queryClient.invalidateQueries({ queryKey: ['meetings'] });
+      void queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      void queryClient.invalidateQueries({ queryKey: ['projects'] });
+      void queryClient.invalidateQueries({ queryKey: ['decisions'] });
+      void queryClient.invalidateQueries({ queryKey: ['knowledge'] });
       void queryClient.invalidateQueries({ queryKey: ['activities'] });
     },
   });

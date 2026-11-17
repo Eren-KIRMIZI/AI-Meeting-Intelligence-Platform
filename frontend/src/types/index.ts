@@ -94,6 +94,7 @@ export interface Meeting {
   durationMinutes: number;
   platform: MeetingPlatform;
   status: MeetingStatus;
+  projectId?: string;
   projectName?: string;
   participants: UserProfile[];
   agenda: string[];
@@ -101,7 +102,84 @@ export interface Meeting {
   actionItems: string[];
   decisions: string[];
   transcriptReady: boolean;
+  analysis?: MeetingAnalysis;
+  analysisError?: string;
 }
+
+export interface TranscriptLine {
+  speaker: string;
+  at: number;
+  text: string;
+}
+
+export type AnalysisStepStatus = 'pending' | 'running' | 'done' | 'failed';
+
+export interface AnalysisStep {
+  key: 'transcribe' | 'extract' | 'link';
+  label: string;
+  status: AnalysisStepStatus;
+  detail?: string;
+}
+
+export interface ExtractedAction {
+  id: string;
+  text: string;
+  owner: string;
+  ownerId?: string | null;
+  dueDate?: string | null;
+  confidence: number;
+  taskId?: string | null;
+}
+
+export interface ExtractedDecision {
+  id: string;
+  title: string;
+  context: string;
+  owner: string;
+  ownerId?: string | null;
+  confidence: number;
+  decisionId?: string | null;
+}
+
+export interface MeetingAnalysis {
+  summary: string;
+  keyPoints: string[];
+  risks: string[];
+  topics: string[];
+  confidence: number;
+  transcript: TranscriptLine[];
+  actions: ExtractedAction[];
+  decisions: ExtractedDecision[];
+  analyzedAt: string;
+  model: string;
+  steps: AnalysisStep[];
+}
+
+export interface AnalyzeMeetingInput {
+  meetingId: string;
+  transcript: string;
+}
+
+export interface CommitMeetingInput {
+  meetingId: string;
+  actionIds: string[];
+  decisionIds: string[];
+}
+
+export interface CommitMeetingResult {
+  tasks: Task[];
+  decisions: Decision[];
+  knowledge: KnowledgeDocument | null;
+}
+
+export interface UpdateTaskInput {
+  title?: string;
+  description?: string;
+  status?: TaskStatus;
+  priority?: TaskPriority;
+  dueDate?: string | null;
+}
+
 
 export type DecisionStatus = 'proposed' | 'accepted' | 'rejected' | 'superseded';
 

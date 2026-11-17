@@ -55,6 +55,12 @@ export interface MeetingRow {
   agenda: string[] | null;
   summary: string | null;
   transcript_status: string | null;
+  transcript: string | null;
+  analysis: unknown;
+  analysis_error: string | null;
+  analysis_confidence: number | null;
+  analyzed_at: string | null;
+  analysis_model: string | null;
 }
 
 export interface MeetingParticipantRow {

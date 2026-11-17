@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { mockDb } from './db';
+import { sampleTranscriptFor } from './transcripts';
 
 /**
  * The mock database keeps module-level state on purpose so the demo
@@ -135,5 +136,108 @@ describe('mockDb workspace', () => {
 
     expect(after.length).toBeGreaterThan(0);
     expect(after.every((notification) => notification.read)).toBe(true);
+  });
+});
+
+describe('mockDb meeting intelligence', () => {
+  const meetingId = 'm-research-readout';
+
+  it('analyzes a processing meeting into the shared analysis shape', async () => {
+    const before = await mockDb.getMeeting(meetingId);
+    expect(before.analysis).toBeUndefined();
+    expect(before.status).toBe('processing');
+
+    const analyzed = await mockDb.analyzeMeeting({
+      meetingId,
+      transcript: sampleTranscriptFor(meetingId),
+    });
+
+    expect(analyzed.status).toBe('completed');
+    expect(analyzed.transcriptReady).toBe(true);
+    expect(analyzed.analysis?.model).toBe('nova-demo-analyzer');
+    expect(analyzed.analysis?.actions.length).toBeGreaterThan(0);
+    expect(analyzed.analysis?.decisions.length).toBeGreaterThan(0);
+    expect(analyzed.analysis?.transcript.length).toBeGreaterThan(0);
+    expect(
+      analyzed.analysis?.transcript.some(
+        (line) => line.speaker === 'Ravi Mehta'
+      )
+    ).toBe(true);
+    expect(
+      analyzed.analysis?.actions.some(
+        (action) => action.owner === 'Ravi Mehta'
+      )
+    ).toBe(true);
+    expect(analyzed.analysis?.steps.every((step) => step.status === 'done')).toBe(
+      true
+    );
+    expect(analyzed.summary).toBe(analyzed.analysis?.summary);
+    expect(analyzed.actionItems.length).toBe(analyzed.analysis?.actions.length);
+  });
+
+  it('rejects a transcript that is too short', async () => {
+    await expect(
+      mockDb.analyzeMeeting({
+        meetingId: 'm-product-sync',
+        transcript: 'Too short',
+      })
+    ).rejects.toThrow(/at least a few lines/);
+  });
+
+  it('commits selected follow-ups once and links them back to the analysis', async () => {
+    const meeting = await mockDb.getMeeting(meetingId);
+    const analysis = meeting.analysis;
+    expect(analysis).toBeDefined();
+
+    const actionIds = (analysis?.actions ?? []).map((action) => action.id);
+    const decisionIds = (analysis?.decisions ?? []).map(
+      (decision) => decision.id
+    );
+
+    const tasksBefore = (await mockDb.listTasks()).length;
+    const decisionsBefore = (await mockDb.listDecisions()).length;
+    const knowledgeBefore = (await mockDb.listKnowledge()).length;
+
+    const result = await mockDb.commitMeetingAnalysis({
+      meetingId,
+      actionIds,
+      decisionIds,
+    });
+
+    expect(result.tasks).toHaveLength(actionIds.length);
+    expect(result.decisions).toHaveLength(decisionIds.length);
+    expect(result.knowledge).not.toBeNull();
+    expect(result.tasks.every((task) => task.sourceMeetingId === meetingId)).toBe(
+      true
+    );
+    expect(
+      result.tasks.some((task) => task.assignee?.fullName === 'Ravi Mehta')
+    ).toBe(true);
+
+    expect((await mockDb.listTasks()).length).toBe(
+      tasksBefore + actionIds.length
+    );
+    expect((await mockDb.listDecisions()).length).toBe(
+      decisionsBefore + decisionIds.length
+    );
+    expect((await mockDb.listKnowledge()).length).toBe(knowledgeBefore + 1);
+
+    const reloaded = await mockDb.getMeeting(meetingId);
+    expect(reloaded.analysis?.actions.every((action) => action.taskId)).toBe(
+      true
+    );
+    expect(
+      reloaded.analysis?.decisions.every((decision) => decision.decisionId)
+    ).toBe(true);
+
+    const second = await mockDb.commitMeetingAnalysis({
+      meetingId,
+      actionIds,
+      decisionIds,
+    });
+
+    expect(second.tasks).toHaveLength(0);
+    expect(second.decisions).toHaveLength(0);
+    expect(second.knowledge).toBeNull();
   });
 });

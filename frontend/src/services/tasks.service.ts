@@ -1,6 +1,6 @@
 import { isSupabaseConfigured } from '@/lib/env';
 import { mockDb } from '@/mocks/db';
-import type { CreateTaskInput, Task, UserProfile } from '@/types';
+import type { CreateTaskInput, Task, UpdateTaskInput, UserProfile } from '@/types';
 import { asTaskPriority, asTaskStatus } from './enum-guards';
 import {
   assertOrg,
@@ -117,6 +117,71 @@ export async function setTaskDone(
       status: done ? 'done' : 'todo',
       completed_at: done ? new Date().toISOString() : null,
     })
+    .eq('id', taskId)
+    .eq('organization_id', organizationId)
+    .select('*')
+    .single<TaskRow>();
+
+  if (error) throw new Error(error.message);
+
+  const [projectNames, profiles] = await Promise.all([
+    fetchProjectNameMap(),
+    fetchProfileMap(),
+  ]);
+
+  return {
+    id: data.id,
+    title: data.title,
+    description: data.description ?? undefined,
+    status: asTaskStatus(data.status),
+    priority: asTaskPriority(data.priority),
+    projectId: data.project_id ?? '',
+    projectName: data.project_id
+      ? projectNames.get(data.project_id) ?? 'Unassigned'
+      : 'Unassigned',
+    assignee: profileFor(data.assignee_id, profiles),
+    dueDate: data.due_date,
+    tags: data.tags ?? [],
+    createdAt: data.created_at,
+    completedAt: data.completed_at,
+    sourceMeetingId: data.source_meeting_id,
+  };
+}
+
+export async function updateTask(
+  taskId: string,
+  input: UpdateTaskInput,
+  orgId: string | null
+): Promise<Task> {
+  if (!isSupabaseConfigured) return mockDb.updateTask(taskId, input);
+
+  const client = getClient();
+  const organizationId = assertOrg(orgId);
+  const patch: Record<string, unknown> = {};
+
+  if (input.title !== undefined) {
+    const title = input.title.trim();
+    if (!title) throw new Error('A task title is required');
+    patch.title = title;
+  }
+  if (input.description !== undefined) {
+    patch.description = input.description.trim() || null;
+  }
+  if (input.priority !== undefined) patch.priority = input.priority;
+  if (input.dueDate !== undefined) patch.due_date = input.dueDate;
+  if (input.status !== undefined) {
+    patch.status = input.status;
+    patch.completed_at =
+      input.status === 'done' ? new Date().toISOString() : null;
+  }
+
+  if (Object.keys(patch).length === 0) {
+    throw new Error('Nothing to update');
+  }
+
+  const { data, error } = await client
+    .from('tasks')
+    .update(patch)
     .eq('id', taskId)
     .eq('organization_id', organizationId)
     .select('*')
