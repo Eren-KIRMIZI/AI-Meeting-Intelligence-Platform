@@ -2,6 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { mockDb } from './db';
 import { demoUser } from './data';
 import { sampleTranscriptFor } from './transcripts';
+import { demoDialogue } from '@/lib/live/demo-dialogue';
+import { buildLiveInsights, formatTranscript } from '@/lib/live/intelligence';
+import type { LiveMeetingInput } from '@/types';
 
 /**
  * The mock database keeps module-level state on purpose so the demo
@@ -260,6 +263,123 @@ describe('mockDb meeting intelligence', () => {
     expect(second.tasks).toHaveLength(0);
     expect(second.decisions).toHaveLength(0);
     expect(second.knowledge).toBeNull();
+  });
+});
+
+describe('mockDb Nova Live', () => {
+  const segments = demoDialogue.map((line, index) => ({
+    id: `live-${index + 1}`,
+    speakerId: `demo-${index + 1}`,
+    speaker: line.speaker,
+    text: line.text,
+    at: index * 12,
+    createdAt: '2026-05-12T09:00:00.000Z',
+    source: 'demo' as const,
+  }));
+
+  const liveInput = (): LiveMeetingInput => {
+    const insights = buildLiveInsights(
+      'Nova Live launch review',
+      segments,
+      demoDialogue.map((line) => line.speaker)
+    );
+
+    return {
+      title: 'Nova Live launch review',
+      roomId: 'nova-live-test',
+      transport: 'mesh',
+      mode: 'video',
+      projectId: 'p-pulse',
+      projectName: 'Pulse mobile app',
+      startedAt: '2026-05-12T09:00:00.000Z',
+      endedAt: '2026-05-12T09:15:00.000Z',
+      durationSeconds: 900,
+      participants: [
+        {
+          peerId: 'peer-self',
+          userId: demoUser.id,
+          fullName: demoUser.fullName,
+          initials: demoUser.initials,
+          avatarColor: demoUser.avatarColor,
+          isSelf: true,
+          micOn: true,
+          cameraOn: true,
+          sharing: false,
+          joinedAt: '2026-05-12T09:00:00.000Z',
+          connection: 'connected',
+        },
+      ],
+      segments,
+      chat: [
+        {
+          id: 'chat-1',
+          authorId: demoUser.id,
+          author: demoUser.fullName,
+          text: 'Recording notice acknowledged.',
+          createdAt: '2026-05-12T09:01:00.000Z',
+        },
+      ],
+      insights,
+      transcript: formatTranscript(segments),
+    };
+  };
+
+  it('saves a completed Nova Live meeting with a Knowledge note and activity', async () => {
+    const meetingsBefore = (await mockDb.listMeetings()).length;
+    const knowledgeBefore = (await mockDb.listKnowledge()).length;
+    const activitiesBefore = (await mockDb.listActivities()).length;
+
+    const meeting = await mockDb.saveLiveMeeting(liveInput());
+
+    expect(meeting.platform).toBe('nova_live');
+    expect(meeting.status).toBe('completed');
+    expect(meeting.projectName).toBe('Pulse mobile app');
+    expect(meeting.durationMinutes).toBe(15);
+    expect(meeting.transcriptReady).toBe(true);
+    expect(meeting.analysis?.model).toBe('nova-live-analyzer');
+    expect(meeting.analysis?.actions.length).toBeGreaterThan(0);
+    expect(meeting.analysis?.transcript.length).toBe(segments.length);
+    expect(meeting.participants.some((person) => person.id === demoUser.id)).toBe(
+      true
+    );
+
+    const meetings = await mockDb.listMeetings();
+    expect(meetings).toHaveLength(meetingsBefore + 1);
+    expect(meetings[0].id).toBe(meeting.id);
+
+    const knowledge = await mockDb.listKnowledge();
+    expect(knowledge).toHaveLength(knowledgeBefore + 1);
+    const note = knowledge[0];
+    expect(note.kind).toBe('meeting_note');
+    expect(note.sourceMeetingId).toBe(meeting.id);
+    expect(note.content).toContain('# Nova Live launch review');
+    expect(note.content).toContain('## Transcript');
+
+    const activities = await mockDb.listActivities();
+    expect(activities).toHaveLength(activitiesBefore + 1);
+    expect(activities[0].title).toBe('Nova Live meeting captured');
+  });
+
+  it('commits Nova Live follow-ups through the shared review step', async () => {
+    const meeting = await mockDb.saveLiveMeeting(liveInput());
+    const analysis = meeting.analysis;
+    expect(analysis).toBeDefined();
+
+    const result = await mockDb.commitMeetingAnalysis({
+      meetingId: meeting.id,
+      actionIds: (analysis?.actions ?? []).map((action) => action.id),
+      decisionIds: (analysis?.decisions ?? []).map((decision) => decision.id),
+    });
+
+    expect(result.tasks.length).toBe(analysis?.actions.length);
+    expect(result.decisions.length).toBe(analysis?.decisions.length);
+    expect(result.knowledge).not.toBeNull();
+    expect(result.tasks.every((task) => task.sourceMeetingId === meeting.id)).toBe(
+      true
+    );
+
+    const reloaded = await mockDb.getMeeting(meeting.id);
+    expect(reloaded.analysis?.actions.every((action) => action.taskId)).toBe(true);
   });
 });
 

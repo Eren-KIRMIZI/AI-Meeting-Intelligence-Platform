@@ -14,5 +14,6 @@ export const env = {
   supabaseUrl,
   supabasePublishableKey,
   appUrl: import.meta.env.VITE_APP_URL?.trim() ?? '',
+  liveKitUrl: import.meta.env.VITE_LIVEKIT_URL?.trim() ?? '',
   isSupabaseConfigured,
 } as const;

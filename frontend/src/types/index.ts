@@ -85,7 +85,8 @@ export type MeetingPlatform =
   | 'google_meet'
   | 'microsoft_teams'
   | 'zoom'
-  | 'in_person';
+  | 'in_person'
+  | 'nova_live';
 
 export interface Meeting {
   id: string;
@@ -170,6 +171,78 @@ export interface CommitMeetingResult {
   tasks: Task[];
   decisions: Decision[];
   knowledge: KnowledgeDocument | null;
+}
+
+export type LiveRoomMode = 'video' | 'audio';
+
+export type LiveConnectionState =
+  | 'idle'
+  | 'connecting'
+  | 'connected'
+  | 'disconnected';
+
+export type LiveTransport = 'mesh' | 'livekit';
+
+export interface LiveParticipant {
+  peerId: string;
+  userId: string;
+  fullName: string;
+  initials: string;
+  avatarColor: string;
+  isSelf: boolean;
+  micOn: boolean;
+  cameraOn: boolean;
+  sharing: boolean;
+  joinedAt: string;
+  connection: 'connecting' | 'connected' | 'disconnected';
+}
+
+export interface TranscriptSegment {
+  id: string;
+  speakerId: string;
+  speaker: string;
+  text: string;
+  /** Seconds from the start of the room. */
+  at: number;
+  createdAt: string;
+  source: 'speech' | 'demo';
+  /** Recognizer confidence when the browser exposes it. */
+  confidence?: number;
+}
+
+export interface LiveChatMessage {
+  id: string;
+  authorId: string;
+  author: string;
+  text: string;
+  createdAt: string;
+}
+
+export interface LiveInsights {
+  summary: string;
+  keyPoints: string[];
+  risks: string[];
+  topics: string[];
+  actions: ExtractedAction[];
+  decisions: ExtractedDecision[];
+  confidence: number;
+}
+
+export interface LiveMeetingInput {
+  title: string;
+  roomId: string;
+  transport: LiveTransport;
+  projectId?: string;
+  projectName?: string;
+  mode: LiveRoomMode;
+  startedAt: string;
+  endedAt: string;
+  durationSeconds: number;
+  participants: LiveParticipant[];
+  segments: TranscriptSegment[];
+  chat: LiveChatMessage[];
+  insights: LiveInsights;
+  transcript: string;
 }
 
 export interface UpdateTaskInput {

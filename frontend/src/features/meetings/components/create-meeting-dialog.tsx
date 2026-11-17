@@ -160,6 +160,7 @@ export function CreateMeetingDialog({
               <option value="microsoft_teams">Microsoft Teams</option>
               <option value="zoom">Zoom</option>
               <option value="in_person">In person</option>
+              <option value="nova_live">Nova Live</option>
             </NativeSelect>
           </Field>
 

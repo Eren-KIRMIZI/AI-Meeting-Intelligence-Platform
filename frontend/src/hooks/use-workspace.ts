@@ -13,6 +13,7 @@ import {
   createMeeting,
   getMeeting,
   listMeetings,
+  saveLiveMeeting,
 } from '@/services/meetings.service';
 import { listDecisions, updateDecisionStatus } from '@/services/decisions.service';
 import { listActivities } from '@/services/activity.service';
@@ -41,6 +42,7 @@ import type {
   CreateTaskInput,
   CreateWorkflowInput,
   InviteMemberInput,
+  LiveMeetingInput,
   Task,
   UpdateDecisionInput,
   UpdateTaskInput,
@@ -276,6 +278,28 @@ export function useCreateMeeting() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['meetings'] });
       void queryClient.invalidateQueries({ queryKey: ['activities'] });
+    },
+  });
+}
+
+export function useSaveLiveMeeting() {
+  const queryClient = useQueryClient();
+  const { orgId, user, session } = useAuth();
+
+  return useMutation({
+    mutationFn: (input: LiveMeetingInput) => {
+      if (!user) throw new Error('A signed-in user is required.');
+      return saveLiveMeeting(input, {
+        orgId,
+        user,
+        accessToken: session?.access_token ?? null,
+      });
+    },
+    onSuccess: (meeting) => {
+      void queryClient.invalidateQueries({ queryKey: ['meetings'] });
+      void queryClient.invalidateQueries({ queryKey: ['knowledge'] });
+      void queryClient.invalidateQueries({ queryKey: ['activities'] });
+      queryClient.setQueryData(['meeting', orgId, meeting.id], meeting);
     },
   });
 }

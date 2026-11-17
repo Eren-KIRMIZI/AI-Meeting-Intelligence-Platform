@@ -10,6 +10,7 @@ import {
   LogOut,
   Settings,
   Users,
+  Video,
   Workflow,
   type LucideIcon,
 } from 'lucide-react';
@@ -45,6 +46,12 @@ export const primaryNav: NavItem[] = [
     path: '/meetings',
     icon: CalendarDays,
     description: 'Schedule, briefs and recordings',
+  },
+  {
+    label: 'Nova Live',
+    path: '/live',
+    icon: Video,
+    description: 'Run a meeting with live captions and AI follow-ups',
   },
   {
     label: 'Decisions',
@@ -103,6 +110,7 @@ export const routeMeta: Record<string, { title: string; parent?: string }> = {
   '/projects': { title: 'Projects', parent: 'Workspace' },
   '/tasks': { title: 'My Tasks', parent: 'Workspace' },
   '/meetings': { title: 'Meetings', parent: 'Workspace' },
+  '/live': { title: 'Nova Live', parent: 'Workspace' },
   '/decisions': { title: 'Decisions', parent: 'Workspace' },
   '/knowledge': { title: 'Knowledge', parent: 'Workspace' },
   '/workflows': { title: 'Workflows', parent: 'Workspace' },

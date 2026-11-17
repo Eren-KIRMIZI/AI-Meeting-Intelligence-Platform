@@ -12,6 +12,7 @@ import type {
   Integration,
   InviteMemberInput,
   KnowledgeDocument,
+  LiveMeetingInput,
   Meeting,
   MeetingAnalysis,
   Project,
@@ -24,6 +25,7 @@ import type {
   WorkflowRun,
 } from '@/types';
 import { analysisSteps, analyzeTranscript } from '@/lib/meeting-intelligence';
+import { liveMeetingNote } from '@/lib/live/intelligence';
 import { decisionActivityTitle } from '@/lib/decisions';
 import { decisionStatusMeta } from '@/lib/status';
 import {
@@ -352,6 +354,110 @@ export const mockDb = {
       title: 'Meeting scheduled',
       description: `Scheduled “${meeting.title}”.`,
     });
+    return clone(meeting);
+  },
+
+  /**
+   * Persists a finished Nova Live room as a completed meeting, then links a
+   * Knowledge note so the transcript survives outside the call.
+   */
+  async saveLiveMeeting(input: LiveMeetingInput) {
+    await wait(420);
+
+    const participants: UserProfile[] = [];
+    const seen = new Set<string>();
+
+    for (const participant of input.participants) {
+      const match = findTeamMember(participant.fullName);
+      const profile: UserProfile =
+        match ?? {
+          id: participant.userId || participant.peerId,
+          fullName: participant.fullName,
+          email: '',
+          initials: participant.initials,
+          avatarColor: participant.avatarColor,
+        };
+
+      if (seen.has(profile.id)) continue;
+      seen.add(profile.id);
+      participants.push(profile);
+    }
+
+    if (participants.length === 0) participants.push(demoUser);
+
+    const durationSeconds = Math.max(0, Math.round(input.durationSeconds));
+    const analysis: MeetingAnalysis = {
+      summary: input.insights.summary,
+      keyPoints: input.insights.keyPoints,
+      risks: input.insights.risks,
+      topics: input.insights.topics,
+      confidence: input.insights.confidence,
+      transcript: input.segments.map((segment) => ({
+        speaker: segment.speaker,
+        at: segment.at,
+        text: segment.text,
+      })),
+      actions: input.insights.actions,
+      decisions: input.insights.decisions,
+      analyzedAt: input.endedAt,
+      model: 'nova-live-analyzer',
+      steps: analysisSteps({
+        transcribe: input.segments.length > 0 ? 'done' : 'failed',
+        extract: 'done',
+        link: 'done',
+      }),
+    };
+
+    const meeting: Meeting = {
+      id: newId('m'),
+      title: input.title,
+      startsAt: new Date(input.startedAt).toISOString(),
+      durationMinutes: Math.max(1, Math.round(durationSeconds / 60)),
+      platform: 'nova_live',
+      status: 'completed',
+      projectId: input.projectId,
+      projectName: input.projectName,
+      participants,
+      agenda: input.insights.topics.slice(0, 6),
+      summary: input.insights.summary,
+      actionItems: input.insights.actions.map(
+        (action) => `${action.owner}: ${action.text}`
+      ),
+      decisions: input.insights.decisions.map((decision) => decision.title),
+      transcriptReady: input.segments.length > 0,
+      analysis,
+    };
+
+    meetings = [meeting, ...meetings];
+
+    const note = liveMeetingNote(input);
+    knowledge.unshift({
+      id: newId('k'),
+      title: note.title,
+      excerpt: note.excerpt,
+      content: note.content,
+      kind: 'meeting_note',
+      tags: ['nova-live', 'meeting', 'transcript'],
+      author: demoUser,
+      sourceMeeting: meeting.title,
+      sourceMeetingId: meeting.id,
+      updatedAt: input.endedAt,
+      readMinutes: Math.max(
+        2,
+        Math.round(note.content.split(/\s+/).length / 200)
+      ),
+    });
+
+    pushActivity({
+      type: 'meeting',
+      title: 'Nova Live meeting captured',
+      description: `Saved “${meeting.title}” with ${
+        input.segments.length
+      } transcript segment${input.segments.length === 1 ? '' : 's'} and ${
+        input.insights.actions.length
+      } action item${input.insights.actions.length === 1 ? '' : 's'}.`,
+    });
+
     return clone(meeting);
   },
 

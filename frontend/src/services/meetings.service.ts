@@ -1,5 +1,6 @@
 import { isSupabaseConfigured } from '@/lib/env';
 import { analysisSteps } from '@/lib/meeting-intelligence';
+import { liveMeetingNote } from '@/lib/live/intelligence';
 import { mockDb } from '@/mocks/db';
 import type {
   AnalyzeMeetingInput,
@@ -8,6 +9,7 @@ import type {
   CreateMeetingInput,
   Decision,
   KnowledgeDocument,
+  LiveMeetingInput,
   Meeting,
   MeetingAnalysis,
   Task,
@@ -176,6 +178,194 @@ export async function createMeeting(
     decisions: [],
     transcriptReady: false,
   };
+}
+
+/**
+ * Saves a finished Nova Live room and links the transcript to Knowledge. The
+ * follow-up tasks and decisions are still created by commitMeetingAnalysis so
+ * the existing review step stays the single source of truth.
+ */
+export async function saveLiveMeeting(
+  input: LiveMeetingInput,
+  context: MeetingContext
+): Promise<Meeting> {
+  if (!isSupabaseConfigured) return mockDb.saveLiveMeeting(input);
+
+  const client = getClient();
+  const organizationId = assertOrg(context.orgId);
+  const endedAt = new Date(input.endedAt);
+  const startedAt = new Date(input.startedAt);
+  const durationSeconds = Math.max(0, Math.round(input.durationSeconds));
+
+  const analysis: MeetingAnalysis = {
+    summary: input.insights.summary,
+    keyPoints: input.insights.keyPoints,
+    risks: input.insights.risks,
+    topics: input.insights.topics,
+    confidence: input.insights.confidence,
+    transcript: input.segments.map((segment) => ({
+      speaker: segment.speaker,
+      at: segment.at,
+      text: segment.text,
+    })),
+    actions: input.insights.actions,
+    decisions: input.insights.decisions,
+    analyzedAt: input.endedAt,
+    model: 'nova-live-analyzer',
+    steps: analysisSteps({
+      transcribe: input.segments.length > 0 ? 'done' : 'failed',
+      extract: 'done',
+      link: 'done',
+    }),
+  };
+
+  const { data: meetingRow, error: meetingError } = await client
+    .from('meetings')
+    .insert({
+      organization_id: organizationId,
+      title: input.title,
+      starts_at: startedAt.toISOString(),
+      ends_at: endedAt.toISOString(),
+      platform: 'nova_live',
+      status: 'completed',
+      project_id: input.projectId || null,
+      agenda: input.insights.topics.slice(0, 6),
+      summary: input.insights.summary,
+      transcript_status: input.segments.length > 0 ? 'ready' : 'pending',
+      transcript: input.transcript,
+      analysis,
+      analysis_confidence: input.insights.confidence,
+      analyzed_at: endedAt.toISOString(),
+      analysis_model: 'nova-live-analyzer',
+      created_by: context.user.id,
+    })
+    .select('*')
+    .single<MeetingRow>();
+
+  if (meetingError) throw new Error(meetingError.message);
+
+  const profiles = await fetchProfileMap();
+  const idByName = new Map(
+    [...profiles.values()].map((profile) => [
+      profile.fullName.trim().toLowerCase(),
+      profile.id,
+    ])
+  );
+  const idByFirstName = new Map(
+    [...profiles.values()].map((profile) => [
+      profile.fullName.trim().toLowerCase().split(/\s+/)[0],
+      profile.id,
+    ])
+  );
+
+  const participantIds = new Set<string>([context.user.id]);
+  for (const participant of input.participants) {
+    const key = participant.fullName.trim().toLowerCase();
+    const id =
+      profiles.get(participant.userId)?.id ??
+      idByName.get(key) ??
+      idByFirstName.get(key.split(/\s+/)[0]);
+    if (id) participantIds.add(id);
+  }
+
+  const participantInsert = await client.from('meeting_participants').insert(
+    [...participantIds].map((userId) => ({
+      meeting_id: meetingRow.id,
+      user_id: userId,
+    }))
+  );
+
+  if (participantInsert.error) {
+    throw new Error(participantInsert.error.message);
+  }
+
+  const { data: sessionRow, error: sessionError } = await client
+    .from('meeting_sessions')
+    .insert({
+      organization_id: organizationId,
+      meeting_id: meetingRow.id,
+      room_name: input.roomId,
+      mode: input.mode,
+      transport: input.transport,
+      started_at: startedAt.toISOString(),
+      ended_at: endedAt.toISOString(),
+      duration_seconds: durationSeconds,
+      participant_count: input.participants.length,
+      participant_names: input.participants.map(
+        (participant) => participant.fullName
+      ),
+      created_by: context.user.id,
+    })
+    .select('id')
+    .single<{ id: string }>();
+
+  if (sessionError) throw new Error(sessionError.message);
+
+  if (input.segments.length > 0) {
+    const segmentInsert = await client
+      .from('meeting_transcript_segments')
+      .insert(
+        input.segments.map((segment) => ({
+          organization_id: organizationId,
+          meeting_id: meetingRow.id,
+          session_id: sessionRow.id,
+          client_id: segment.id,
+          speaker_id: segment.speakerId || null,
+          speaker: segment.speaker,
+          body: segment.text,
+          offset_seconds: Math.max(0, Math.round(segment.at)),
+          source: segment.source,
+          confidence: segment.confidence ?? null,
+        }))
+      );
+
+    if (segmentInsert.error) throw new Error(segmentInsert.error.message);
+  }
+
+  if (input.chat.length > 0) {
+    const chatInsert = await client.from('meeting_chat_messages').insert(
+      input.chat.map((message) => ({
+        organization_id: organizationId,
+        meeting_id: meetingRow.id,
+        session_id: sessionRow.id,
+        client_id: message.id,
+        author_id: message.authorId || null,
+        author: message.author,
+        body: message.text,
+        created_at: message.createdAt,
+      }))
+    );
+
+    if (chatInsert.error) throw new Error(chatInsert.error.message);
+  }
+
+  const note = liveMeetingNote(input);
+  const { error: knowledgeError } = await client
+    .from('knowledge_documents')
+    .insert({
+      organization_id: organizationId,
+      title: note.title,
+      summary: note.excerpt,
+      content: note.content,
+      kind: 'meeting_note',
+      tags: ['nova-live', 'meeting', 'transcript'],
+      source_meeting_id: meetingRow.id,
+      author_id: context.user.id,
+    });
+
+  if (knowledgeError) throw new Error(knowledgeError.message);
+
+  await client.from('activities').insert({
+    organization_id: organizationId,
+    actor_id: context.user.id,
+    type: 'meeting',
+    title: 'Nova Live meeting captured',
+    description: `Saved “${input.title}” with ${input.segments.length} transcript segment${
+      input.segments.length === 1 ? '' : 's'
+    }.`,
+  });
+
+  return getMeeting(meetingRow.id, context.orgId);
 }
 
 export async function analyzeMeeting(

@@ -31,6 +31,7 @@ Nova turns meetings into execution: every conversation becomes a brief with deci
 │  │  ├─ _lib/                 http + redis helpers (not routed)
 │  │  ├─ health.ts             GET  /api/health
 │  │  ├─ meetings/analyze.ts   POST /api/meetings/analyze
+│  │  ├─ live/token.ts         POST /api/live/token (LiveKit, server-side)
 │  │  └─ team/invite.ts        POST /api/team/invite
 │  ├─ src/
 │  │  ├─ app/                  providers, router, root component
@@ -50,6 +51,7 @@ Nova turns meetings into execution: every conversation becomes a brief with deci
    ├─ migrations/0002_meeting_intelligence.sql transcript + analysis columns
    ├─ migrations/0003_workflow_runs.sql        workflow execution history
    ├─ migrations/0004_decision_events.sql      decision status audit trail
+   ├─ migrations/0005_live_meetings.sql        Nova Live sessions, transcript and chat
    └─ seed.sql                                 idempotent demo workspace
 ```
 
@@ -84,7 +86,7 @@ Open the printed URL (default `http://localhost:5173`). Use **Continue with demo
 
 ### Testing & CI
 
-Tests use Vitest with jsdom, Testing Library and jest-dom. The suite covers pure helpers, metric builders, range-derived analytics, enum guards, the transcript analyzer, the demo data store and its meeting pipeline (analyze → commit) and workflow run log, sidebar accessibility, the 404 page and a task-board interaction end to end.
+Tests use Vitest with jsdom, Testing Library and jest-dom. The suite covers pure helpers, metric builders, range-derived analytics, enum guards, the transcript analyzer, the live-meeting intelligence and Knowledge note, the demo data store and its meeting pipeline (analyze → commit), Nova Live persistence, the workflow run log, sidebar accessibility, the 404 page and a task-board interaction end to end.
 
 ```bash
 cd frontend
@@ -111,7 +113,8 @@ Open the SQL editor and run, in order:
 2. `supabase/migrations/0002_meeting_intelligence.sql`
 3. `supabase/migrations/0003_workflow_runs.sql`
 4. `supabase/migrations/0004_decision_events.sql`
-5. `supabase/seed.sql` — optional demo workspace. Requires at least one auth user; sign up once first.
+5. `supabase/migrations/0005_live_meetings.sql`
+6. `supabase/seed.sql` — optional demo workspace. Requires at least one auth user; sign up once first.
 
 Or with the Supabase CLI:
 
@@ -128,6 +131,8 @@ The migration creates:
 - `activities`, `knowledge_documents`, `workflows`, `integrations`, `notifications`
 - `workflow_runs` (added in `0003`) for workflow execution history
 - `decision_events` (added in `0004`) for the append-only decision status log
+- `meeting_sessions`, `meeting_transcript_segments` and `meeting_chat_messages`
+  (added in `0005`) for Nova Live rooms, plus the `nova_live` platform value
 - `handle_new_user` trigger, `set_updated_at` triggers, indexes
 - RLS helpers: `is_org_member`, `is_org_admin`, `shares_org_with`
 - `bootstrap_workspace()` for first-run onboarding
@@ -138,6 +143,8 @@ The second migration adds `transcript`, `analysis`, `analysis_error`, `analysis_
 The third migration adds `workflow_runs`, scoped to workspace members for reads. Automation writes stay on the service role, so no authenticated insert or update policy is granted.
 
 The fourth migration adds `decision_events`, an append-only audit trail for the decision log. Members can read and insert events for their own workspace; history is never updated or deleted.
+
+The fifth migration extends the `meetings.platform` check with `nova_live` and adds the room-level tables: one `meeting_sessions` row per room, ordered `meeting_transcript_segments` and the room `meeting_chat_messages`. Members can read and insert rows for their own workspace. Demo mode keeps the same shapes in memory.
 
 ### 3. Configure environment
 
@@ -166,8 +173,13 @@ UPSTASH_REDIS_REST_URL=<optional>
 UPSTASH_REDIS_REST_TOKEN=<optional>
 OPENAI_API_KEY=<optional, enables live transcript extraction>
 OPENAI_MODEL=gpt-4o-mini
+LIVEKIT_URL=wss://<project>.livekit.cloud
+LIVEKIT_API_KEY=<server-side only>
+LIVEKIT_API_SECRET=<server-side only>
 VITE_APP_URL=https://your-app.vercel.app
 ```
+
+Optional Nova Live media. `VITE_LIVEKIT_URL` is browser-safe and only switches the room transport to LiveKit; the API key and secret stay on the server and are read exclusively by `POST /api/live/token`. Leave all four empty to keep the WebRTC mesh used by demo mode.
 
 > Only variables prefixed with `VITE_` are bundled into the browser. Never prefix a secret with `VITE_`.
 
@@ -241,6 +253,37 @@ Response: `{ "ok": true, "analysis": { summary, keyPoints, risks, topics, confid
 
 The browser never calls a provider directly. In demo mode the deterministic analyzer in `src/lib/meeting-intelligence.ts` runs locally and the endpoint is not called at all.
 
+### `POST /api/live/token`
+
+Requires `Authorization: Bearer <access-token>`. Mints a short-lived (2 hour) LiveKit join token for a Nova Live room.
+
+```json
+{ "room": "nova-abc123", "identity": "<user-or-peer-id>", "name": "Ayşe Yılmaz" }
+```
+
+Guards:
+
+1. Validates the JWT with Supabase Auth.
+2. Requires `LIVEKIT_URL`, `LIVEKIT_API_KEY`, `LIVEKIT_API_SECRET` and the server Supabase keys; returns `503` when unset.
+3. Validates the room and identity formats and caps them at 80 characters.
+4. Rate limits to 30 token requests per 10 minutes per user via Upstash (fails open when unset).
+5. Returns only `{ token, url, room }` — never the API secret.
+
+---
+
+## Nova Live
+
+Nova Live runs the meeting inside the workspace: video/audio, screen sharing, chat, live captions, a transcript-grounded copilot and a report that becomes tasks, decisions and a Knowledge note.
+
+- **Isolated media layer.** `src/lib/live/media/` defines one `LiveMediaAdapter` contract. `mesh.ts` is a WebRTC mesh with `BroadcastChannel` signalling for demo mode; `livekit.ts` is the production SFU adapter. The room UI never imports either implementation directly.
+- **Demo mode works with no credentials.** Rooms connect tabs in the same browser and the scripted `demo-dialogue.ts` feeds captions and the AI pipeline without a microphone. Every demo segment is labelled **Demo** in the transcript.
+- **Live mode uses LiveKit Cloud.** Set the four `*_LIVEKIT*` variables; the client requests a token from `/api/live/token`, and no media server runs on Vercel. The mesh is not suitable for real cross-device calls because it needs TURN in restrictive networks.
+- **Captions.** `use-live-captions.ts` wraps the Web Speech API (Chrome/Edge), records speaker, text, timestamp and confidence, and stops cleanly on permission errors. The demo dialogue remains available everywhere.
+- **Recording.** `use-local-recording.ts` records the local camera/mic with `MediaRecorder` and offers a `.webm` download. It is explicitly browser-local: nothing is uploaded.
+- **Consent first.** The pre-join screen explains transcription and optional recording and requires a KVKK/GDPR acknowledgement before anyone joins.
+- **Persistence.** Ending a room saves a completed `nova_live` meeting with its analysis, transcript, chat and participants, then writes a Knowledge note. Follow-ups are created only after review through the existing `commitMeetingAnalysis` step.
+- **Routes.** `/live` is the lobby inside the app shell; `/live/:roomId` runs full-screen. Start a room in one tab and open the invite link in another to test the mesh as two participants.
+
 ---
 
 ## Deployment — Vercel
@@ -274,7 +317,8 @@ If you rotate keys, update Vercel environment variables and redeploy. Never comm
 - Fixed header with breadcrumb, centered search, notifications and avatar menu
 - Mobile drawer navigation, accessible labels and keyboard support
 - Dark surfaces, Manrope/Inter typography, restrained blue accent — no gradients or glow effects
-- Modules: Overview, Projects, Tasks, Meetings, Decisions, Knowledge, Workflows, Intelligence, Analytics, Team, Settings
+- Modules: Overview, Projects, Tasks, Meetings, Nova Live, Decisions, Knowledge, Workflows, Intelligence, Analytics, Team, Settings
+- Nova Live opens a pre-join check (devices, display name, consent), a full-screen room with captions, chat, copilot and people panels, then an ended-meeting summary with the report
 - Workflows expose an inline run log with status, trigger, step outcomes and duration
 - Analytics recomputes KPIs, decision mix, workload and project health for 7, 14 or 30 day windows
 - Decisions open a detail panel with accept, reject, supersede and reopen actions, a reason note and an append-only status history

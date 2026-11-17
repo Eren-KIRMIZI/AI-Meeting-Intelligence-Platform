@@ -11,6 +11,8 @@ import { ProjectDetailPage } from '@/features/projects/ProjectDetailPage';
 import { TasksPage } from '@/features/tasks/TasksPage';
 import { MeetingsPage } from '@/features/meetings/MeetingsPage';
 import { MeetingDetailPage } from '@/features/meetings/MeetingDetailPage';
+import { LiveLobbyPage } from '@/features/live/LiveLobbyPage';
+import { LiveRoomPage } from '@/features/live/LiveRoomPage';
 import { DecisionsPage } from '@/features/decisions/DecisionsPage';
 import { KnowledgePage } from '@/features/knowledge/KnowledgePage';
 import { WorkflowsPage } from '@/features/workflows/WorkflowsPage';
@@ -58,6 +60,8 @@ export function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
 
       <Route element={<RequireAuth />}>
+        <Route path="/live/:roomId" element={<LiveRoomPage />} />
+
         <Route element={<AppLayout />}>
           <Route index element={<Navigate to="/overview" replace />} />
           <Route path="/overview" element={<OverviewPage />} />
@@ -66,6 +70,7 @@ export function AppRoutes() {
           <Route path="/tasks" element={<TasksPage />} />
           <Route path="/meetings" element={<MeetingsPage />} />
           <Route path="/meetings/:meetingId" element={<MeetingDetailPage />} />
+          <Route path="/live" element={<LiveLobbyPage />} />
           <Route path="/decisions" element={<DecisionsPage />} />
           <Route path="/knowledge" element={<KnowledgePage />} />
           <Route path="/workflows" element={<WorkflowsPage />} />

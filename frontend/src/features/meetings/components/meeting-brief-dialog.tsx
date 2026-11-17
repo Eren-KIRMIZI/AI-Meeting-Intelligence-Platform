@@ -25,6 +25,7 @@ const platformLabels: Record<Meeting['platform'], string> = {
   microsoft_teams: 'Microsoft Teams',
   zoom: 'Zoom',
   in_person: 'In person',
+  nova_live: 'Nova Live',
 };
 
 export function MeetingBriefDialog({
