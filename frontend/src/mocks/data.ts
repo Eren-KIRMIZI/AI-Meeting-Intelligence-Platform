@@ -104,13 +104,13 @@ export const demoUser = people.ayse;
 export const seedProfiles: UserProfile[] = Object.values(people);
 
 export const seedTeam: TeamMember[] = [
-  { ...people.ayse, status: 'active', workload: 78, projectIds: ['p-pulse', 'p-insight', 'p-execution'] },
-  { ...people.sarah, status: 'active', workload: 91, projectIds: ['p-pulse', 'p-execution'] },
-  { ...people.emre, status: 'active', workload: 64, projectIds: ['p-pulse', 'p-brand'] },
-  { ...people.ravi, status: 'active', workload: 82, projectIds: ['p-pulse', 'p-insight'] },
-  { ...people.nadia, status: 'active', workload: 71, projectIds: ['p-brand'] },
-  { ...people.lucas, status: 'away', workload: 46, projectIds: ['p-brand', 'p-execution'] },
-  { ...people.mina, status: 'active', workload: 58, projectIds: ['p-insight'] },
+  { ...people.ayse, status: 'active', workload: 78, projectIds: ['p-pulse', 'p-insight', 'p-execution'], joinedAt: hoursAgo(24 * 420) },
+  { ...people.sarah, status: 'active', workload: 91, projectIds: ['p-pulse', 'p-execution'], joinedAt: hoursAgo(24 * 380) },
+  { ...people.emre, status: 'active', workload: 64, projectIds: ['p-pulse', 'p-brand', 'p-onboarding'], joinedAt: hoursAgo(24 * 310) },
+  { ...people.ravi, status: 'active', workload: 82, projectIds: ['p-pulse', 'p-insight'], joinedAt: hoursAgo(24 * 260) },
+  { ...people.nadia, status: 'active', workload: 71, projectIds: ['p-brand'], joinedAt: hoursAgo(24 * 190) },
+  { ...people.lucas, status: 'away', workload: 46, projectIds: ['p-brand', 'p-execution'], joinedAt: hoursAgo(24 * 120) },
+  { ...people.mina, status: 'active', workload: 58, projectIds: ['p-insight'], joinedAt: hoursAgo(24 * 64) },
 ];
 
 export const seedProjects: Project[] = [

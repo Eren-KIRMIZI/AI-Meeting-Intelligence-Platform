@@ -1,7 +1,12 @@
 import { isSupabaseConfigured } from '@/lib/env';
 import { mockDb } from '@/mocks/db';
 import { getInitials } from '@/lib/utils';
-import type { InviteMemberInput, TeamMember, UserProfile } from '@/types';
+import type {
+  InviteMemberInput,
+  OrgRole,
+  TeamMember,
+  UserProfile,
+} from '@/types';
 import { asOrgRole } from './enum-guards';
 import {
   assertOrg,
@@ -29,7 +34,7 @@ export async function listTeam(orgId: string | null): Promise<TeamMember[]> {
     await Promise.all([
       client
         .from('organization_members')
-        .select('role, status, user_id')
+        .select('role, status, user_id, created_at')
         .eq('organization_id', organizationId)
         .returns<OrgMemberRow[]>(),
       fetchProfileMap(),
@@ -71,6 +76,7 @@ export async function listTeam(orgId: string | null): Promise<TeamMember[]> {
       projectIds: projectMembers
         .filter((projectMember) => projectMember.user_id === member.user_id)
         .map((projectMember) => projectMember.project_id),
+      joinedAt: member.created_at,
     };
   });
 }
@@ -121,4 +127,72 @@ export async function inviteMember(
     workload: 0,
     projectIds: [],
   };
+}
+
+export async function updateMemberRole(
+  memberId: string,
+  role: OrgRole,
+  context: TeamContext
+): Promise<void> {
+  if (!isSupabaseConfigured) {
+    await mockDb.updateMemberRole(memberId, role, context.user);
+    return;
+  }
+
+  if (role === 'owner') {
+    throw new Error('The owner role cannot be assigned.');
+  }
+
+  const client = getClient();
+  const organizationId = assertOrg(context.orgId);
+
+  const { error } = await client.rpc('update_member_role', {
+    p_organization: organizationId,
+    p_member: memberId,
+    p_role: role,
+  });
+
+  if (error) throw new Error(error.message);
+}
+
+export async function removeMember(
+  memberId: string,
+  context: TeamContext
+): Promise<void> {
+  if (!isSupabaseConfigured) {
+    await mockDb.removeMember(memberId, context.user);
+    return;
+  }
+
+  const client = getClient();
+  const organizationId = assertOrg(context.orgId);
+
+  const { error } = await client.rpc('remove_workspace_member', {
+    p_organization: organizationId,
+    p_member: memberId,
+  });
+
+  if (error) throw new Error(error.message);
+}
+
+export async function setMemberProjects(
+  memberId: string,
+  projectIds: string[],
+  context: TeamContext
+): Promise<void> {
+  if (!isSupabaseConfigured) {
+    await mockDb.setMemberProjects(memberId, projectIds, context.user);
+    return;
+  }
+
+  const client = getClient();
+  const organizationId = assertOrg(context.orgId);
+
+  const { error } = await client.rpc('set_member_projects', {
+    p_organization: organizationId,
+    p_member: memberId,
+    p_project_ids: projectIds,
+  });
+
+  if (error) throw new Error(error.message);
 }

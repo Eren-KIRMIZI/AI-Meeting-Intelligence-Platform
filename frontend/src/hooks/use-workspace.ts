@@ -29,7 +29,13 @@ import {
   listIntegrations,
   setIntegrationConnected,
 } from '@/services/integrations.service';
-import { inviteMember, listTeam } from '@/services/team.service';
+import {
+  inviteMember,
+  listTeam,
+  removeMember,
+  setMemberProjects,
+  updateMemberRole,
+} from '@/services/team.service';
 import {
   listNotifications,
   markAllNotificationsRead,
@@ -45,8 +51,10 @@ import type {
   InviteMemberInput,
   LiveMeetingInput,
   SaveMeetingRecordingInput,
+  SetMemberProjectsInput,
   Task,
   UpdateDecisionInput,
+  UpdateMemberRoleInput,
   UpdateTaskInput,
 } from '@/types';
 
@@ -432,6 +440,57 @@ export function useInviteMember() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['team'] });
+    },
+  });
+}
+
+export function useUpdateMemberRole() {
+  const queryClient = useQueryClient();
+  const { orgId, user } = useAuth();
+
+  return useMutation({
+    mutationFn: ({ memberId, role }: UpdateMemberRoleInput) => {
+      if (!user) throw new Error('A signed-in user is required.');
+      return updateMemberRole(memberId, role, { orgId, user });
+    },
+    onSuccess: () => {
+      for (const key of ['team', 'activities', 'notifications']) {
+        void queryClient.invalidateQueries({ queryKey: [key] });
+      }
+    },
+  });
+}
+
+export function useRemoveMember() {
+  const queryClient = useQueryClient();
+  const { orgId, user } = useAuth();
+
+  return useMutation({
+    mutationFn: (memberId: string) => {
+      if (!user) throw new Error('A signed-in user is required.');
+      return removeMember(memberId, { orgId, user });
+    },
+    onSuccess: () => {
+      for (const key of ['team', 'projects', 'activities']) {
+        void queryClient.invalidateQueries({ queryKey: [key] });
+      }
+    },
+  });
+}
+
+export function useSetMemberProjects() {
+  const queryClient = useQueryClient();
+  const { orgId, user } = useAuth();
+
+  return useMutation({
+    mutationFn: ({ memberId, projectIds }: SetMemberProjectsInput) => {
+      if (!user) throw new Error('A signed-in user is required.');
+      return setMemberProjects(memberId, projectIds, { orgId, user });
+    },
+    onSuccess: () => {
+      for (const key of ['team', 'projects', 'activities']) {
+        void queryClient.invalidateQueries({ queryKey: [key] });
+      }
     },
   });
 }

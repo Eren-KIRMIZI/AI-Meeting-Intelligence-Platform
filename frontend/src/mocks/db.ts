@@ -16,6 +16,7 @@ import type {
   Meeting,
   MeetingAnalysis,
   MeetingRecording,
+  OrgRole,
   Project,
   SaveMeetingRecordingInput,
   Task,
@@ -30,6 +31,12 @@ import { analysisSteps, analyzeTranscript } from '@/lib/meeting-intelligence';
 import { liveMeetingNote } from '@/lib/live/intelligence';
 import { baseMimeType } from '@/lib/recordings';
 import { decisionActivityTitle } from '@/lib/decisions';
+import {
+  canAssignProjects,
+  canChangeMemberRole,
+  canRemoveMember,
+  roleLabel,
+} from '@/lib/team';
 import { decisionStatusMeta } from '@/lib/status';
 import { emitWorkspaceEvent } from '@/lib/workspace-events';
 import {
@@ -118,9 +125,30 @@ function pushNotification(input: {
 }
 
 function emitDemoResource(
-  resource: 'tasks' | 'decisions' | 'meetings' | 'knowledge'
+  resource: 'tasks' | 'decisions' | 'meetings' | 'knowledge' | 'team'
 ) {
   emitWorkspaceEvent({ resource, orgId: demoOrg.id });
+}
+
+function teamRoleFor(actor: UserProfile) {
+  return (
+    team.find((member) => member.id === actor.id)?.workspaceRole ??
+    actor.workspaceRole ??
+    null
+  );
+}
+
+function profileOf(member: TeamMember): UserProfile {
+  return {
+    id: member.id,
+    fullName: member.fullName,
+    email: member.email,
+    initials: member.initials,
+    avatarColor: member.avatarColor,
+    avatarUrl: member.avatarUrl,
+    jobTitle: member.jobTitle,
+    workspaceRole: member.workspaceRole,
+  };
 }
 
 function findTeamMember(name: string): UserProfile | null {
@@ -936,9 +964,143 @@ export const mockDb = {
       status: 'invited',
       workload: 0,
       projectIds: [],
+      joinedAt: new Date().toISOString(),
     };
     team = [...team, member];
     return clone(member);
+  },
+
+  async updateMemberRole(
+    memberId: string,
+    role: OrgRole,
+    actor: UserProfile
+  ): Promise<TeamMember> {
+    await wait(220);
+    const target = team.find((member) => member.id === memberId);
+    if (!target) throw new Error('Team member not found');
+
+    const check = canChangeMemberRole(
+      { id: actor.id, workspaceRole: teamRoleFor(actor) },
+      target,
+      role
+    );
+    if (!check.allowed) throw new Error(check.reason);
+
+    const previous = target.workspaceRole ?? 'member';
+    target.workspaceRole = role;
+
+    pushActivity({
+      type: 'assignment',
+      title: 'Workspace role updated',
+      description: `${target.fullName} moved from ${roleLabel(
+        previous
+      )} to ${roleLabel(role)}.`,
+    });
+    pushNotification({
+      type: 'mention',
+      title: 'Your workspace role changed',
+      body: `You are now ${roleLabel(role)} in ${demoOrg.name}.`,
+      link: `/team?member=${target.id}`,
+    });
+    emitDemoResource('team');
+
+    return clone(target);
+  },
+
+  async removeMember(memberId: string, actor: UserProfile): Promise<void> {
+    await wait(240);
+    const target = team.find((member) => member.id === memberId);
+    if (!target) throw new Error('Team member not found');
+
+    const check = canRemoveMember(
+      { id: actor.id, workspaceRole: teamRoleFor(actor) },
+      target
+    );
+    if (!check.allowed) throw new Error(check.reason);
+
+    const wasInvited = target.status === 'invited';
+    team = team.filter((member) => member.id !== memberId);
+    projects = projects.map((project) => ({
+      ...project,
+      members: project.members.filter((member) => member.id !== memberId),
+    }));
+
+    pushActivity({
+      type: 'assignment',
+      title: wasInvited ? 'Invitation revoked' : 'Member removed',
+      description: wasInvited
+        ? `The pending invitation for ${target.email} was revoked.`
+        : `${target.fullName} was removed from the workspace and its projects.`,
+    });
+    emitDemoResource('team');
+  },
+
+  async setMemberProjects(
+    memberId: string,
+    projectIds: string[],
+    actor: UserProfile
+  ): Promise<TeamMember> {
+    await wait(240);
+    const target = team.find((member) => member.id === memberId);
+    if (!target) throw new Error('Team member not found');
+
+    const check = canAssignProjects(
+      { id: actor.id, workspaceRole: teamRoleFor(actor) },
+      target
+    );
+    if (!check.allowed) throw new Error(check.reason);
+
+    const ownedProjectIds = projects
+      .filter((project) => project.owner.id === target.id)
+      .map((project) => project.id);
+    const nextIds = Array.from(
+      new Set([
+        ...projectIds.filter((projectId) =>
+          projects.some((project) => project.id === projectId)
+        ),
+        ...ownedProjectIds,
+      ])
+    );
+
+    target.projectIds = nextIds;
+    const targetProfile = profileOf(target);
+
+    projects = projects.map((project) => {
+      const shouldInclude = nextIds.includes(project.id);
+      const members = project.members.filter(
+        (member) => member.id !== target.id
+      );
+      if (shouldInclude) members.push(targetProfile);
+      return { ...project, members };
+    });
+
+    const names = projects
+      .filter((project) => nextIds.includes(project.id))
+      .map((project) => project.name);
+    const summary =
+      names.length === 0
+        ? 'No project access'
+        : names.length <= 2
+          ? names.join(' and ')
+          : `${names.slice(0, 2).join(', ')} and ${names.length - 2} more`;
+
+    pushActivity({
+      type: 'project',
+      title: 'Project access updated',
+      description: `${target.fullName} now has access to ${summary}.`,
+    });
+
+    if (target.id !== actor.id) {
+      pushNotification({
+        type: 'mention',
+        title: 'Project access updated',
+        body: `You now have access to ${summary}.`,
+        link: `/team?member=${target.id}`,
+      });
+    }
+
+    emitDemoResource('team');
+    return clone(target);
   },
 
   async listNotifications() {

@@ -83,6 +83,116 @@ describe('mockDb workspace', () => {
     });
   });
 
+  it('changes a role, records it and notifies the member', async () => {
+    const updated = await mockDb.updateMemberRole('u-emre', 'viewer', demoUser);
+
+    expect(updated.workspaceRole).toBe('viewer');
+
+    const team = await mockDb.listTeam();
+    expect(team.find((member) => member.id === 'u-emre')?.workspaceRole).toBe(
+      'viewer'
+    );
+
+    const [notification] = await mockDb.listNotifications();
+    expect(notification).toMatchObject({
+      type: 'mention',
+      title: 'Your workspace role changed',
+      link: '/team?member=u-emre',
+    });
+
+    await mockDb.updateMemberRole('u-emre', 'member', demoUser);
+  });
+
+  it('protects the owner role and self changes', async () => {
+    await expect(
+      mockDb.updateMemberRole('u-ayse', 'admin', demoUser)
+    ).rejects.toThrow(/your own role/i);
+
+    await expect(
+      mockDb.updateMemberRole('u-emre', 'owner', demoUser)
+    ).rejects.toThrow(/owner role/i);
+  });
+
+  it('stops admins from changing another admin', async () => {
+    await mockDb.updateMemberRole('u-emre', 'admin', demoUser);
+
+    const adminActor = {
+      ...demoUser,
+      id: 'u-sarah',
+      fullName: 'Sarah Chen',
+      workspaceRole: 'admin' as const,
+    };
+
+    await expect(
+      mockDb.updateMemberRole('u-emre', 'member', adminActor)
+    ).rejects.toThrow(/owner can change an admin/i);
+
+    await mockDb.updateMemberRole('u-emre', 'member', demoUser);
+  });
+
+  it('re-assigns project access and syncs project members', async () => {
+    const updated = await mockDb.setMemberProjects('u-emre', ['p-insight'], demoUser);
+
+    expect(updated.projectIds).toEqual(['p-insight', 'p-onboarding']);
+
+    const projects = await mockDb.listProjects();
+    const insight = projects.find((project) => project.id === 'p-insight');
+    const pulse = projects.find((project) => project.id === 'p-pulse');
+
+    expect(insight?.members.some((member) => member.id === 'u-emre')).toBe(true);
+    expect(pulse?.members.some((member) => member.id === 'u-emre')).toBe(false);
+
+    const [notification] = await mockDb.listNotifications();
+    expect(notification).toMatchObject({
+      type: 'mention',
+      title: 'Project access updated',
+      link: '/team?member=u-emre',
+    });
+
+    await mockDb.setMemberProjects('u-emre', ['p-pulse', 'p-brand'], demoUser);
+  });
+
+  it('keeps a project owner in their own project', async () => {
+    const updated = await mockDb.setMemberProjects('u-nadia', [], demoUser);
+
+    expect(updated.projectIds).toEqual(['p-brand']);
+
+    await mockDb.setMemberProjects('u-nadia', ['p-brand'], demoUser);
+  });
+
+  it('revokes a pending invitation and removes project access', async () => {
+    const invitee = await mockDb.inviteMember({
+      email: 'leyla@novalabs.io',
+      role: 'member',
+    });
+
+    await expect(
+      mockDb.setMemberProjects(invitee.id, ['p-pulse'], demoUser)
+    ).rejects.toThrow(/invitation is accepted/i);
+
+    await mockDb.removeMember(invitee.id, demoUser);
+
+    const team = await mockDb.listTeam();
+    expect(team.some((member) => member.id === invitee.id)).toBe(false);
+  });
+
+  it('refuses to remove the owner', async () => {
+    await expect(mockDb.removeMember('u-ayse', demoUser)).rejects.toThrow(
+      /remove yourself/i
+    );
+
+    const adminActor = {
+      ...demoUser,
+      id: 'u-sarah',
+      fullName: 'Sarah Chen',
+      workspaceRole: 'admin' as const,
+    };
+
+    await expect(
+      mockDb.removeMember('u-ayse', adminActor)
+    ).rejects.toThrow(/owner cannot be removed/i);
+  });
+
   it('flips a workflow and persists the new state', async () => {
     const [target] = await mockDb.listWorkflows();
     expect(target).toBeDefined();

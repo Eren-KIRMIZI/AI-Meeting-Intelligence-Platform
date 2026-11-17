@@ -54,6 +54,7 @@ Nova turns meetings into execution: every conversation becomes a brief with deci
    ├─ migrations/0005_live_meetings.sql        Nova Live sessions, transcript and chat
    ├─ migrations/0006_meeting_recordings.sql   recording archive + private bucket
    ├─ migrations/0007_notifications_realtime.sql notifications, RPC and Realtime
+   ├─ migrations/0008_team_management.sql      roles, removals and project access
    └─ seed.sql                                 idempotent demo workspace
 ```
 
@@ -88,7 +89,7 @@ Open the printed URL (default `http://localhost:5173`). Use **Continue with demo
 
 ### Testing & CI
 
-Tests use Vitest with jsdom, Testing Library and jest-dom. The suite covers pure helpers, metric builders, range-derived analytics, enum guards, the transcript analyzer, the live-meeting intelligence and Knowledge note, the demo data store and its meeting pipeline (analyze → commit), Nova Live persistence, recording formatting and archive storage, notification preference filtering and deep-link safety, the demo workspace event bus, action-driven notification delivery, the workflow run log, sidebar accessibility, the 404 page and a task-board interaction end to end.
+Tests use Vitest with jsdom, Testing Library and jest-dom. The suite covers pure helpers, metric builders, range-derived analytics, enum guards, the transcript analyzer, the live-meeting intelligence and Knowledge note, the demo data store and its meeting pipeline (analyze → commit), Nova Live persistence, recording formatting and archive storage, notification preference filtering and deep-link safety, the demo workspace event bus, action-driven notification delivery, team role hierarchy rules, member removal and project-access sync, the workflow run log, sidebar accessibility, the 404 page and a task-board interaction end to end.
 
 ```bash
 cd frontend
@@ -118,7 +119,8 @@ Open the SQL editor and run, in order:
 5. `supabase/migrations/0005_live_meetings.sql`
 6. `supabase/migrations/0006_meeting_recordings.sql`
 7. `supabase/migrations/0007_notifications_realtime.sql`
-8. `supabase/seed.sql` — optional demo workspace. Requires at least one auth user; sign up once first.
+8. `supabase/migrations/0008_team_management.sql`
+9. `supabase/seed.sql` — optional demo workspace. Requires at least one auth user; sign up once first.
 
 Or with the Supabase CLI:
 
@@ -140,6 +142,8 @@ The migration creates:
 - `meeting_recordings` (added in `0006`) for archived recordings
 - `notifications.link`, the `digest` type, `notify_workspace()` and Realtime
   publication (added in `0007`) for action-driven, live notifications
+- `update_member_role()`, `remove_workspace_member()` and
+  `set_member_projects()` (added in `0008`) for hierarchy-aware team management
 - `handle_new_user` trigger, `set_updated_at` triggers, indexes
 - RLS helpers: `is_org_member`, `is_org_admin`, `shares_org_with`
 - `bootstrap_workspace()` for first-run onboarding
@@ -157,6 +161,8 @@ The fifth migration extends the `meetings.platform` check with `nova_live` and a
 The sixth migration adds `meeting_recordings` and the private `meeting-recordings` bucket (500 MB per file, video/audio mime types only). Members can read and add recordings for their workspace; the uploader or a workspace admin can delete them. Playback requests a one-hour signed URL, so recording files are never public.
 
 The seventh migration adds `notifications.link` and the `digest` notification type, then creates the `notify_workspace()` security-definer RPC. The RPC resolves the audience (`workspace`, `meeting` or `assignee`), excludes the actor and inserts one row per recipient, so client code never writes notifications for other people. It also publishes `notifications`, `tasks`, `decisions`, `decision_events`, `meetings`, `meeting_recordings` and `knowledge_documents` to `supabase_realtime` with replica identity `full`.
+
+The eighth migration makes team management explicit. Direct writes to `organization_members` are disabled and `project_members` writes are restricted to owners/admins. Three security-definer RPCs enforce the hierarchy: `update_member_role()` (owner fixed, no self-change, admins cannot manage admins or grant admin), `remove_workspace_member()` (no self-removal, no owner removal, revokes project memberships) and `set_member_projects()` (active members only, validates project ownership and keeps project owners in their own project). Role and project changes write an activity and notify the affected member with a `/team?member=<id>` deep link. `organization_members` and `project_members` are published to Realtime so every open tab refreshes.
 
 ### 3. Configure environment
 
@@ -306,11 +312,26 @@ Notifications are produced by workspace actions, not by a scheduled job that gue
 - **Audiences.** Decision changes go to every active member except the actor; meeting events go to the meeting's participants; task events go to the assignee. The audience is resolved by the `notify_workspace()` RPC, so the client never writes rows for another user.
 - **Preferences actually filter.** Each notification type maps to one switch in **Settings → Notifications** (`meetingBriefs`, `actionItems`, `decisionReviews`, `weeklyDigest`, `mentions`). The mapping lives in `src/lib/notifications.ts`, so the bell badge, the list and the settings page cannot drift. Switching a type off hides it from the menu and from the unread count immediately; the menu says how many items are hidden and links to the settings tab.
 - **Deep links.** Every notification carries a `link` to the object that produced it, for example `/decisions?decision=d-03`, `/tasks?task=<id>` or `/meetings/<id>`. Links are validated in the UI and by a database check constraint: only single-slash internal paths are accepted, everything else falls back to the module landing page.
-- **Live delivery.** `use-workspace-realtime.ts` subscribes to Supabase Realtime for `notifications`, `tasks`, `decisions`, `meetings`, `meeting_recordings` and `knowledge_documents`. Notification inserts show a toast and refresh the bell; other tables invalidate the matching TanStack Query keys. Notification and task channels are filtered by `user_id` / `organization_id`, and RLS still applies to every payload.
+- **Live delivery.** `use-workspace-realtime.ts` subscribes to Supabase Realtime for `notifications`, `tasks`, `decisions`, `meetings`, `meeting_recordings`, `knowledge_documents`, `organization_members` and `project_members`. Notification inserts show a toast and refresh the bell; other tables invalidate the matching TanStack Query keys. Notification and task channels are filtered by `user_id` / `organization_id`, and RLS still applies to every payload.
 - **Demo delivery.** Without credentials the same hook subscribes to the `BroadcastChannel` bus in `src/lib/workspace-events.ts`. Open the app in two tabs: an action in one tab shows a toast, updates the bell and refreshes the list in the other. Only notifications carry their payload across tabs; other demo resources invalidate queries because each tab keeps its own in-memory store.
 - **Settings deep link.** Settings tabs are URL-controlled (`/settings?tab=notifications`), so the bell footer and the empty-state hint land on the right panel.
 
 ---
+
+## Team management & roles
+
+The Team directory is a working permission surface. Clicking a member card opens a detail panel at `/team?member=<id>`, so team notifications deep-link straight to the person who changed.
+
+- **Member detail.** Shows role, status, workload, member-since, open assignments and project access. The same panel is read-only for viewers and members.
+- **Roles.** Only owners and admins can change roles. The owner role is fixed; admins can assign `member` and `viewer`, while only the owner can promote or demote an admin. Nobody can change their own role. Every change writes an activity and notifies the member through the `mentions` preference.
+- **Removal.** Removing a member revokes their project memberships but keeps task history. Pending invitations are revoked from the same panel. Owners cannot be removed, admins cannot remove other admins and nobody can remove themselves.
+- **Project access.** Owners and admins assign projects from the detail panel. Access is limited to accepted members, project owners always stay in their own project, and the project's member list is updated in the same action.
+- **Demo and live parity.** Demo mode enforces the same rules in `mocks/db.ts`; live mode calls the `0008` security-definer RPCs. Both paths write activities, notifications and workspace events, so another tab refreshes without a manual reload.
+- **Invite gating.** The invite action is only rendered for owners and admins; the API route re-checks the caller's active role before sending anything.
+
+---
+
+## Deployment
 
 1. Import the repository.
 2. Set **Root Directory** to `frontend`.
@@ -330,6 +351,7 @@ Notifications are produced by workspace actions, not by a scheduled job that gue
 - **Storage isolation.** The `meeting-assets` and `meeting-recordings` buckets are private and keyed by organization folder (`<org-uuid>/<file>`). Recordings are served through one-hour signed URLs and never through public links.
 - **Server-side fan-out.** `notify_workspace()` is `security definer` with a pinned `search_path`, verifies the caller is an active member, validates the type and link, resolves the audience itself and excludes the actor. The existing `notifications_insert` policy stays admin-only, so members cannot forge notifications for each other.
 - **Realtime respects RLS.** Published tables keep row-level security; notification subscriptions filter by the signed-in user and workspace, and replica identity `full` only changes how much of a row is echoed, not who may read it.
+- **Team hierarchy.** Membership writes go through `security definer` RPCs with a pinned `search_path`; direct authenticated writes to `organization_members` are disabled and `project_members` writes are limited to owners/admins. The RPCs reject owner demotion/removal, self-changes, admin-on-admin changes and assigning the owner role, so the UI rules are also enforced server-side.
 - **Input validation.** API routes validate email, role and UUID formats and cap request bodies.
 - **Abuse control.** Optional Upstash rate limiting on invitations.
 
@@ -351,5 +373,6 @@ If you rotate keys, update Vercel environment variables and redeploy. Never comm
 - Analytics recomputes KPIs, decision mix, workload and project health for 7, 14 or 30 day windows
 - Decisions open a detail panel with accept, reject, supersede and reopen actions, a reason note and an append-only status history
 - Knowledge opens a full-document reader with section parsing, search highlighting, related notes and source-meeting links
+- Team cards open a management panel for role changes, project access, open assignments and member removal, gated by the caller's role
 
 All interactive controls are wired: create dialogs, task status changes, filters, exports, settings persistence, command palette (`Ctrl/⌘ + K`) and toasts.

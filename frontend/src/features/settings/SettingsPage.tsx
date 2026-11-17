@@ -81,8 +81,8 @@ const notificationOptions: Array<{
   },
   {
     key: 'mentions',
-    label: 'Mentions and comments',
-    description: 'Notify me when a teammate mentions me in a meeting or task.',
+    label: 'Mentions and account updates',
+    description: 'Notify me when a teammate mentions me or my role and project access change.',
   },
 ];
 

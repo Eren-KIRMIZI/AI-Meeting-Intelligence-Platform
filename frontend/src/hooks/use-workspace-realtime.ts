@@ -17,6 +17,7 @@ const resourceQueryKeys: Record<WorkspaceEventResource, string[]> = {
   meetings: ['meetings', 'meeting', 'knowledge'],
   knowledge: ['knowledge'],
   activities: ['activities'],
+  team: ['team', 'projects'],
 };
 
 function invalidateResource(
@@ -32,13 +33,32 @@ function invalidateResource(
   }
 }
 
-const realtimeTables: Array<[string, WorkspaceEventResource]> = [
-  ['tasks', 'tasks'],
-  ['decisions', 'decisions'],
-  ['decision_events', 'decisions'],
-  ['meetings', 'meetings'],
-  ['meeting_recordings', 'meetings'],
-  ['knowledge_documents', 'knowledge'],
+const realtimeTables: Array<{
+  table: string;
+  resource: WorkspaceEventResource;
+  /** Membership tables are filtered client-side by RLS. */
+  organizationScoped?: boolean;
+}> = [
+  { table: 'tasks', resource: 'tasks', organizationScoped: true },
+  { table: 'decisions', resource: 'decisions', organizationScoped: true },
+  { table: 'decision_events', resource: 'decisions', organizationScoped: true },
+  { table: 'meetings', resource: 'meetings', organizationScoped: true },
+  {
+    table: 'meeting_recordings',
+    resource: 'meetings',
+    organizationScoped: true,
+  },
+  {
+    table: 'knowledge_documents',
+    resource: 'knowledge',
+    organizationScoped: true,
+  },
+  {
+    table: 'organization_members',
+    resource: 'team',
+    organizationScoped: true,
+  },
+  { table: 'project_members', resource: 'team' },
 ];
 
 /**
@@ -76,14 +96,16 @@ export function useWorkspaceRealtime() {
     const client = supabase;
     const channel = client.channel(`workspace:${orgId}:${user.id}`);
 
-    for (const [table, resource] of realtimeTables) {
+    for (const { table, resource, organizationScoped } of realtimeTables) {
       channel.on(
         'postgres_changes',
         {
           event: '*',
           schema: 'public',
           table,
-          filter: `organization_id=eq.${orgId}`,
+          ...(organizationScoped
+            ? { filter: `organization_id=eq.${orgId}` }
+            : {}),
         },
         () => invalidateResource(queryClient, resource)
       );

@@ -162,6 +162,7 @@ export interface OrgMemberRow {
   role: string;
   status: string;
   user_id: string;
+  created_at: string;
 }
 
 export interface NotificationRow {

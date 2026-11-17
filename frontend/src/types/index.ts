@@ -24,6 +24,7 @@ export interface TeamMember extends UserProfile {
   status: 'active' | 'away' | 'invited';
   workload: number;
   projectIds: string[];
+  joinedAt?: string;
 }
 
 export type ProjectStatus =
@@ -496,4 +497,14 @@ export interface CreateWorkflowInput {
 export interface InviteMemberInput {
   email: string;
   role: OrgRole;
+}
+
+export interface UpdateMemberRoleInput {
+  memberId: string;
+  role: OrgRole;
+}
+
+export interface SetMemberProjectsInput {
+  memberId: string;
+  projectIds: string[];
 }

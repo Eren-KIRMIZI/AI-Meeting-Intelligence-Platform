@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import {
   Download,
   Mail,
@@ -18,26 +19,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { useProjects, useTeam } from '@/hooks/use-workspace';
+import { useAuth } from '@/features/auth/auth-provider';
+import { useProjects, useTasks, useTeam } from '@/hooks/use-workspace';
+import { canManageTeam } from '@/lib/team';
 import { cn, downloadCsv } from '@/lib/utils';
 import { InviteMemberDialog } from './components/invite-member-dialog';
-import type { OrgRole, Project, TeamMember } from '@/types';
-
-const roleMeta: Record<
-  OrgRole,
-  { label: string; variant: 'violet' | 'info' | 'neutral' | 'outline' }
-> = {
-  owner: { label: 'Owner', variant: 'violet' },
-  admin: { label: 'Admin', variant: 'info' },
-  member: { label: 'Member', variant: 'neutral' },
-  viewer: { label: 'Viewer', variant: 'outline' },
-};
-
-const statusMeta: Record<TeamMember['status'], { label: string; dot: string }> = {
-  active: { label: 'Active', dot: 'bg-emerald-400' },
-  away: { label: 'Away', dot: 'bg-amber-400' },
-  invited: { label: 'Invited', dot: 'bg-slate-400' },
-};
+import { MemberDetailDialog } from './components/member-detail-dialog';
+import { roleMeta, statusMeta } from './team-meta';
+import type { OrgRole, Project } from '@/types';
 
 type RoleFilter = 'all' | OrgRole;
 
@@ -52,12 +41,34 @@ const roleFilters: Array<{ value: RoleFilter; label: string }> = [
 export function TeamPage() {
   const team = useTeam();
   const projects = useProjects();
+  const tasks = useTasks();
+  const { user, orgRole } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [roleFilter, setRoleFilter] = useState<RoleFilter>('all');
   const [query, setQuery] = useState('');
   const [inviteOpen, setInviteOpen] = useState(false);
 
   const list = useMemo(() => team.data ?? [], [team.data]);
   const projectList = useMemo(() => projects.data ?? [], [projects.data]);
+  const taskList = useMemo(() => tasks.data ?? [], [tasks.data]);
+  const manage = canManageTeam(orgRole);
+  const actor = { id: user?.id ?? '', workspaceRole: orgRole };
+  const selectedMemberId = searchParams.get('member');
+  const selectedMember =
+    list.find((member) => member.id === selectedMemberId) ?? null;
+
+  const openMember = (memberId: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set('member', memberId);
+    setSearchParams(next);
+  };
+
+  const handleMemberOpenChange = (open: boolean) => {
+    if (open) return;
+    const next = new URLSearchParams(searchParams);
+    next.delete('member');
+    setSearchParams(next, { replace: true });
+  };
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -162,10 +173,12 @@ export function TeamPage() {
               <Download className="h-3.5 w-3.5" />
               Export
             </Button>
-            <Button size="sm" onClick={() => setInviteOpen(true)}>
-              <UserPlus className="h-3.5 w-3.5" />
-              Invite member
-            </Button>
+            {manage ? (
+              <Button size="sm" onClick={() => setInviteOpen(true)}>
+                <UserPlus className="h-3.5 w-3.5" />
+                Invite member
+              </Button>
+            ) : null}
           </>
         }
       />
@@ -230,7 +243,7 @@ export function TeamPage() {
               : 'Invite a teammate or switch to another role filter.'
           }
           action={
-            !query ? (
+            !query && manage ? (
               <Button size="sm" onClick={() => setInviteOpen(true)}>
                 <UserPlus className="h-3.5 w-3.5" />
                 Invite member
@@ -251,7 +264,11 @@ export function TeamPage() {
               .filter((project): project is Project => Boolean(project));
 
             return (
-              <Card key={member.id} className="flex flex-col">
+              <Card
+                key={member.id}
+                className="flex cursor-pointer flex-col transition-colors hover:border-border/80 hover:bg-secondary/10"
+                onClick={() => openMember(member.id)}
+              >
                 <CardContent className="flex flex-1 flex-col p-4">
                   <div className="flex items-start gap-3">
                     <UserAvatar user={member} size="lg" />
@@ -331,17 +348,38 @@ export function TeamPage() {
                             memberProjects.length === 1 ? 'project' : 'projects'
                           }`}
                     </span>
-                    <Button
-                      asChild
-                      variant="outline"
-                      size="sm"
-                      className="h-7 text-[11px]"
-                    >
-                      <a href={`mailto:${member.email}`}>
-                        <Mail className="h-3 w-3" />
-                        Email
-                      </a>
-                    </Button>
+                    <div className="flex items-center gap-1.5">
+                      <Button
+                        asChild
+                        variant="ghost"
+                        size="icon-sm"
+                        className="h-7 w-7 text-muted-foreground"
+                      >
+                        <a
+                          href={`mailto:${member.email}`}
+                          aria-label={`Email ${member.fullName}`}
+                          title={`Email ${member.fullName}`}
+                          onClick={(event) => event.stopPropagation()}
+                        >
+                          <Mail className="h-3.5 w-3.5" />
+                        </a>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-[11px]"
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          openMember(member.id);
+                        }}
+                      >
+                        {manage
+                          ? member.status === 'invited'
+                            ? 'Review invite'
+                            : 'Manage'
+                          : 'View profile'}
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -350,7 +388,17 @@ export function TeamPage() {
         </div>
       )}
 
-      <InviteMemberDialog open={inviteOpen} onOpenChange={setInviteOpen} />
+      {manage ? (
+        <InviteMemberDialog open={inviteOpen} onOpenChange={setInviteOpen} />
+      ) : null}
+      <MemberDetailDialog
+        open={Boolean(selectedMember)}
+        member={selectedMember}
+        projects={projectList}
+        tasks={taskList}
+        actor={actor}
+        onOpenChange={handleMemberOpenChange}
+      />
     </div>
   );
 }
