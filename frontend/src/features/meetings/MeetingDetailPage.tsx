@@ -39,6 +39,8 @@ import {
 import { cn, formatDate, formatRelativeTime, formatTime } from '@/lib/utils';
 import { useI18n } from '@/i18n';
 import { AnalyzeMeetingDialog } from './components/analyze-meeting-dialog';
+import { MeetingFollowUpCard } from './components/meeting-follow-up-card';
+import { MeetingPreparationCard } from './components/meeting-preparation-card';
 import { MeetingRecordingCard } from './components/meeting-recording-card';
 import type { Meeting, UserProfile } from '@/types';
 
@@ -353,6 +355,10 @@ export function MeetingDetailPage() {
         <MeetingRecordingCard recordings={meeting.recordings} />
       ) : null}
 
+      {meeting.status === 'scheduled' || meeting.status === 'processing' ? (
+        <MeetingPreparationCard meeting={meeting} />
+      ) : null}
+
       {analysis ? (
         <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_340px]">
           <div className="space-y-4">
@@ -618,6 +624,8 @@ export function MeetingDetailPage() {
           </div>
 
           <div className="space-y-4">
+            <MeetingFollowUpCard meeting={meeting} />
+
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle>{t('Follow-through')}</CardTitle>
@@ -841,56 +849,62 @@ export function MeetingDetailPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle>{t('Meeting context')}</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div>
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                  {t('Agenda')}
-                </p>
-                {meeting.agenda.length === 0 ? (
-                  <p className="mt-1 text-[11px] text-muted-foreground">
-                    {t('No agenda was added.')}
+          <div className="space-y-4">
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle>{t('Meeting context')}</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                    {t('Agenda')}
                   </p>
-                ) : (
-                  <ul className="mt-1.5 space-y-1">
-                    {meeting.agenda.map((item) => (
-                      <li
-                        key={item}
-                        className="flex items-start gap-1.5 text-[11px] leading-snug text-muted-foreground"
-                      >
-                        <Circle className="mt-1 h-2 w-2 shrink-0 text-blue-400/70" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
-              <Separator />
-              <div>
-                <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                  {t('Participants')}
-                </p>
-                <div className="mt-2 space-y-2">
-                  {meeting.participants.map((participant: UserProfile) => (
-                    <div key={participant.id} className="flex items-center gap-2">
-                      <UserAvatar user={participant} size="sm" />
-                      <div className="min-w-0">
-                        <p className="truncate text-[11px] font-medium text-foreground">
-                          {participant.fullName}
-                        </p>
-                        <p className="truncate text-[10px] text-muted-foreground">
-                          {participant.jobTitle ?? participant.email}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
+                  {meeting.agenda.length === 0 ? (
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      {t('No agenda was added.')}
+                    </p>
+                  ) : (
+                    <ul className="mt-1.5 space-y-1">
+                      {meeting.agenda.map((item) => (
+                        <li
+                          key={item}
+                          className="flex items-start gap-1.5 text-[11px] leading-snug text-muted-foreground"
+                        >
+                          <Circle className="mt-1 h-2 w-2 shrink-0 text-blue-400/70" />
+                          {item}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+                <Separator />
+                <div>
+                  <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
+                    {t('Participants')}
+                  </p>
+                  <div className="mt-2 space-y-2">
+                    {meeting.participants.map((participant: UserProfile) => (
+                      <div key={participant.id} className="flex items-center gap-2">
+                        <UserAvatar user={participant} size="sm" />
+                        <div className="min-w-0">
+                          <p className="truncate text-[11px] font-medium text-foreground">
+                            {participant.fullName}
+                          </p>
+                          <p className="truncate text-[10px] text-muted-foreground">
+                            {participant.jobTitle ?? participant.email}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {meeting.status === 'completed' || meeting.status === 'processing' ? (
+              <MeetingFollowUpCard meeting={meeting} />
+            ) : null}
+          </div>
         </div>
       )}
 

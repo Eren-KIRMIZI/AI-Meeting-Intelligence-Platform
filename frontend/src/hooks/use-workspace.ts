@@ -40,6 +40,13 @@ import {
 import { listCalendarEvents } from '@/services/calendar.service';
 import { searchWorkspace } from '@/services/search.service';
 import {
+  generateFollowUpMessages,
+  listFollowUpMessages,
+  setFollowUpStatus,
+} from '@/services/follow-up.service';
+import { getMeetingPreparation } from '@/services/preparation.service';
+import { getOrgIntelligence } from '@/services/org-intelligence.service';
+import {
   createMeetingTemplate,
   listMeetingTemplates,
   markTemplateUsed,
@@ -72,6 +79,7 @@ import type {
   CreateProjectInput,
   CreateTaskInput,
   CreateWorkflowInput,
+  FollowUpStatus,
   InviteMemberInput,
   LiveMeetingInput,
   SaveMeetingRecordingInput,
@@ -778,5 +786,70 @@ export function useRecordAuditExport() {
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['audit-events'] });
     },
+  });
+}
+
+export function useMeetingPreparation(
+  meetingId: string | undefined,
+  options: QueryOptions = {}
+) {
+  const { orgId } = useAuth();
+  return useQuery({
+    queryKey: ['meeting-preparation', orgId, meetingId],
+    queryFn: () => getMeetingPreparation(meetingId as string, orgId),
+    enabled: (options.enabled ?? true) && Boolean(meetingId),
+  });
+}
+
+export function useFollowUpMessages(
+  meetingId: string | undefined,
+  options: QueryOptions = {}
+) {
+  const { orgId } = useAuth();
+  return useQuery({
+    queryKey: ['follow-up-messages', orgId, meetingId],
+    queryFn: () => listFollowUpMessages(meetingId as string, orgId),
+    enabled: (options.enabled ?? true) && Boolean(meetingId),
+  });
+}
+
+export function useGenerateFollowUpMessages() {
+  const queryClient = useQueryClient();
+  const { orgId } = useAuth();
+
+  return useMutation({
+    mutationFn: (meetingId: string) => generateFollowUpMessages(meetingId, orgId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['follow-up-messages'] });
+      void queryClient.invalidateQueries({ queryKey: ['activities'] });
+    },
+  });
+}
+
+export function useSetFollowUpStatus() {
+  const queryClient = useQueryClient();
+  const { orgId } = useAuth();
+
+  return useMutation({
+    mutationFn: ({
+      messageId,
+      status,
+    }: {
+      messageId: string;
+      status: FollowUpStatus;
+    }) => setFollowUpStatus(messageId, status, orgId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['follow-up-messages'] });
+      void queryClient.invalidateQueries({ queryKey: ['activities'] });
+    },
+  });
+}
+
+export function useOrgIntelligence(options: QueryOptions = {}) {
+  const { orgId } = useAuth();
+  return useQuery({
+    queryKey: ['org-intelligence', orgId],
+    queryFn: () => getOrgIntelligence(orgId),
+    enabled: options.enabled ?? true,
   });
 }

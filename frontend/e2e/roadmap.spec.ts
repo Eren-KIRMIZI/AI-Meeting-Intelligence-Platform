@@ -128,3 +128,63 @@ test('audit log filters and exports compliance evidence', async ({ page }) => {
   await download;
   await expect(page.getByText('Audit log exported')).toBeVisible();
 });
+
+test('a scheduled meeting opens with an AI preparation brief', async ({
+  page,
+}) => {
+  await page.goto('/meetings/m-product-sync');
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Weekly product sync' })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 3, name: 'AI meeting preparation' })
+  ).toBeVisible();
+  await expect(page.getByText('This meeting is ready to run.')).toBeVisible();
+  await expect(page.getByText('Questions to ask')).toBeVisible();
+  await expect(
+    page.getByText('Leave with a decision and an owner for onboarding v2 rollout.')
+  ).toBeVisible();
+  await expect(
+    page.getByRole('link', { name: 'Open meeting' }).first()
+  ).toBeVisible();
+});
+
+test('follow-ups queue and send from the meeting record', async ({ page }) => {
+  await page.goto('/meetings/m-product-sync-past');
+  await expect(
+    page.getByRole('heading', { level: 3, name: 'AI follow-up' })
+  ).toBeVisible();
+  await expect(
+    page.getByText('Recap — Product sync — Nov 9')
+  ).toBeVisible();
+  await expect(page.getByText('33% sent')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Queue' }).click();
+  await expect(page.getByText('Follow-up queued')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Send' }).first().click();
+  await expect(page.getByText('Follow-up sent')).toBeVisible();
+  await expect(page.getByText('67% sent')).toBeVisible();
+});
+
+test('organizational intelligence reads across meetings', async ({ page }) => {
+  await page.goto('/org-intelligence');
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Organizational intelligence' })
+  ).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 3, name: 'Workspace health' })
+  ).toBeVisible();
+  await expect(page.getByText('Signals across the workspace')).toBeVisible();
+  await expect(
+    page.getByRole('heading', { level: 3, name: 'Recurring themes' })
+  ).toBeVisible();
+  await expect(
+    page.getByText('Decision latency', { exact: true })
+  ).toBeVisible();
+
+  await page.getByRole('button', { name: 'Refresh report' }).click();
+  await expect(
+    page.getByRole('heading', { level: 3, name: 'Workspace health' })
+  ).toBeVisible();
+});

@@ -10,6 +10,7 @@ import {
   LayoutTemplate,
   ListTodo,
   LogOut,
+  Network,
   Plug,
   Search,
   Settings,
@@ -107,6 +108,12 @@ export const primaryNav: NavItem[] = [
     description: 'Extracted summaries, decisions and actions',
   },
   {
+    label: 'Org intelligence',
+    path: '/org-intelligence',
+    icon: Network,
+    description: 'Cross-meeting patterns, decision speed and load',
+  },
+  {
     label: 'Analytics',
     path: '/analytics',
     icon: ChartNoAxesCombined,
@@ -154,6 +161,7 @@ export const routeMeta: Record<string, { title: string; parent?: string }> = {
   '/workflows': { title: 'Workflows', parent: 'Workspace' },
   '/integrations': { title: 'Integrations', parent: 'Workspace' },
   '/intelligence': { title: 'AI Intelligence', parent: 'Workspace' },
+  '/org-intelligence': { title: 'Org intelligence', parent: 'Workspace' },
   '/analytics': { title: 'Analytics', parent: 'Workspace' },
   '/team': { title: 'Team', parent: 'Workspace' },
   '/audit': { title: 'Audit & compliance', parent: 'Workspace' },

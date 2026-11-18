@@ -19,6 +19,7 @@ const routes = [
   '/workflows',
   '/integrations',
   '/intelligence',
+  '/org-intelligence',
   '/analytics',
   '/team',
   '/audit',

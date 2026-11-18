@@ -748,3 +748,101 @@ export interface ComplianceControl {
   evidenceCount: number;
   remediation?: string;
 }
+
+export interface PreparationContextItem {
+  id: string;
+  title: string;
+  detail: string;
+  meetingId: string | null;
+}
+
+export interface PreparationAttendeeNote {
+  userId: string;
+  name: string;
+  focus: string;
+  openTasks: number;
+}
+
+export interface MeetingPreparation {
+  meetingId: string;
+  generatedAt: string;
+  /** 0–100: how much context Nova has to prepare the meeting. */
+  readiness: number;
+  headline: string;
+  objective: string;
+  questions: string[];
+  context: PreparationContextItem[];
+  risks: string[];
+  attendeeNotes: PreparationAttendeeNote[];
+  suggestedAgenda: string[];
+  model: string;
+}
+
+export type FollowUpChannel = 'email' | 'chat' | 'task';
+
+export type FollowUpStatus = 'draft' | 'queued' | 'sent';
+
+export interface FollowUpMessage {
+  id: string;
+  meetingId: string;
+  meetingTitle: string;
+  channel: FollowUpChannel;
+  status: FollowUpStatus;
+  recipient: string;
+  subject: string;
+  body: string;
+  createdAt: string;
+  sentAt: string | null;
+}
+
+export interface FollowUpPlan {
+  meetingId: string;
+  generatedAt: string;
+  messages: FollowUpMessage[];
+  taskCount: number;
+  decisionCount: number;
+  summary: string;
+  model: string;
+}
+
+export type OrgSignalKind =
+  | 'risk'
+  | 'decision'
+  | 'load'
+  | 'knowledge'
+  | 'collaboration';
+
+export type OrgSignalTone = 'positive' | 'warning' | 'critical' | 'neutral';
+
+export interface OrgSignal {
+  id: string;
+  kind: OrgSignalKind;
+  title: string;
+  detail: string;
+  metric: string;
+  tone: OrgSignalTone;
+}
+
+export interface OrgTheme {
+  id: string;
+  label: string;
+  mentions: number;
+  meetingCount: number;
+  /** Percentage change in mentions between the recent and older window. */
+  trend: number;
+  tone: OrgSignalTone;
+}
+
+export interface OrgIntelligenceReport {
+  generatedAt: string;
+  healthScore: number;
+  summary: string;
+  signals: OrgSignal[];
+  themes: OrgTheme[];
+  decisionLatencyDays: number;
+  followUpRate: number;
+  meetingLoadHours: number;
+  analyzedMeetings: number;
+  topRisks: string[];
+  model: string;
+}

@@ -23,6 +23,9 @@ const resourceQueryKeys: Record<WorkspaceEventResource, string[]> = {
   calendar: ['calendar-events', 'meetings'],
   templates: ['meeting-templates'],
   audit: ['audit-events'],
+  preparation: ['meeting-preparation'],
+  'follow-up': ['follow-up-messages'],
+  intelligence: ['org-intelligence'],
 };
 
 function invalidateResource(

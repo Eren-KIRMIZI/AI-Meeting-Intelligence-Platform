@@ -58,6 +58,11 @@ const routeGroups: Array<{ name: string; routes: RouteCheck[] }> = [
         heading: 'AI Intelligence',
         title: 'AI Intelligence — Nova',
       },
+      {
+        path: '/org-intelligence',
+        heading: 'Organizational intelligence',
+        title: 'Org intelligence — Nova',
+      },
       { path: '/analytics', heading: 'Analytics', title: 'Analytics — Nova' },
       { path: '/team', heading: 'Team', title: 'Team — Nova' },
       {

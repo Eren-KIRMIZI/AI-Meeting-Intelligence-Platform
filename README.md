@@ -402,6 +402,42 @@ AI Intelligence is a reviewed queue, not a second meeting summary. Every signal 
 
 ---
 
+## AI meeting preparation
+
+The brief arrives before the meeting starts, built from the workspace rather than a blank prompt.
+
+- **Deterministic brief.** `buildMeetingPreparation` in `src/lib/preparation.ts` reads the agenda, the participants, earlier meetings on the same project, open risk insights and assigned tasks, then produces an objective, questions to ask, context, risks and per-attendee focus.
+- **Readiness, explained.** `preparationReadiness` scores 0–100 from the agenda, participant count, prior context, open risks and open follow-ups; the card shows the score, the headline and the exact gaps instead of a vague confidence.
+- **Context with links.** Every context item keeps the source meeting, so **Open meeting** jumps straight to the transcript and decisions that shaped the agenda.
+- **Where it appears.** Scheduled and processing meetings show the brief above the record; analysed meetings keep it out of the way and lead with the outcome.
+- **Demo and live parity.** Demo mode builds the brief from the in-memory workspace. Live mode reads `meeting_preparations` through the same shape, so the card never branches on mode.
+
+---
+
+## AI follow-up automation
+
+Follow-ups are a reviewed pack, not an automatic blast: one recap email, one owner nudge and one task digest.
+
+- **One plan, three messages.** `buildFollowUpPlan` in `src/lib/follow-up.ts` turns the analysis (or the stored summary) into an email to all participants, a chat nudge for the first owner and a task digest for the project.
+- **Explicit state machine.** `nextFollowUpStatus` only allows `draft → queued → sent`; sent is terminal, so a message cannot be re-sent or silently reverted. `followUpCompletion` reports the share that actually left the workspace.
+- **Every step is visible.** The meeting record shows the channel, recipient, subject, body, status and when it was sent; **Queue** and **Send** update the record and write an activity entry.
+- **Regenerate deliberately.** Rebuilding the pack replaces the meeting's messages only after the user asks, so a stale recap never overwrites a sent one.
+- **Demo and live parity.** Demo mode mutates `mocks/db.ts`; live mode runs the same builder and upserts the pack into `follow_up_messages`.
+
+---
+
+## Organizational intelligence
+
+Organizational intelligence reads the workspace as a system instead of a list of meetings.
+
+- **Explainable score.** `buildOrgIntelligence` in `src/lib/org-intelligence.ts` weights open risks, proposed decisions, unanalysed meetings and follow-up completion. The methodology card shows the same rule the score uses.
+- **Five signals.** Open risks, the decision queue, workload concentration, unanalysed meetings and meeting size each carry a metric and a tone, derived from the same records the rest of Nova reads.
+- **Recurring themes.** Analysed topics are normalised, grouped and compared between the recent and older window, so a theme that keeps returning rises to the top with its mention count.
+- **Decision speed and load.** Decision latency measures proposal-to-acceptance from the decision history; meeting load sums the last 30 days of scheduled minutes.
+- **Demo and live parity.** Live mode loads meetings, decisions, tasks and insights through the existing services and runs the same pure builder, so the report cannot drift between modes.
+
+---
+
 ## Notifications & realtime
 
 Notifications are produced by workspace actions, not by a scheduled job that guesses what happened. The bell in the header is a filtered, deep-linked inbox.

@@ -402,6 +402,42 @@ AI Intelligence ikinci bir toplantı özeti değil, incelenen bir kuyruktur. Her
 
 ---
 
+## AI toplantı hazırlığı
+
+Brif toplantı başlamadan önce gelir ve boş bir istemden değil, çalışma alanından oluşturulur.
+
+- **Deterministik brif.** `src/lib/preparation.ts` içindeki `buildMeetingPreparation`; gündemi, katılımcıları, aynı projedeki önceki toplantıları, açık risk içgörülerini ve atanmış görevleri okur; ardından bir hedef, sorulacak sorular, bağlam, riskler ve katılımcı bazında odak üretir.
+- **Açıklanan hazırlık.** `preparationReadiness`; gündem, katılımcı sayısı, önceki bağlam, açık riskler ve açık takiplerden 0–100 arası bir puan hesaplar; kart belirsiz bir güven yerine puanı, başlığı ve tam eksikleri gösterir.
+- **Bağlantılı bağlam.** Her bağlam öğesi kaynak toplantısını korur; **Toplantıyı aç** doğrudan gündemi şekillendiren transkripte ve kararlara gider.
+- **Nerede görünür.** Planlanmış ve işlenen toplantılar brifi kaydın üstünde gösterir; analiz edilmiş toplantılar brifi geri plana atar ve sonuçla başlar.
+- **Demo ve canlı eşliği.** Demo modu brifi bellekteki çalışma alanından oluşturur. Canlı mod `meeting_preparations` tablosunu aynı şekille okur; böylece kart moda göre dallanmaz.
+
+---
+
+## AI takip otomasyonu
+
+Takipler otomatik bir yağmur değil, incelenen bir pakettir: bir özet e-postası, bir sorumlu hatırlatması ve bir görev özeti.
+
+- **Tek plan, üç mesaj.** `src/lib/follow-up.ts` içindeki `buildFollowUpPlan`; analizi (veya saklanan özeti) tüm katılımcılara e-posta, ilk sorumluya sohbet hatırlatması ve projeye görev özeti olarak dönüştürür.
+- **Açık durum makinesi.** `nextFollowUpStatus` yalnızca `draft → queued → sent` geçişine izin verir; gönderildi son durumdur, böylece bir mesaj yeniden gönderilemez veya sessizce geri alınamaz. `followUpCompletion` çalışma alanından gerçekten çıkan payı bildirir.
+- **Her adım görünür.** Toplantı kaydı kanalı, alıcıyı, konuyu, gövdeyi, durumu ve gönderim zamanını gösterir; **Kuyruğa al** ve **Gönder** kaydı günceller ve bir etkinlik girdisi yazar.
+- **Bilinçli yeniden oluşturma.** Paketi yeniden kurmak, toplantının mesajlarını yalnızca kullanıcı istedikten sonra değiştirir; böylece eski bir özet gönderilmiş bir mesajın üzerine yazmaz.
+- **Demo ve canlı eşliği.** Demo modu `mocks/db.ts` üzerinde değişiklik yapar; canlı mod aynı oluşturucuyu çalıştırır ve paketi `follow_up_messages` tablosuna yazar.
+
+---
+
+## Organizasyon zekası
+
+Organizasyon zekası çalışma alanını toplantı listesi olarak değil, bir sistem olarak okur.
+
+- **Açıklanabilir puan.** `src/lib/org-intelligence.ts` içindeki `buildOrgIntelligence`; açık riskleri, önerilen kararları, analiz edilmemiş toplantıları ve takip tamamlanmasını ağırlıklandırır. Yöntem kartı, puanın kullandığı kuralın aynısını gösterir.
+- **Beş sinyal.** Açık riskler, karar kuyruğu, iş yükü yoğunlaşması, analiz edilmemiş toplantılar ve toplantı büyüklüğü; her biri Nova'nın geri kalanının okuduğu aynı kayıtlardan türetilen bir metrik ve ton taşır.
+- **Tekrarlayan temalar.** Analiz edilen konular sadeleştirilir, gruplanır ve yeni ile eski pencere arasında karşılaştırılır; böylece tekrar eden tema, geçiş sayısıyla birlikte en üste çıkar.
+- **Karar hızı ve yük.** Karar gecikmesi, karar geçmişinden öneriden kabule süreyi ölçer; toplantı yükü son 30 günün planlanmış dakikalarını toplar.
+- **Demo ve canlı eşliği.** Canlı mod toplantıları, kararları, görevleri ve içgörüleri mevcut servisler üzerinden yükler ve aynı saf oluşturucuyu çalıştırır; böylece rapor modlar arasında kayamaz.
+
+---
+
 ## Bildirimler ve gerçek zamanlı akış
 
 Bildirimler, ne olduğunu tahmin eden zamanlanmış bir iş tarafından değil, çalışma alanı eylemleri tarafından üretilir. Başlıktaki zil, filtrelenmiş ve derin bağlantılı bir gelen kutusudur.

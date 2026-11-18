@@ -1579,4 +1579,93 @@ export const tr: Record<string, string> = {
   HIPAA: 'HIPAA',
   Passing: 'Geçiyor',
   Failing: 'Başarısız',
+
+  // AI meeting preparation
+  'AI meeting preparation': 'AI toplantı hazırlığı',
+  'Preparing the meeting brief…': 'Toplantı özeti hazırlanıyor…',
+  '{{count}}% ready': '{{count}}% hazır',
+  'Preparation readiness': 'Hazırlık düzeyi',
+  'Questions to ask': 'Sorulacak sorular',
+  'Suggested agenda': 'Önerilen gündem',
+  'Context from past meetings': 'Geçmiş toplantılardan bağlam',
+  'Risks to raise': 'Gündeme getirilecek riskler',
+  'Attendee focus': 'Katılımcı odağı',
+  '{{count}} open follow-ups': '{{count}} açık takip',
+  'This meeting is ready to run.': 'Bu toplantı yürütülmeye hazır.',
+  'A few gaps to close before the meeting.':
+    'Toplantıdan önce kapatılacak birkaç eksik var.',
+  'Preparation is thin — add an agenda and context.':
+    'Hazırlık yetersiz — bir gündem ve bağlam ekleyin.',
+
+  // AI follow-up automation
+  'AI follow-up': 'AI takibi',
+  '{{count}}% sent': '{{count}}% gönderildi',
+  'Loading follow-ups…': 'Takip mesajları yükleniyor…',
+  'Turn the analysis into a recap email, an owner nudge and a task digest.':
+    'Analizi bir özet e-postasına, sorumlu hatırlatmasına ve görev özetine dönüştürün.',
+  'Generating…': 'Oluşturuluyor…',
+  'Generate follow-up': 'Takip oluştur',
+  'Regenerate follow-up': 'Takibi yeniden oluştur',
+  'Follow-up completion': 'Takip tamamlanması',
+  'Follow-up pack generated': 'Takip paketi oluşturuldu',
+  'Could not generate the follow-up pack': 'Takip paketi oluşturulamadı',
+  'Follow-up sent': 'Takip gönderildi',
+  'Follow-up queued': 'Takip kuyruğa alındı',
+  'Could not update the follow-up': 'Takip güncellenemedi',
+  'Sent {{time}}': '{{time}} gönderildi',
+  Queue: 'Kuyruğa al',
+  Send: 'Gönder',
+  Email: 'E-posta',
+  Draft: 'Taslak',
+  Queued: 'Kuyrukta',
+
+  // Organizational intelligence
+  'Organizational intelligence': 'Organizasyon zekası',
+  'See the patterns behind the meetings: repeated themes, decision speed and where follow-up work stalls.':
+    'Toplantıların ardındaki kalıpları görün: tekrarlayan temalar, karar hızı ve takip çalışmasının nerede tıkandığı.',
+  'The organizational report could not be loaded.':
+    'Organizasyon raporu yüklenemedi.',
+  'Refresh report': 'Raporu yenile',
+  'Open AI intelligence': 'AI zekasını aç',
+  'Workspace health': 'Çalışma alanı sağlığı',
+  '{{count}} / 100': '{{count}} / 100',
+  'Composite score': 'Bileşik puan',
+  'The score weights open risks, proposed decisions, unanalysed meetings and follow-up completion.':
+    'Puan; açık riskleri, önerilen kararları, analiz edilmemiş toplantıları ve takip tamamlanmasını ağırlıklandırır.',
+  'Decision latency': 'Karar gecikmesi',
+  '{{count}} days': '{{count}} gün',
+  'Proposal to acceptance': 'Öneriden kabule',
+  'Meeting tasks that closed': 'Kapanan toplantı görevleri',
+  'Meeting load': 'Toplantı yükü',
+  '{{count}} hours': '{{count}} saat',
+  'Analysed meetings': 'Analiz edilen toplantılar',
+  'Source of the signal': 'Sinyalin kaynağı',
+  'Signals across the workspace': 'Çalışma alanındaki sinyaller',
+  'Each signal is derived from the same records the rest of Nova reads.':
+    'Her sinyal, Nova’nın geri kalanının okuduğu aynı kayıtlardan türetilir.',
+  'Recurring themes': 'Tekrarlayan temalar',
+  'Analyse a meeting to surface recurring themes.':
+    'Tekrarlayan temaları görmek için bir toplantıyı analiz edin.',
+  '{{count}} mentions in {{meetings}} meetings':
+    '{{meetings}} toplantıda {{count}} kez geçti',
+  '{{count}}%': '{{count}}%',
+  'Risks that keep returning': 'Tekrar eden riskler',
+  'No open risk signals across the workspace.':
+    'Çalışma alanında açık risk sinyali yok.',
+  'Review the insight queue': 'İçgörü kuyruğunu incele',
+  'How this report is built': 'Bu rapor nasıl oluşturulur',
+  'Read the record': 'Kaydı oku',
+  'Meetings, analyses, decisions, tasks and insights.':
+    'Toplantılar, analizler, kararlar, görevler ve içgörüler.',
+  'Find the pattern': 'Kalıbı bul',
+  'Repeated topics, decision latency, follow-up closure and load.':
+    'Tekrarlayan konular, karar gecikmesi, takip kapanışı ve yük.',
+  'Keep it explainable': 'Açıklanabilir tut',
+  'Every number comes from a deterministic rule, never a hidden score.':
+    'Her sayı belirli bir kuraldan gelir, asla gizli bir puandan değil.',
+  'Open risks need an owner': 'Açık risklerin bir sorumlusu olmalı',
+  'Decision queue': 'Karar kuyruğu',
+  'Workload concentration': 'İş yükü yoğunlaşması',
+  'Unanalysed meetings': 'Analiz edilmemiş toplantılar',
+  'Meeting size': 'Toplantı büyüklüğü',
 };

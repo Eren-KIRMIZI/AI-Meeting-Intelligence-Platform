@@ -96,6 +96,11 @@ const IntelligencePage = lazy(() =>
     default: module.IntelligencePage,
   }))
 );
+const OrgIntelligencePage = lazy(() =>
+  import('@/features/org-intelligence/OrgIntelligencePage').then((module) => ({
+    default: module.OrgIntelligencePage,
+  }))
+);
 const AnalyticsPage = lazy(() =>
   import('@/features/analytics/AnalyticsPage').then((module) => ({
     default: module.AnalyticsPage,
@@ -179,6 +184,7 @@ export function AppRoutes() {
           <Route path="/workflows" element={<WorkflowsPage />} />
           <Route path="/integrations" element={<IntegrationsPage />} />
           <Route path="/intelligence" element={<IntelligencePage />} />
+          <Route path="/org-intelligence" element={<OrgIntelligencePage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/team" element={<TeamPage />} />
           <Route path="/audit" element={<AuditPage />} />

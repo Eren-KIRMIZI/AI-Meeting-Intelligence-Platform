@@ -15,6 +15,8 @@ import type {
   CreateTaskInput,
   CreateWorkflowInput,
   Decision,
+  FollowUpMessage,
+  FollowUpStatus,
   Insight,
   Integration,
   IntegrationSyncEvent,
@@ -38,6 +40,9 @@ import type {
   WorkflowRun,
 } from '@/types';
 import { analysisSteps, analyzeTranscript } from '@/lib/meeting-intelligence';
+import { buildFollowUpPlan } from '@/lib/follow-up';
+import { buildOrgIntelligence } from '@/lib/org-intelligence';
+import { buildMeetingPreparation } from '@/lib/preparation';
 import { liveMeetingNote } from '@/lib/live/intelligence';
 import { baseMimeType } from '@/lib/recordings';
 import { decisionActivityTitle } from '@/lib/decisions';
@@ -62,6 +67,7 @@ import {
   seedCalendarEvents,
   seedComplianceControls,
   seedDecisions,
+  seedFollowUpMessages,
   seedInsights,
   seedIntegrationSyncEvents,
   seedIntegrations,
@@ -98,6 +104,7 @@ const calendarEvents: CalendarEvent[] = clone(seedCalendarEvents);
 let meetingTemplates: MeetingTemplate[] = clone(seedMeetingTemplates);
 let auditEvents: AuditEvent[] = clone(seedAuditEvents);
 const complianceControls: ComplianceControl[] = clone(seedComplianceControls);
+let followUpMessages: FollowUpMessage[] = clone(seedFollowUpMessages);
 let team: TeamMember[] = clone(seedTeam);
 let notifications: AppNotification[] = clone(seedNotifications);
 let insights: Insight[] = clone(seedInsights);
@@ -165,6 +172,9 @@ function emitDemoResource(
     | 'calendar'
     | 'templates'
     | 'audit'
+    | 'preparation'
+    | 'follow-up'
+    | 'intelligence'
 ) {
   emitWorkspaceEvent({ resource, orgId: demoOrg.id });
 }
@@ -1473,6 +1483,86 @@ export const mockDb = {
     auditEvents = [event, ...auditEvents];
     emitDemoResource('audit');
     return clone(event);
+  },
+
+  async getMeetingPreparation(meetingId: string) {
+    await wait(120);
+    const meeting = meetings.find((item) => item.id === meetingId);
+    if (!meeting) throw new Error('Meeting not found');
+
+    return clone(
+      buildMeetingPreparation({
+        meeting,
+        pastMeetings: meetings,
+        insights,
+        tasks,
+      })
+    );
+  },
+
+  async listFollowUpMessages(meetingId: string) {
+    await wait(110);
+    return clone(
+      followUpMessages
+        .filter((message) => message.meetingId === meetingId)
+        .sort(
+          (a, b) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        )
+    );
+  },
+
+  async generateFollowUpMessages(meetingId: string) {
+    await wait(260);
+    const meeting = meetings.find((item) => item.id === meetingId);
+    if (!meeting) throw new Error('Meeting not found');
+
+    const plan = buildFollowUpPlan({
+      meeting,
+      analysis: meeting.analysis,
+    });
+
+    followUpMessages = [
+      ...followUpMessages.filter((message) => message.meetingId !== meetingId),
+      ...plan.messages,
+    ];
+    emitDemoResource('follow-up');
+    return clone(plan.messages);
+  },
+
+  async setFollowUpMessageStatus(
+    messageId: string,
+    status: FollowUpStatus
+  ) {
+    await wait(120);
+    const message = followUpMessages.find((item) => item.id === messageId);
+    if (!message) throw new Error('Follow-up message not found');
+
+    message.status = status;
+    message.sentAt = status === 'sent' ? new Date().toISOString() : null;
+
+    if (status === 'sent') {
+      pushActivity({
+        type: 'meeting',
+        title: 'Follow-up sent',
+        description: `“${message.subject}” went to ${message.recipient}.`,
+      });
+    }
+
+    emitDemoResource('follow-up');
+    return clone(message);
+  },
+
+  async getOrgIntelligence() {
+    await wait(180);
+    return clone(
+      buildOrgIntelligence({
+        meetings,
+        decisions,
+        tasks,
+        insights,
+      })
+    );
   },
 
   async listTeam() {

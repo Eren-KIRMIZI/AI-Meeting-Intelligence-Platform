@@ -6,6 +6,7 @@ import type {
   CalendarEvent,
   ComplianceControl,
   Decision,
+  FollowUpMessage,
   Insight,
   Integration,
   IntegrationSyncEvent,
@@ -1987,6 +1988,45 @@ export const seedComplianceControls: ComplianceControl[] = [
     owner: people.nadia,
     lastCheckedAt: hoursAgo(24 * 4),
     evidenceCount: 2,
+  },
+];
+
+export const seedFollowUpMessages: FollowUpMessage[] = [
+  {
+    id: 'fu-product-sync-past-email',
+    meetingId: 'm-product-sync-past',
+    meetingTitle: 'Product sync — Nov 9',
+    channel: 'email',
+    status: 'sent',
+    recipient: 'All participants',
+    subject: 'Recap — Product sync — Nov 9',
+    body: 'The team agreed to ship onboarding v2 behind a 10% cohort flag and keep transcript QA as the release blocker.\n\nDecisions:\n• Launch mobile app to a 10% cohort first\n• Keep transcript QA as the release blocker\n\nNext steps:\n• Sarah: finalize onboarding checklist before Thursday\n• Ravi: close transcript QA edge cases\n• Emre: prepare mobile navigation spec for critique',
+    createdAt: hoursAgo(24 * 7),
+    sentAt: hoursAgo(24 * 7 - 0.2),
+  },
+  {
+    id: 'fu-product-sync-past-chat',
+    meetingId: 'm-product-sync-past',
+    meetingTitle: 'Product sync — Nov 9',
+    channel: 'chat',
+    status: 'queued',
+    recipient: 'Sarah',
+    subject: 'Follow-up from Product sync — Nov 9',
+    body: 'Quick nudge on your action item: Sarah: finalize onboarding checklist before Thursday',
+    createdAt: hoursAgo(24 * 7),
+    sentAt: null,
+  },
+  {
+    id: 'fu-product-sync-past-task',
+    meetingId: 'm-product-sync-past',
+    meetingTitle: 'Product sync — Nov 9',
+    channel: 'task',
+    status: 'draft',
+    recipient: 'Pulse mobile app',
+    subject: 'Follow-up tasks — Product sync — Nov 9',
+    body: '• Sarah: finalize onboarding checklist before Thursday\n• Ravi: close transcript QA edge cases\n• Emre: prepare mobile navigation spec for critique',
+    createdAt: hoursAgo(24 * 7),
+    sentAt: null,
   },
 ];
 

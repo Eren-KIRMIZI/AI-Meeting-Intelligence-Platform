@@ -6,6 +6,8 @@ import type {
   ComplianceFramework,
   ComplianceStatus,
   DecisionStatus,
+  FollowUpChannel,
+  FollowUpStatus,
   InsightKind,
   InsightStatus,
   IntegrationHealth,
@@ -155,3 +157,9 @@ export const asComplianceStatus = (value: string) =>
     ['passing', 'attention', 'failing'],
     'attention'
   );
+
+export const asFollowUpChannel = (value: string) =>
+  pick<FollowUpChannel>(value, ['email', 'chat', 'task'], 'email');
+
+export const asFollowUpStatus = (value: string) =>
+  pick<FollowUpStatus>(value, ['draft', 'queued', 'sent'], 'draft');
