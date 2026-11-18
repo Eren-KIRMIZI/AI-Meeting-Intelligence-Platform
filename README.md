@@ -120,7 +120,7 @@ npm run test:e2e
 
 Playwright starts its own Vite server on `127.0.0.1:4173`, so the dev server does not need to be running. CI runs the browser suite in a separate job and uploads the HTML report when it fails.
 
-GitHub Actions runs `lint → typecheck → test → build` plus the Playwright job on every push and pull request to `main` (`.github/workflows/ci.yml`).
+GitHub Actions runs `lint → typecheck → test → build` plus the Playwright job on every push and pull request to `main` (`.github/workflows/ci.yml`). CI runs the suite through `npm run test:coverage`, which enforces coverage floors (36% statements, 24% branches, 34% functions, 37% lines) so the number can only move up. A separate `npm run check:readme` step compares both READMEs before the build starts.
 
 ---
 
@@ -324,6 +324,7 @@ Nova Live runs the meeting inside the workspace: video/audio, screen sharing, ch
 - **Consent first.** The pre-join screen explains transcription and optional recording and requires a KVKK/GDPR acknowledgement before anyone joins.
 - **Persistence.** Ending a room saves a completed `nova_live` meeting with its analysis, transcript, chat and participants, then writes a Knowledge note. Follow-ups are created only after review through the existing `commitMeetingAnalysis` step.
 - **Routes.** `/live` is the lobby inside the app shell; `/live/:roomId` runs full-screen. Start a room in one tab and open the invite link in another to test the mesh as two participants.
+- **Turkish questions.** The deterministic copilot understands Turkish intents (decisions, action items, dates, risks, speaking time, summaries) and answers in the active interface language, so a Turkish room does not fall back to English.
 
 ---
 
@@ -385,7 +386,7 @@ The Team directory is a working permission surface. Clicking a member card opens
 - a Turkish entry is empty;
 - visible JSX text or a literal UI attribute (`placeholder`, `title`, `aria-label`, `label`, `alt`, …) is not wrapped in `t()`.
 
-Run it alone with `npm run test -- src/i18n/translation-coverage.test.ts`. Dynamic keys such as `t(roleLabel)` cannot be verified statically; those labels stay canonical English strings in the data layer and are translated at render.
+Run it alone with `npm run test -- src/i18n/translation-coverage.test.ts`. Dynamic keys such as `t(roleLabel)` cannot be verified statically; those labels stay canonical English strings in the data layer and are translated at render. As a safety net, development builds log a one-time `console.warn` with the key name when the Turkish dictionary is missing a dynamically built entry.
 
 ### Adding a page or component
 
@@ -442,6 +443,14 @@ Run it alone with `npm run test -- src/i18n/translation-coverage.test.ts`. Dynam
 - **Input validation.** API routes validate email, role and UUID formats and cap request bodies.
 - **Abuse control.** Optional Upstash rate limiting on invitations.
 
+### Data retention and deletion
+
+- **Consent before media.** The pre-join screen explains transcription and optional recording and blocks joining until the participant acknowledges it. Nova never starts a transcript or a recording silently.
+- **Private media by default.** Recordings live in the private `meeting-recordings` bucket, keyed by organization, and are served through one-hour signed URLs.
+- **Cascading database deletes.** Meeting-owned rows (participants, transcript segments, chat messages, recordings, insights) use `on delete cascade`, so deleting a meeting removes its relational data. Storage objects are not deleted by the database: remove the files through the Storage API in the same operation.
+- **Operators own the retention window.** Decide how long transcripts, recordings and Knowledge notes are kept, document it in your privacy notice and schedule deletions. Demo data stays in memory and never leaves the tab; a full reload restores the seed workspace.
+- **Access and erasure requests.** RLS scopes every tenant table to the active organization, so an export is a scoped select and an erasure request is a scoped delete of the member's authored content plus their membership rows. Never copy production exports into demo mode.
+
 If you rotate keys, update Vercel environment variables and redeploy. Never commit real credentials.
 
 ---
@@ -462,5 +471,6 @@ If you rotate keys, update Vercel environment variables and redeploy. Never comm
 - Decisions open a detail panel with accept, reject, supersede and reopen actions, a reason note and an append-only status history
 - Knowledge opens a full-document reader with section parsing, search highlighting, related notes and source-meeting links
 - Team cards open a management panel for role changes, project access, open assignments and member removal, gated by the caller's role
+- SVG favicon and a web app manifest ship from `public/`, so browser tabs and installed windows carry the Nova mark with the dark theme color
 
 All interactive controls are wired: create dialogs, task status changes, filters, exports, settings persistence, command palette (`Ctrl/⌘ + K`) and toasts.

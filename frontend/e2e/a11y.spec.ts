@@ -132,4 +132,38 @@ test.describe('accessibility audit', () => {
 
     await audit(page, 'user menu');
   });
+
+  test('keyboard focus stays visible while tabbing', async ({ page }) => {
+    test.setTimeout(90_000);
+    await page.goto('/overview', { waitUntil: 'domcontentloaded' });
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible({
+      timeout: 20_000,
+    });
+
+    await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
+
+    for (let stop = 0; stop < 8; stop += 1) {
+      await page.keyboard.press('Tab');
+      const state = await page.evaluate(() => {
+        const element = document.activeElement as HTMLElement | null;
+        if (!element || element === document.body) {
+          return { ok: false, label: 'body' };
+        }
+        const style = getComputedStyle(element);
+        const rect = element.getBoundingClientRect();
+        const hasRing = style.boxShadow !== 'none' && style.boxShadow.trim() !== '';
+        const hasOutline =
+          style.outlineStyle !== 'none' && Number.parseFloat(style.outlineWidth) > 0;
+        return {
+          ok: (hasRing || hasOutline) && rect.width > 0 && rect.height > 0,
+          label:
+            element.getAttribute('aria-label') ??
+            element.textContent?.trim().slice(0, 40) ??
+            element.tagName,
+        };
+      });
+
+      expect(state.ok, `no visible focus indicator on tab stop ${stop + 1}: ${state.label}`).toBe(true);
+    }
+  });
 });

@@ -25,7 +25,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { NativeSelect } from '@/components/ui/select-native';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useAuth } from '@/features/auth/auth-provider';
+import { useAuth } from '@/features/auth/use-auth';
 import {
   useConvertInsightToDecision,
   useConvertInsightToTask,

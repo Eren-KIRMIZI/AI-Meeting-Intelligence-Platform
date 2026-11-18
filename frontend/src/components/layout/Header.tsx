@@ -1,7 +1,7 @@
 import { useLocation } from 'react-router-dom';
 import { ChevronRight, Menu, Search } from 'lucide-react';
 import { resolveRouteMeta } from '@/lib/navigation';
-import { useAuth } from '@/features/auth/auth-provider';
+import { useAuth } from '@/features/auth/use-auth';
 import { useUiStore } from '@/stores/ui-store';
 import { Button } from '@/components/ui/button';
 import { DataSourceBadge } from '@/components/common/data-source-badge';

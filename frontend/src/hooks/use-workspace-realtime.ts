@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { useAuth } from '@/features/auth/auth-provider';
+import { useAuth } from '@/features/auth/use-auth';
 import { isSupabaseConfigured } from '@/lib/env';
 import { supabase } from '@/lib/supabase';
 import {

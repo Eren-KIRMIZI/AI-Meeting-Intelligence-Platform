@@ -1,4 +1,6 @@
 import { analyzeTranscript } from '@/lib/meeting-intelligence';
+import { getActiveLocale, localeTags } from '@/i18n/locale';
+import { plural, translate } from '@/i18n/translate';
 import type {
   LiveInsights,
   LiveMeetingInput,
@@ -101,10 +103,19 @@ function dueLabel(value: string | null | undefined) {
   if (!value) return null;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return null;
-  return date.toLocaleDateString(undefined, {
+  return date.toLocaleDateString(localeTags[getActiveLocale()], {
     month: 'short',
     day: 'numeric',
   });
+}
+
+/**
+ * Turkish-aware lowercasing: `I` must become `ı` and `İ` must become `i`, and
+ * the intent keywords are matched as substrings because `\b` treats Turkish
+ * letters such as `ş` and `ı` as non-word characters.
+ */
+function normalizeQuestion(question: string) {
+  return question.replace(/İ/g, 'i').replace(/I/g, 'ı').toLowerCase();
 }
 
 function firstName(name: string) {
@@ -121,45 +132,67 @@ export function answerLiveQuestion(
   segments: TranscriptSegment[],
   selfName: string
 ): LiveAssistantAnswer {
-  const normalized = question.toLowerCase();
+  const normalized = normalizeQuestion(question);
 
   if (segments.length === 0) {
     return {
-      answer:
-        'There is no transcript yet. Turn on captions or start the demo dialogue so I can follow the conversation.',
+      answer: translate(
+        'There is no transcript yet. Turn on captions or start the demo dialogue so I can follow the conversation.'
+      ),
       items: [],
     };
   }
 
-  if (/\b(who|speaker|talked|spoke|talk time)\b/.test(normalized)) {
+  if (
+    /\b(who|speaker|talked|spoke|talk time)\b/.test(normalized) ||
+    /(kim|konuş|söz|kelime|en çok)/.test(normalized)
+  ) {
     const stats = speakerBreakdown(segments).slice(0, 4);
     return {
-      answer: 'Speaking time is spread across the room like this.',
-      items: stats.map(
-        (stat) => `${stat.speaker} — ${stat.share}% of the words (${stat.segments} turns)`
+      answer: translate('Speaking time is spread across the room like this.'),
+      items: stats.map((stat) =>
+        translate('{{speaker}} — {{share}}% of the words ({{count}} turns)', {
+          speaker: stat.speaker,
+          share: stat.share,
+          count: stat.segments,
+        })
       ),
     };
   }
 
-  if (/\b(decisions?|decided|agreed|approved)\b/.test(normalized)) {
+  if (
+    /\b(decisions?|decided|agreed|approved)\b/.test(normalized) ||
+    /(karar|anlaş|onay)/.test(normalized)
+  ) {
     if (insights.decisions.length === 0) {
       return {
-        answer: 'No decision has been stated yet.',
+        answer: translate('No decision has been stated yet.'),
         items: [],
       };
     }
 
     return {
-      answer: `${insights.decisions.length} decision${
-        insights.decisions.length === 1 ? '' : 's'
-      } detected so far.`,
-      items: insights.decisions.map(
-        (decision) => `${decision.title} — owner: ${decision.owner}`
+      answer: plural(
+        insights.decisions.length,
+        '{{count}} decision detected so far.',
+        '{{count}} decisions detected so far.',
+        { count: insights.decisions.length }
+      ),
+      items: insights.decisions.map((decision) =>
+        translate('{{title}} — owner: {{owner}}', {
+          title: decision.title,
+          owner: decision.owner,
+        })
       ),
     };
   }
 
-  if (/\b(my|mine|me|assigned)\b/.test(normalized) && /\b(task|action|own)\b/.test(normalized)) {
+  if (
+    (/\b(my|mine|me|assigned)\b/.test(normalized) &&
+      /\b(task|action|own)\b/.test(normalized)) ||
+    (/(benim|bana|bende|bana ait)/.test(normalized) &&
+      /(görev|aksiyon|iş|sorumluluk)/.test(normalized))
+  ) {
     const mine = insights.actions.filter(
       (action) =>
         action.owner.toLowerCase() === selfName.toLowerCase() ||
@@ -169,62 +202,99 @@ export function answerLiveQuestion(
     return {
       answer:
         mine.length === 0
-          ? `Nothing is assigned to ${selfName} yet.`
-          : `${mine.length} action item${mine.length === 1 ? '' : 's'} on your plate.`,
+          ? translate('Nothing is assigned to {{name}} yet.', { name: selfName })
+          : plural(
+              mine.length,
+              '{{count}} action item on your plate.',
+              '{{count}} action items on your plate.',
+              { count: mine.length }
+            ),
       items: mine.map((action) => {
         const due = dueLabel(action.dueDate);
-        return `${action.text}${due ? ` — due ${due}` : ' — no date yet'}`;
+        return due
+          ? translate('{{text}} — due {{due}}', { text: action.text, due })
+          : translate('{{text}} — no date yet', { text: action.text });
       }),
     };
   }
 
-  if (/\b(task|action|follow.?up|owner)\b/.test(normalized)) {
+  if (
+    /\b(task|action|follow.?up|owner)\b/.test(normalized) ||
+    /(görev|aksiyon|takip|sorumlu)/.test(normalized)
+  ) {
     if (insights.actions.length === 0) {
-      return { answer: 'No action items have been detected yet.', items: [] };
+      return {
+        answer: translate('No action items have been detected yet.'),
+        items: [],
+      };
     }
 
     return {
-      answer: `${insights.actions.length} action item${
-        insights.actions.length === 1 ? '' : 's'
-      } detected so far.`,
+      answer: plural(
+        insights.actions.length,
+        '{{count}} action item detected so far.',
+        '{{count}} action items detected so far.',
+        { count: insights.actions.length }
+      ),
       items: insights.actions.map((action) => {
         const due = dueLabel(action.dueDate);
-        return `${action.owner}: ${action.text}${due ? ` — due ${due}` : ''}`;
+        return due
+          ? translate('{{owner}}: {{text}} — due {{due}}', {
+              owner: action.owner,
+              text: action.text,
+              due,
+            })
+          : `${action.owner}: ${action.text}`;
       }),
     };
   }
 
-  if (/\b(date|deadline|when|due)\b/.test(normalized)) {
+  if (
+    /\b(date|deadline|when|due)\b/.test(normalized) ||
+    /(tarih|son teslim|ne zaman|bitiş|vade)/.test(normalized)
+  ) {
     const dated = insights.actions.filter((action) => action.dueDate);
     return {
       answer:
         dated.length === 0
-          ? 'No explicit dates have been mentioned yet.'
-          : 'These dates were mentioned in the conversation.',
-      items: dated.map(
-        (action) => `${dueLabel(action.dueDate)} — ${action.text} (${action.owner})`
+          ? translate('No explicit dates have been mentioned yet.')
+          : translate('These dates were mentioned in the conversation.'),
+      items: dated.map((action) =>
+        translate('{{date}} — {{text}} ({{owner}})', {
+          date: dueLabel(action.dueDate) ?? '',
+          text: action.text,
+          owner: action.owner,
+        })
       ),
     };
   }
 
-  if (/\b(unresolved|open|pending|risk|blocker)\b/.test(normalized)) {
+  if (
+    /\b(unresolved|open|pending|risk|blocker)\b/.test(normalized) ||
+    /(açık|bekleyen|risk|engel|çözülmemiş|belirsiz)/.test(normalized)
+  ) {
     const items = [
       ...insights.risks,
       ...insights.actions
         .filter((action) => action.owner === 'Unassigned')
-        .map((action) => `${action.text} — no owner yet`),
+        .map((action) =>
+          translate('{{text}} — no owner yet', { text: action.text })
+        ),
     ];
 
     return {
       answer:
         items.length === 0
-          ? 'Nothing is flagged as open right now.'
-          : 'These items still need a decision or an owner.',
+          ? translate('Nothing is flagged as open right now.')
+          : translate('These items still need a decision or an owner.'),
       items: items.slice(0, 6),
     };
   }
 
-  if (/\b(summary|summarize|so far|recap|overview)\b/.test(normalized)) {
+  if (
+    /\b(summary|summarize|so far|recap|overview)\b/.test(normalized) ||
+    /(özet|genel durum|durum nedir)/.test(normalized)
+  ) {
     return {
       answer: insights.summary,
       items: insights.keyPoints.slice(0, 3),
@@ -233,8 +303,9 @@ export function answerLiveQuestion(
 
   const actions = insights.actions.slice(0, 3);
   return {
-    answer:
-      'I can answer questions about decisions, action items, deadlines, open risks or speaking time. Here is the latest summary.',
+    answer: translate(
+      'I can answer questions about decisions, action items, deadlines, open risks or speaking time. Here is the latest summary.'
+    ),
     items: [insights.summary, ...actions.map((action) => `${action.owner}: ${action.text}`)],
   };
 }

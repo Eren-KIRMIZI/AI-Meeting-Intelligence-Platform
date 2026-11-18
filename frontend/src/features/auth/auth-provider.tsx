@@ -1,7 +1,5 @@
 import {
-  createContext,
   useCallback,
-  useContext,
   useEffect,
   useMemo,
   useState,
@@ -14,27 +12,13 @@ import { demoOrg, demoUser } from '@/mocks/data';
 import { avatarColorFor, getInitials } from '@/lib/utils';
 import { asOrgRole } from '@/services/enum-guards';
 import type { OrgRole, UserProfile } from '@/types';
+import { AuthContext } from './auth-context';
 
 interface MembershipRow {
   role: string;
   organization_id: string;
   organizations: { name: string } | { name: string }[] | null;
 }
-
-interface AuthContextValue {
-  user: UserProfile | null;
-  session: Session | null;
-  orgId: string | null;
-  orgName: string | null;
-  orgRole: OrgRole | null;
-  loading: boolean;
-  isDemo: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signOut: () => Promise<void>;
-  enterDemo: () => void;
-}
-
-const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const isDemo = !isSupabaseConfigured;
@@ -209,12 +193,4 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
-}
-
-export function useAuth() {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used inside AuthProvider');
-  }
-  return context;
 }

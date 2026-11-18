@@ -21,6 +21,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Check README parity
+        working-directory: .
+        run: node scripts/check-readme-sync.mjs
+
       - name: Use Node.js 22
         uses: actions/setup-node@v4
         with:
@@ -38,7 +42,7 @@ jobs:
         run: npm run typecheck
 
       - name: Test
-        run: npm run test
+        run: npm run test:coverage
 
       - name: Build
         run: npm run build

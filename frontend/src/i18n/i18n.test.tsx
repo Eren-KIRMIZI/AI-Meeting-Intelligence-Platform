@@ -59,6 +59,17 @@ describe('translateFor', () => {
       'Hello {{name}}'
     );
   });
+
+  it('warns once in development when a Turkish entry is missing', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const key = 'Runtime probe without a dictionary entry';
+
+    expect(translateFor('tr', key)).toBe(key);
+    translateFor('tr', key);
+
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(String(warn.mock.calls[0][0])).toContain(key);
+  });
 });
 
 describe('I18nProvider', () => {

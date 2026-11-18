@@ -27,6 +27,15 @@ export default defineConfig({
         'src/vite-env.d.ts',
         'src/main.tsx',
       ],
+      // Regression gate: unit tests cover pure logic and i18n deeply, while
+      // page-level behaviour is covered by Playwright. Keep the global floor
+      // just below today's numbers so untested additions cannot slip through.
+      thresholds: {
+        statements: 36,
+        branches: 24,
+        functions: 34,
+        lines: 37,
+      },
     },
   },
 });

@@ -120,7 +120,7 @@ npm run test:e2e
 
 Playwright kendi Vite sunucusunu `127.0.0.1:4173` üzerinde başlatır; bu yüzden geliştirme sunucusunun çalışıyor olması gerekmez. CI tarayıcı paketini ayrı bir işte çalıştırır ve başarısız olduğunda HTML raporunu yükler.
 
-GitHub Actions her push ve `main` hedefli pull request'te `lint → typecheck → test → build` ile Playwright işini çalıştırır (`.github/workflows/ci.yml`).
+GitHub Actions her push ve `main` hedefli pull request'te `lint → typecheck → test → build` ile Playwright işini çalıştırır (`.github/workflows/ci.yml`). CI paketi `npm run test:coverage` ile çalıştırır ve kapsam tabanlarını zorunlu kılar (%36 ifade, %24 dal, %34 fonksiyon, %37 satır); böylece oran yalnızca yükselebilir. Ayrı bir `npm run check:readme` adımı derleme başlamadan önce iki README'yi karşılaştırır.
 
 ---
 
@@ -324,6 +324,7 @@ Nova Live toplantıyı çalışma alanının içinde yürütür: video/ses, ekra
 - **Önce rıza.** Katılım öncesi ekran transkripti ve isteğe bağlı kaydı açıklar ve kimse katılmadan önce bir KVKK/GDPR onayı ister.
 - **Kalıcılık.** Bir odayı bitirmek, analizi, transkripti, sohbeti ve katılımcılarıyla tamamlanmış bir `nova_live` toplantısı kaydeder, ardından bir Knowledge notu yazar. Takipler yalnızca mevcut `commitMeetingAnalysis` adımı üzerinden incelemeden sonra oluşturulur.
 - **Rotalar.** `/live` uygulama kabuğu içindeki lobidir; `/live/:roomId` tam ekran çalışır. Mesh yapısını iki katılımcı olarak test etmek için bir sekmede oda başlatın ve davet bağlantısını başka bir sekmede açın.
+- **Türkçe sorular.** Deterministik copilot Türkçe niyetleri (kararlar, aksiyon maddeleri, tarihler, riskler, konuşma süresi, özetler) anlar ve aktif arayüz dilinde yanıtlar; böylece Türkçe bir oda İngilizceye düşmez.
 
 ---
 
@@ -385,7 +386,7 @@ Ekip dizini çalışan bir izin yüzeyidir. Bir üye kartına tıklamak `/team?m
 - bir Türkçe kayıt boşsa;
 - görünür JSX metni veya literal bir UI özelliği (`placeholder`, `title`, `aria-label`, `label`, `alt`, …) `t()` içine alınmamışsa.
 
-Tek başına `npm run test -- src/i18n/translation-coverage.test.ts` ile çalıştırın. `t(roleLabel)` gibi dinamik anahtarlar statik olarak doğrulanamaz; bu etiketler veri katmanında kanonik İngilizce metin olarak kalır ve render sırasında çevrilir.
+Tek başına `npm run test -- src/i18n/translation-coverage.test.ts` ile çalıştırın. `t(roleLabel)` gibi dinamik anahtarlar statik olarak doğrulanamaz; bu etiketler veri katmanında kanonik İngilizce metin olarak kalır ve render sırasında çevrilir. Ek güvence olarak, geliştirme derlemeleri Türkçe sözlükte dinamik bir kayıt bulunamadığında anahtar adıyla birlikte bir kez `console.warn` yazar.
 
 ### Yeni sayfa veya bileşen ekleme
 
@@ -442,6 +443,14 @@ Tek başına `npm run test -- src/i18n/translation-coverage.test.ts` ile çalı�
 - **Girdi doğrulama.** API rotaları e-posta, rol ve UUID biçimlerini doğrular ve istek gövdelerini sınırlar.
 - **Kötüye kullanım kontrolü.** Davetlerde isteğe bağlı Upstash hız sınırlama.
 
+### Veri saklama ve silme
+
+- **Medyadan önce onay.** Katılım öncesi ekran transkripti ve isteğe bağlı kaydı açıklar ve katılımcı onaylayana kadar odaya girişi engeller. Nova bir transkripti veya kaydı sessizce başlatmaz.
+- **Medya varsayılan olarak özeldir.** Kayıtlar kuruluşa göre anahtarlanmış özel `meeting-recordings` bucket'ında durur ve bir saatlik imzalı URL'lerle sunulur.
+- **Veritabanı silmeleri zincirleme çalışır.** Toplantıya ait satırlar (katılımcılar, transkript bölümleri, sohbet mesajları, kayıtlar, içgörüler) `on delete cascade` kullanır; toplantı silindiğinde ilişkili veriler de silinir. Depolama nesneleri veritabanı tarafından silinmez: dosyaları aynı işlemde Storage API'si üzerinden kaldırın.
+- **Saklama süresini işletme belirler.** Transkriptlerin, kayıtların ve Bilgi notlarının ne kadar süre tutulacağına karar verin, bunu gizlilik bildiriminizde belirtin ve silmeleri planlayın. Demo verisi bellekte kalır ve sekmeden çıkmaz; tam sayfa yenileme tohum çalışma alanını geri yükler.
+- **Erişim ve silme talepleri.** RLS her kiracı tablosunu aktif kuruluşla sınırladığı için dışa aktarma kapsamlı bir seçim, silme talebi ise üyenin ürettiği içeriğin ve üyelik satırlarının kapsamlı silinmesidir. Üretim dışa aktarımlarını asla demo moduna kopyalamayın.
+
 Anahtarları döndürürseniz Vercel ortam değişkenlerini güncelleyin ve yeniden dağıtın. Gerçek kimlik bilgilerini asla commit etmeyin.
 
 ---
@@ -462,5 +471,7 @@ Anahtarları döndürürseniz Vercel ortam değişkenlerini güncelleyin ve yeni
 - Decisions; kabul et, reddet, yerine geç ve yeniden aç eylemleri, neden notu ve yalnızca ekleme yapılabilen durum geçmişi içeren bir ayrıntı paneli açar
 - Knowledge; bölüm ayrıştırma, arama vurgulama, ilgili notlar ve kaynak toplantı bağlantıları içeren tam belge okuyucusu açar
 - Ekip kartları, çağıranın rolüne göre kapılanan rol değişiklikleri, proje erişimi, açık atamalar ve üye çıkarma için bir yönetim paneli açar
+
+- SVG favicon ve bir web uygulaması manifesti `public/` içinden gelir; böylece tarayıcı sekmeleri ve kurulu pencereler Nova işaretini koyu tema rengiyle taşır
 
 Tüm etkileşimli kontroller bağlıdır: oluşturma pencereleri, görev durumu değişiklikleri, filtreler, dışa aktarmalar, ayar kalıcılığı, komut paleti (`Ctrl/⌘ + K`) ve bildirimler.

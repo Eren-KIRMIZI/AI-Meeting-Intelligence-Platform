@@ -5,7 +5,7 @@ import { StatCard } from '@/components/common/stat-card';
 import { PageSkeleton } from '@/components/common/page-skeleton';
 import { ErrorState } from '@/components/common/error-state';
 import { Button } from '@/components/ui/button';
-import { useAuth } from '@/features/auth/auth-provider';
+import { useAuth } from '@/features/auth/use-auth';
 import {
   useActivities,
   useIntegrations,

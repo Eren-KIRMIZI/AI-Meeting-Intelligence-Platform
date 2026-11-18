@@ -6,7 +6,7 @@ import {
   secondaryNav,
   type NavItem,
 } from '@/lib/navigation';
-import { useAuth } from '@/features/auth/auth-provider';
+import { useAuth } from '@/features/auth/use-auth';
 import { useUiStore } from '@/stores/ui-store';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import {

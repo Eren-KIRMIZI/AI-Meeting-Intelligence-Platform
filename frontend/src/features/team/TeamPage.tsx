@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Progress } from '@/components/ui/progress';
-import { useAuth } from '@/features/auth/auth-provider';
+import { useAuth } from '@/features/auth/use-auth';
 import { useProjects, useTasks, useTeam } from '@/hooks/use-workspace';
 import { canManageTeam } from '@/lib/team';
 import { cn, downloadCsv } from '@/lib/utils';

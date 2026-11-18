@@ -25,7 +25,7 @@ export function KnowledgePage() {
   const [selected, setSelected] = useState<KnowledgeDocument | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const list = knowledge.data ?? [];
+  const list = useMemo(() => knowledge.data ?? [], [knowledge.data]);
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();

@@ -32,7 +32,7 @@ import { Input } from '@/components/ui/input';
 import { Field } from '@/components/common/field';
 import { NativeSelect } from '@/components/ui/select-native';
 import { useMeetings, useProjects } from '@/hooks/use-workspace';
-import { useAuth } from '@/features/auth/auth-provider';
+import { useAuth } from '@/features/auth/use-auth';
 import { newRoomId, parseRoomCode } from '@/lib/live/room';
 import { formatDate, formatTime } from '@/lib/utils';
 import { useI18n } from '@/i18n';

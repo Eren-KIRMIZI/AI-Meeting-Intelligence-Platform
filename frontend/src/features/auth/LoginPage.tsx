@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Field } from '@/components/common/field';
 import { NovaMark } from '@/components/common/nova-mark';
-import { useAuth } from '@/features/auth/auth-provider';
+import { useAuth } from '@/features/auth/use-auth';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { useI18n } from '@/i18n';
 

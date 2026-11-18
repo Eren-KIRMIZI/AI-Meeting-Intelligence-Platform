@@ -14,7 +14,7 @@ import { allNavItems } from '@/lib/navigation';
 import { cn, formatDate } from '@/lib/utils';
 import { useI18n } from '@/i18n';
 import { useUiStore } from '@/stores/ui-store';
-import { useAuth } from '@/features/auth/auth-provider';
+import { useAuth } from '@/features/auth/use-auth';
 import {
   useMeetings,
   useProjects,

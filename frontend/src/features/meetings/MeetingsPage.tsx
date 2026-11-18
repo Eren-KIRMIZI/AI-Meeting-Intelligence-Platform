@@ -45,7 +45,7 @@ export function MeetingsPage() {
   const [query, setQuery] = useState('');
   const [createOpen, setCreateOpen] = useState(false);
 
-  const list = meetings.data ?? [];
+  const list = useMemo(() => meetings.data ?? [], [meetings.data]);
   const stats = buildMeetingStats(list);
   const upcomingCount = countUpcomingMeetings(list);
   const pastCount = list.length - upcomingCount;

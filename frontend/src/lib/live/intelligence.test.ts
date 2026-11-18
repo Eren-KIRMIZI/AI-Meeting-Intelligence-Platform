@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it } from 'vitest';
 import { demoDialogue } from './demo-dialogue';
 import {
   answerLiveQuestion,
@@ -7,7 +7,10 @@ import {
   liveMeetingNote,
   speakerBreakdown,
 } from './intelligence';
+import { setActiveLocale } from '@/i18n/locale';
 import type { LiveMeetingInput, TranscriptSegment } from '@/types';
+
+afterEach(() => setActiveLocale('en'));
 
 const startedAt = '2026-05-12T09:00:00.000Z';
 
@@ -171,6 +174,51 @@ describe('answerLiveQuestion', () => {
     );
 
     expect(result.answer).toMatch(/Emre Demir|action item/);
+  });
+
+  it('understands Turkish questions for decisions', () => {
+    const result = answerLiveQuestion(
+      'Hangi kararlar alındı?',
+      insights,
+      segments,
+      'Eren Kırmızı'
+    );
+
+    expect(result.answer).toMatch(/decision/);
+    expect(result.items.length).toBe(insights.decisions.length);
+  });
+
+  it('understands Turkish questions about speaking time and summaries', () => {
+    const speaking = answerLiveQuestion(
+      'Kim en çok konuştu?',
+      insights,
+      segments,
+      'Eren Kırmızı'
+    );
+    const summary = answerLiveQuestion(
+      'Toplantıyı özetle',
+      insights,
+      segments,
+      'Eren Kırmızı'
+    );
+
+    expect(speaking.answer).toMatch(/Speaking time/);
+    expect(speaking.items.some((item) => item.includes('% of the words'))).toBe(true);
+    expect(summary.answer).toBe(insights.summary);
+  });
+
+  it('localizes copilot answers when Turkish is the active locale', () => {
+    setActiveLocale('tr');
+
+    const result = answerLiveQuestion(
+      'Kim en çok konuştu?',
+      insights,
+      segments,
+      'Eren Kırmızı'
+    );
+
+    expect(result.answer).toBe('Konuşma süresi odada şöyle dağılıyor.');
+    expect(result.items[0]).toContain('kelimelerin %');
   });
 });
 

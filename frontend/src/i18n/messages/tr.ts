@@ -1310,6 +1310,40 @@ export const tr: Record<string, string> = {
     '{{count}} çalışma alanı kaydı oluşturuldu.',
   '{{text}} — no owner yet': '{{text}} — henüz sahip yok',
 
+  // Live copilot answers (deterministic, transcript-grounded)
+  'There is no transcript yet. Turn on captions or start the demo dialogue so I can follow the conversation.':
+    'Henüz transkript yok. Altyazıları açın veya demo diyaloğu başlatın; konuşmayı takip edebileyim.',
+  'Speaking time is spread across the room like this.':
+    'Konuşma süresi odada şöyle dağılıyor.',
+  '{{speaker}} — {{share}}% of the words ({{count}} turns)':
+    '{{speaker}} — kelimelerin %{{share}} kadarı ({{count}} sıra)',
+  'No decision has been stated yet.': 'Henüz bir karar belirtilmedi.',
+  '{{count}} decision detected so far.':
+    'Şu ana kadar {{count}} karar tespit edildi.',
+  '{{count}} decisions detected so far.':
+    'Şu ana kadar {{count}} karar tespit edildi.',
+  '{{title}} — owner: {{owner}}': '{{title}} — sahibi: {{owner}}',
+  'Nothing is assigned to {{name}} yet.':
+    '{{name}} kişisine henüz bir şey atanmadı.',
+  '{{count}} action item on your plate.': 'Üzerinizde {{count}} aksiyon maddesi var.',
+  '{{count}} action items on your plate.': 'Üzerinizde {{count}} aksiyon maddesi var.',
+  '{{text}} — due {{due}}': '{{text}} — son tarih {{due}}',
+  '{{text}} — no date yet': '{{text}} — henüz tarih yok',
+  'No action items have been detected yet.': 'Henüz aksiyon maddesi tespit edilmedi.',
+  '{{count}} action item detected so far.':
+    'Şu ana kadar {{count}} aksiyon maddesi tespit edildi.',
+  '{{count}} action items detected so far.':
+    'Şu ana kadar {{count}} aksiyon maddesi tespit edildi.',
+  '{{owner}}: {{text}} — due {{due}}': '{{owner}}: {{text}} — son tarih {{due}}',
+  'No explicit dates have been mentioned yet.': 'Henüz açık bir tarih belirtilmedi.',
+  'These dates were mentioned in the conversation.': 'Konuşmada bu tarihler geçti.',
+  '{{date}} — {{text}} ({{owner}})': '{{date}} — {{text}} ({{owner}})',
+  'Nothing is flagged as open right now.': 'Şu anda açık olarak işaretlenmiş bir şey yok.',
+  'These items still need a decision or an owner.':
+    'Bu maddeler hâlâ bir karar veya sahip bekliyor.',
+  'I can answer questions about decisions, action items, deadlines, open risks or speaking time. Here is the latest summary.':
+    'Kararlar, aksiyon maddeleri, son tarihler, açık riskler veya konuşma süresi hakkında soruları yanıtlayabilirim. İşte en son özet.',
+
   // Language switcher
   Language: 'Dil',
   'Interface language': 'Arayüz dili',

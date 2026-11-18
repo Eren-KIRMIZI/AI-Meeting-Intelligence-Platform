@@ -7,7 +7,7 @@ import {
   UserRound,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useAuth } from '@/features/auth/auth-provider';
+import { useAuth } from '@/features/auth/use-auth';
 import { useUiStore } from '@/stores/ui-store';
 import { Button } from '@/components/ui/button';
 import {

@@ -37,7 +37,7 @@ import {
 } from '@/components/ui/dialog';
 import { Field } from '@/components/common/field';
 import { Input } from '@/components/ui/input';
-import { useAuth } from '@/features/auth/auth-provider';
+import { useAuth } from '@/features/auth/use-auth';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { useLiveRoom } from '@/hooks/use-live-room';
 import { useLocalRecording } from '@/hooks/use-local-recording';

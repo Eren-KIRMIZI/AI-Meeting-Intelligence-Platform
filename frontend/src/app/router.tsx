@@ -3,7 +3,7 @@ import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
 import { NovaMark } from '@/components/common/nova-mark';
-import { useAuth } from '@/features/auth/auth-provider';
+import { useAuth } from '@/features/auth/use-auth';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { NotFoundPage } from '@/features/auth/NotFoundPage';
 import { useI18n } from '@/i18n';

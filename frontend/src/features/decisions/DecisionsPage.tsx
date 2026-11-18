@@ -43,7 +43,7 @@ export function DecisionsPage() {
   const [query, setQuery] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  const list = decisions.data ?? [];
+  const list = useMemo(() => decisions.data ?? [], [decisions.data]);
   const linkedId = searchParams.get('decision');
   const selected =
     list.find((decision) => decision.id === (selectedId ?? linkedId)) ?? null;

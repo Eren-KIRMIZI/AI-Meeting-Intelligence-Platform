@@ -42,7 +42,7 @@ export function ProjectsPage() {
   const [filter, setFilter] = useState<'all' | ProjectStatus>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
 
-  const list = projects.data ?? [];
+  const list = useMemo(() => projects.data ?? [], [projects.data]);
   const filtered = useMemo(
     () => (filter === 'all' ? list : list.filter((project) => project.status === filter)),
     [filter, list]
