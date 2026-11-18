@@ -349,6 +349,30 @@ Entegrasyon merkezi; takvimler, video platformları ve mesajlaşma araçları i�
 
 ---
 
+## Toplantı şablonları ve oyun kitapları
+
+Bir şablon, tekrarlayan bir toplantıyı işe yarar kılan gündemi ve soruları saklar; böylece bir sonraki toplantı aynı yapıyla başlar.
+
+- **Kütüphane.** Altı hazır oyun kitabı ürün planlaması, bire bir görüşmeler, retrospektifler, müşteri keşfi, mülakatlar ve lansman incelemelerini kapsar. Her kart kategoriyi, süreyi, aşama ve soru sayısını, etiketleri, kullanımı ve son çalıştırılma zamanını gösterir.
+- **Oyun kitabı detayı.** `playbookPrompts` her aşamayı sıralı bir kontrol listesine indirger ve pencere, toplantı başlamadan önce her aşamayı kendi süre bütçesiyle gösterir.
+- **Yerinde oluşturma.** `CreateTemplateDialog` ad, açıklama, kategori, süre, etiketler ve her biri kendi dakikasına ve satır başına bir soruya sahip istediğiniz sayıda aşama toplar; süre boş bırakılırsa aşamalardan türetilir.
+- **Şablondan başlama.** **Şablonu kullan** normal planlama penceresini şablon başlığı, süresi ve gündemiyle önceden doldurarak açar, ardından kullanımı kaydeder; böylece popülerlik sıralaması doğru kalır.
+- **Türkçe farkındalıklı arama.** `filterTemplates` merkezi aramayla aynı sadeleştirmeyi kullanır; `ayse` araması `Ayşe`yi bulur ve kategori, favori ve sıralama filtreleri sunucuya gitmeden birleşir.
+
+---
+
+## Denetim ve uyum
+
+Denetim yüzeyi iki soruyu tek yerde yanıtlar: ne oldu ve bunu kanıtlayabiliyor muyuz?
+
+- **Denetim kaydı.** Erişim, veri, entegrasyon, güvenlik ve uyum olayları; aktör, hedef, IP adresi, önem düzeyi ve üst veriyle kaydedilir. `filterAuditEvents` sorgu, kategori, önem ve güncellik filtrelerini tek sıralı liste üzerinde birleştirir.
+- **Özet ve önem.** Kritik olaylar, uyarılar ve son 24 saat ayrı ayrı sayılır; böylece engellenen bir oturum açma veya başarısız bir jeton yenileme uzun bir listede gizlenemez.
+- **Uyum puanı.** `complianceScore` geçen kontrolleri tam, ilgi gerektiren kontrolleri yarım ve başarısız kontrolleri sıfır sayar; ardından aynı puanı GDPR, SOC 2, ISO 27001 ve HIPAA bazında gruplar.
+- **Kontrol sahipliği.** Her kontrol bir sahip, son kontrol zamanı ve kanıt sayısı belirtir; durum geçmiyorsa bir iyileştirme notu görünür.
+- **Dışa aktarma da denetlenir.** **CSV dışa aktar** filtrelenmiş kaydı `auditEventsToCsv` ile (tırnaklanmış, RFC 4180 uyumlu) yazar ve dışa aktarmayı hem demo hem canlı modda yeni bir veri olayı olarak kaydeder.
+
+---
+
 ## Nova Live
 
 Nova Live toplantıyı çalışma alanının içinde yürütür: video/ses, ekran paylaşımı, sohbet, canlı altyazılar, transkripte dayalı bir copilot ve görevlere, kararlara ve bir Knowledge notuna dönüşen bir rapor.

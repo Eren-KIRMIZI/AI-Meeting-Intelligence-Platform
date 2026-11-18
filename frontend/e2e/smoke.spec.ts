@@ -29,6 +29,11 @@ const routeGroups: Array<{ name: string; routes: RouteCheck[] }> = [
       },
       { path: '/tasks', heading: 'My Tasks', title: 'My Tasks — Nova' },
       { path: '/meetings', heading: 'Meetings', title: 'Meetings — Nova' },
+      {
+        path: '/templates',
+        heading: 'Meeting templates',
+        title: 'Templates — Nova',
+      },
     ],
   },
   {
@@ -55,6 +60,11 @@ const routeGroups: Array<{ name: string; routes: RouteCheck[] }> = [
       },
       { path: '/analytics', heading: 'Analytics', title: 'Analytics — Nova' },
       { path: '/team', heading: 'Team', title: 'Team — Nova' },
+      {
+        path: '/audit',
+        heading: 'Audit & compliance',
+        title: 'Audit & compliance — Nova',
+      },
       { path: '/settings', heading: 'Settings', title: 'Settings — Nova' },
     ],
   },

@@ -2,12 +2,15 @@ import type {
   Activity,
   AnalyzeMeetingInput,
   AppNotification,
+  AuditEvent,
   CalendarEvent,
   CommitMeetingInput,
   CommitMeetingResult,
+  ComplianceControl,
   ConvertInsightToDecisionInput,
   ConvertInsightToTaskInput,
   CreateMeetingInput,
+  CreateMeetingTemplateInput,
   CreateProjectInput,
   CreateTaskInput,
   CreateWorkflowInput,
@@ -21,6 +24,7 @@ import type {
   Meeting,
   MeetingAnalysis,
   MeetingRecording,
+  MeetingTemplate,
   OrgRole,
   Project,
   SaveMeetingRecordingInput,
@@ -54,12 +58,15 @@ import {
   demoOrg,
   demoUser,
   seedActivities,
+  seedAuditEvents,
   seedCalendarEvents,
+  seedComplianceControls,
   seedDecisions,
   seedInsights,
   seedIntegrationSyncEvents,
   seedIntegrations,
   seedKnowledge,
+  seedMeetingTemplates,
   seedMeetings,
   seedNotifications,
   seedProjects,
@@ -88,6 +95,9 @@ let integrationSyncEvents: IntegrationSyncEvent[] = clone(
   seedIntegrationSyncEvents
 );
 const calendarEvents: CalendarEvent[] = clone(seedCalendarEvents);
+let meetingTemplates: MeetingTemplate[] = clone(seedMeetingTemplates);
+let auditEvents: AuditEvent[] = clone(seedAuditEvents);
+const complianceControls: ComplianceControl[] = clone(seedComplianceControls);
 let team: TeamMember[] = clone(seedTeam);
 let notifications: AppNotification[] = clone(seedNotifications);
 let insights: Insight[] = clone(seedInsights);
@@ -153,6 +163,8 @@ function emitDemoResource(
     | 'insights'
     | 'integrations'
     | 'calendar'
+    | 'templates'
+    | 'audit'
 ) {
   emitWorkspaceEvent({ resource, orgId: demoOrg.id });
 }
@@ -1358,6 +1370,109 @@ export const mockDb = {
           new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime()
       )
     );
+  },
+
+  async listMeetingTemplates() {
+    await wait(140);
+    return clone(
+      meetingTemplates
+        .slice()
+        .sort((a, b) => b.usageCount - a.usageCount)
+    );
+  },
+
+  async createMeetingTemplate(input: CreateMeetingTemplateInput) {
+    await wait(260);
+    const now = new Date().toISOString();
+    const phases = input.phases.map((phase) => ({
+      id: newId('phase'),
+      title: phase.title,
+      durationMinutes: phase.durationMinutes,
+      prompts: phase.prompts,
+    }));
+
+    const template: MeetingTemplate = {
+      id: newId('tpl'),
+      name: input.name,
+      description: input.description,
+      category: input.category,
+      accent: 'blue',
+      durationMinutes:
+        input.durationMinutes ||
+        phases.reduce((total, phase) => total + phase.durationMinutes, 0),
+      phases,
+      tags: input.tags,
+      usageCount: 0,
+      isFavorite: false,
+      lastUsedAt: null,
+      owner: demoUser,
+      updatedAt: now,
+    };
+
+    meetingTemplates = [template, ...meetingTemplates];
+    pushActivity({
+      type: 'meeting',
+      title: 'Meeting template created',
+      description: `“${template.name}” is ready to reuse from the template library.`,
+    });
+    emitDemoResource('templates');
+    return clone(template);
+  },
+
+  async toggleTemplateFavorite(templateId: string, isFavorite: boolean) {
+    await wait(120);
+    const template = meetingTemplates.find((item) => item.id === templateId);
+    if (!template) throw new Error('Meeting template not found');
+    template.isFavorite = isFavorite;
+    emitDemoResource('templates');
+    return clone(template);
+  },
+
+  async markTemplateUsed(templateId: string) {
+    await wait(120);
+    const template = meetingTemplates.find((item) => item.id === templateId);
+    if (!template) throw new Error('Meeting template not found');
+    template.usageCount += 1;
+    template.lastUsedAt = new Date().toISOString();
+    emitDemoResource('templates');
+    return clone(template);
+  },
+
+  async listAuditEvents() {
+    await wait(150);
+    return clone(
+      auditEvents
+        .slice()
+        .sort(
+          (a, b) =>
+            new Date(b.occurredAt).getTime() -
+            new Date(a.occurredAt).getTime()
+        )
+    );
+  },
+
+  async listComplianceControls() {
+    await wait(130);
+    return clone(complianceControls);
+  },
+
+  async recordAuditExport(eventCount: number) {
+    await wait(100);
+    const event: AuditEvent = {
+      id: newId('audit'),
+      category: 'data',
+      severity: 'info',
+      action: 'Exported the audit log',
+      actor: demoUser,
+      target: `${eventCount} events`,
+      occurredAt: new Date().toISOString(),
+      ipAddress: '127.0.0.1',
+      metadata: 'CSV export generated from the compliance workspace.',
+    };
+
+    auditEvents = [event, ...auditEvents];
+    emitDemoResource('audit');
+    return clone(event);
   },
 
   async listTeam() {

@@ -987,3 +987,107 @@ describe('mockDb insights', () => {
     ).toBe('accepted');
   });
 });
+
+describe('mockDb meeting templates', () => {
+  it('lists templates by usage and creates a new playbook', async () => {
+    const before = await mockDb.listMeetingTemplates();
+    expect(before.length).toBeGreaterThanOrEqual(6);
+    expect(before[0].usageCount).toBeGreaterThanOrEqual(
+      before[before.length - 1].usageCount
+    );
+
+    const created = await mockDb.createMeetingTemplate({
+      name: 'Quarterly planning',
+      description: 'Set the quarter themes and owners.',
+      category: 'planning',
+      durationMinutes: 0,
+      phases: [
+        { title: 'Themes', durationMinutes: 20, prompts: ['What matters?'] },
+        { title: 'Owners', durationMinutes: 10, prompts: ['Who owns it?'] },
+      ],
+      tags: ['quarter', 'planning'],
+    });
+
+    expect(created).toMatchObject({
+      name: 'Quarterly planning',
+      category: 'planning',
+      durationMinutes: 30,
+      usageCount: 0,
+      isFavorite: false,
+      lastUsedAt: null,
+      owner: { id: demoUser.id },
+    });
+    expect(created.phases).toHaveLength(2);
+
+    const after = await mockDb.listMeetingTemplates();
+    expect(after).toHaveLength(before.length + 1);
+    expect(after.some((template) => template.id === created.id)).toBe(true);
+
+    const activities = await mockDb.listActivities();
+    expect(activities[0]).toMatchObject({
+      title: 'Meeting template created',
+    });
+  });
+
+  it('toggles a favourite and records template usage', async () => {
+    const [template] = await mockDb.listMeetingTemplates();
+
+    const favorite = await mockDb.toggleTemplateFavorite(template.id, true);
+    expect(favorite.isFavorite).toBe(true);
+
+    const used = await mockDb.markTemplateUsed(template.id);
+    expect(used.usageCount).toBe(template.usageCount + 1);
+    expect(used.lastUsedAt).toBeTruthy();
+  });
+
+  it('rejects unknown template ids', async () => {
+    await expect(
+      mockDb.toggleTemplateFavorite('tpl-missing', true)
+    ).rejects.toThrow('Meeting template not found');
+    await expect(mockDb.markTemplateUsed('tpl-missing')).rejects.toThrow(
+      'Meeting template not found'
+    );
+  });
+});
+
+describe('mockDb audit trail', () => {
+  it('lists audit events newest first', async () => {
+    const events = await mockDb.listAuditEvents();
+
+    expect(events.length).toBeGreaterThanOrEqual(11);
+    expect(
+      new Date(events[0].occurredAt).getTime() >=
+        new Date(events[events.length - 1].occurredAt).getTime()
+    ).toBe(true);
+    expect(events.every((event) => Boolean(event.actor.fullName))).toBe(true);
+  });
+
+  it('lists the seeded compliance controls', async () => {
+    const controls = await mockDb.listComplianceControls();
+
+    expect(controls.length).toBeGreaterThanOrEqual(7);
+    expect(controls.some((control) => control.status === 'failing')).toBe(
+      true
+    );
+    expect(
+      controls.every((control) => Boolean(control.owner.fullName))
+    ).toBe(true);
+  });
+
+  it('records an audit export as a data event', async () => {
+    const before = await mockDb.listAuditEvents();
+
+    const event = await mockDb.recordAuditExport(4);
+
+    expect(event).toMatchObject({
+      category: 'data',
+      severity: 'info',
+      action: 'Exported the audit log',
+      target: '4 events',
+    });
+
+    const after = await mockDb.listAuditEvents();
+    expect(after).toHaveLength(before.length + 1);
+    expect(after[0].id).toBe(event.id);
+  });
+});

@@ -1,6 +1,10 @@
 import type {
   AccentColor,
   ActivityType,
+  AuditCategory,
+  AuditSeverity,
+  ComplianceFramework,
+  ComplianceStatus,
   DecisionStatus,
   InsightKind,
   InsightStatus,
@@ -16,6 +20,7 @@ import type {
   ProjectStatus,
   TaskPriority,
   TaskStatus,
+  TemplateCategory,
 } from '@/types';
 
 function pick<T extends string>(value: string, allowed: readonly T[], fallback: T): T {
@@ -110,3 +115,43 @@ export const asImpact = (value: string) =>
 
 export const asMemberStatus = (value: string) =>
   pick<'active' | 'away' | 'invited'>(value, ['active', 'away', 'invited'], 'active');
+
+export const asTemplateCategory = (value: string) =>
+  pick<TemplateCategory>(
+    value,
+    [
+      'one_on_one',
+      'standup',
+      'retrospective',
+      'planning',
+      'sales',
+      'interview',
+      'customer',
+      'custom',
+    ],
+    'custom'
+  );
+
+export const asAuditCategory = (value: string) =>
+  pick<AuditCategory>(
+    value,
+    ['access', 'data', 'integration', 'security', 'compliance'],
+    'access'
+  );
+
+export const asAuditSeverity = (value: string) =>
+  pick<AuditSeverity>(value, ['info', 'warning', 'critical'], 'info');
+
+export const asComplianceFramework = (value: string) =>
+  pick<ComplianceFramework>(
+    value,
+    ['gdpr', 'soc2', 'iso27001', 'hipaa'],
+    'gdpr'
+  );
+
+export const asComplianceStatus = (value: string) =>
+  pick<ComplianceStatus>(
+    value,
+    ['passing', 'attention', 'failing'],
+    'attention'
+  );

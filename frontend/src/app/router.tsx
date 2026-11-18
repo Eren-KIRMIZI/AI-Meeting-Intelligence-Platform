@@ -51,6 +51,16 @@ const IntegrationsPage = lazy(() =>
     default: module.IntegrationsPage,
   }))
 );
+const TemplatesPage = lazy(() =>
+  import('@/features/templates/TemplatesPage').then((module) => ({
+    default: module.TemplatesPage,
+  }))
+);
+const AuditPage = lazy(() =>
+  import('@/features/audit/AuditPage').then((module) => ({
+    default: module.AuditPage,
+  }))
+);
 const MeetingDetailPage = lazy(() =>
   import('@/features/meetings/MeetingDetailPage').then((module) => ({
     default: module.MeetingDetailPage,
@@ -161,6 +171,7 @@ export function AppRoutes() {
           <Route path="/meetings" element={<MeetingsPage />} />
           <Route path="/meetings/:meetingId" element={<MeetingDetailPage />} />
           <Route path="/calendar" element={<CalendarPage />} />
+          <Route path="/templates" element={<TemplatesPage />} />
           <Route path="/search" element={<SearchPage />} />
           <Route path="/live" element={<LiveLobbyPage />} />
           <Route path="/decisions" element={<DecisionsPage />} />
@@ -170,6 +181,7 @@ export function AppRoutes() {
           <Route path="/intelligence" element={<IntelligencePage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/team" element={<TeamPage />} />
+          <Route path="/audit" element={<AuditPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="*" element={<NotFoundPage />} />
         </Route>

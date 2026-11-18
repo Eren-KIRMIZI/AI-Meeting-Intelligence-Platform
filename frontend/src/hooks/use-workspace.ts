@@ -40,6 +40,17 @@ import {
 import { listCalendarEvents } from '@/services/calendar.service';
 import { searchWorkspace } from '@/services/search.service';
 import {
+  createMeetingTemplate,
+  listMeetingTemplates,
+  markTemplateUsed,
+  setTemplateFavorite,
+} from '@/services/templates.service';
+import {
+  listAuditEvents,
+  listComplianceControls,
+  recordAuditExport,
+} from '@/services/audit.service';
+import {
   inviteMember,
   listTeam,
   removeMember,
@@ -57,6 +68,7 @@ import type {
   ConvertInsightToDecisionInput,
   ConvertInsightToTaskInput,
   CreateMeetingInput,
+  CreateMeetingTemplateInput,
   CreateProjectInput,
   CreateTaskInput,
   CreateWorkflowInput,
@@ -677,6 +689,94 @@ export function useMarkNotificationRead() {
       markNotificationRead(notificationId, user?.id ?? null, orgId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+}
+
+export function useMeetingTemplates(options: QueryOptions = {}) {
+  const { orgId } = useAuth();
+  return useQuery({
+    queryKey: ['meeting-templates', orgId],
+    queryFn: () => listMeetingTemplates(orgId),
+    enabled: options.enabled ?? true,
+  });
+}
+
+export function useCreateMeetingTemplate() {
+  const queryClient = useQueryClient();
+  const { user, orgId } = useAuth();
+
+  return useMutation({
+    mutationFn: (input: CreateMeetingTemplateInput) => {
+      if (!user) throw new Error('A signed-in user is required.');
+      return createMeetingTemplate(input, { orgId, user });
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['meeting-templates'] });
+      void queryClient.invalidateQueries({ queryKey: ['activities'] });
+    },
+  });
+}
+
+export function useToggleTemplateFavorite() {
+  const queryClient = useQueryClient();
+  const { orgId } = useAuth();
+
+  return useMutation({
+    mutationFn: ({
+      templateId,
+      isFavorite,
+    }: {
+      templateId: string;
+      isFavorite: boolean;
+    }) => setTemplateFavorite(templateId, isFavorite, orgId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['meeting-templates'] });
+    },
+  });
+}
+
+export function useMarkTemplateUsed() {
+  const queryClient = useQueryClient();
+  const { orgId } = useAuth();
+
+  return useMutation({
+    mutationFn: (templateId: string) => markTemplateUsed(templateId, orgId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['meeting-templates'] });
+    },
+  });
+}
+
+export function useAuditEvents(options: QueryOptions = {}) {
+  const { orgId } = useAuth();
+  return useQuery({
+    queryKey: ['audit-events', orgId],
+    queryFn: () => listAuditEvents(orgId),
+    enabled: options.enabled ?? true,
+  });
+}
+
+export function useComplianceControls(options: QueryOptions = {}) {
+  const { orgId } = useAuth();
+  return useQuery({
+    queryKey: ['compliance-controls', orgId],
+    queryFn: () => listComplianceControls(orgId),
+    enabled: options.enabled ?? true,
+  });
+}
+
+export function useRecordAuditExport() {
+  const queryClient = useQueryClient();
+  const { user, orgId } = useAuth();
+
+  return useMutation({
+    mutationFn: (eventCount: number) => {
+      if (!user) throw new Error('A signed-in user is required.');
+      return recordAuditExport(eventCount, { orgId, user });
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['audit-events'] });
     },
   });
 }

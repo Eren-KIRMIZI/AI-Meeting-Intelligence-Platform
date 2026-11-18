@@ -7,11 +7,13 @@ import {
   FolderKanban,
   GitBranch,
   LayoutDashboard,
+  LayoutTemplate,
   ListTodo,
   LogOut,
   Plug,
   Search,
   Settings,
+  ShieldCheck,
   Users,
   Video,
   Workflow,
@@ -55,6 +57,12 @@ export const primaryNav: NavItem[] = [
     path: '/calendar',
     icon: CalendarRange,
     description: 'Plan meetings, invites and reminders',
+  },
+  {
+    label: 'Templates',
+    path: '/templates',
+    icon: LayoutTemplate,
+    description: 'Reusable agendas and meeting playbooks',
   },
   {
     label: 'Global search',
@@ -110,6 +118,12 @@ export const primaryNav: NavItem[] = [
     icon: Users,
     description: 'Members, roles and workload',
   },
+  {
+    label: 'Audit & compliance',
+    path: '/audit',
+    icon: ShieldCheck,
+    description: 'Sensitive actions and compliance controls',
+  },
 ];
 
 export const secondaryNav: NavItem[] = [
@@ -132,6 +146,7 @@ export const routeMeta: Record<string, { title: string; parent?: string }> = {
   '/tasks': { title: 'My Tasks', parent: 'Workspace' },
   '/meetings': { title: 'Meetings', parent: 'Workspace' },
   '/calendar': { title: 'Calendar', parent: 'Workspace' },
+  '/templates': { title: 'Templates', parent: 'Workspace' },
   '/search': { title: 'Global search', parent: 'Workspace' },
   '/live': { title: 'Nova Live', parent: 'Workspace' },
   '/decisions': { title: 'Decisions', parent: 'Workspace' },
@@ -141,6 +156,7 @@ export const routeMeta: Record<string, { title: string; parent?: string }> = {
   '/intelligence': { title: 'AI Intelligence', parent: 'Workspace' },
   '/analytics': { title: 'Analytics', parent: 'Workspace' },
   '/team': { title: 'Team', parent: 'Workspace' },
+  '/audit': { title: 'Audit & compliance', parent: 'Workspace' },
   '/settings': { title: 'Settings', parent: 'Workspace' },
   '/login': { title: 'Sign in' },
 };

@@ -16,14 +16,18 @@ import { Field } from '@/components/common/field';
 import { UserAvatar } from '@/components/common/user-avatar';
 import { useCreateMeeting, useTeam } from '@/hooks/use-workspace';
 import { useI18n } from '@/i18n';
+import { templateAgenda } from '@/lib/templates';
 import { cn } from '@/lib/utils';
-import type { MeetingPlatform } from '@/types';
+import type { Meeting, MeetingPlatform, MeetingTemplate } from '@/types';
 
 interface CreateMeetingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** Pre-fills the date and time, e.g. from a free calendar slot. */
   initialStartsAt?: string | null;
+  /** Pre-fills title, duration and agenda from a meeting template. */
+  template?: MeetingTemplate | null;
+  onScheduled?: (meeting: Meeting) => void;
 }
 
 function localDate(daysFromNow = 1) {
@@ -43,6 +47,8 @@ export function CreateMeetingDialog({
   open,
   onOpenChange,
   initialStartsAt,
+  template,
+  onScheduled,
 }: CreateMeetingDialogProps) {
   const createMeeting = useCreateMeeting();
   const team = useTeam({ enabled: open });
@@ -58,17 +64,17 @@ export function CreateMeetingDialog({
 
   useEffect(() => {
     if (!open) return;
-    setTitle('');
+    setTitle(template?.name ?? '');
     setDate(
       initialStartsAt ? initialStartsAt.slice(0, 10) : localDate()
     );
     setTime(initialStartsAt ? localTime(initialStartsAt) : '10:00');
-    setDuration('45');
+    setDuration(template ? String(template.durationMinutes) : '45');
     setPlatform('google_meet');
-    setAgenda('');
+    setAgenda(template ? templateAgenda(template).join('\n') : '');
     setParticipantIds([]);
     setReminder('15');
-  }, [open, initialStartsAt]);
+  }, [open, initialStartsAt, template]);
 
   const toggleParticipant = (memberId: string) => {
     setParticipantIds((current) =>
@@ -115,6 +121,7 @@ export function CreateMeetingDialog({
       {
         onSuccess: (meeting) => {
           toast.success(t('“{{title}}” scheduled', { title: meeting.title }));
+          onScheduled?.(meeting);
           onOpenChange(false);
         },
         onError: (error) => {

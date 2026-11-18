@@ -349,6 +349,30 @@ The Integrations hub is the connection surface for calendars, video platforms an
 
 ---
 
+## Meeting templates & playbooks
+
+A template captures the agenda and the prompts that make a recurring meeting work, so the next one starts from the same shape.
+
+- **Library.** Six seeded playbooks cover product planning, one-on-ones, retrospectives, customer discovery, hiring interviews and launch reviews. Each card shows category, duration, phase count, prompt count, tags, usage and the last time it ran.
+- **Playbook detail.** `playbookPrompts` flattens every phase into an ordered checklist, and the dialog shows each phase with its own time budget before the meeting starts.
+- **Create in place.** `CreateTemplateDialog` collects a name, description, category, duration, tags and any number of phases with per-phase minutes and one prompt per line; the total duration is derived when it is left empty.
+- **Start from a template.** **Use template** opens the normal scheduling dialog pre-filled with the template title, duration and agenda, then records the usage so popularity sorting stays honest.
+- **Turkish-aware search.** `filterTemplates` reuses the same normalisation as global search, so `ayse` finds `Ayşe`, and category, favourites and sort filters compose without a server round trip.
+
+---
+
+## Audit & compliance
+
+The audit surface answers two questions in one place: what happened, and can we prove it?
+
+- **Audit log.** Access, data, integration, security and compliance events are recorded with actor, target, IP address, severity and metadata. `filterAuditEvents` composes query, category, severity and recency filters over one sorted list.
+- **Summary and severity.** Critical events, warnings and the last 24 hours are counted separately, so a blocked sign-in or a failed token refresh cannot hide in a long list.
+- **Compliance score.** `complianceScore` counts passing controls in full, controls that need attention as half and failing controls as zero, then groups the same score by GDPR, SOC 2, ISO 27001 and HIPAA.
+- **Control ownership.** Every control names an owner, the last check and its evidence count; a remediation note appears whenever the status is not passing.
+- **Export is itself audited.** **Export CSV** writes the filtered log through `auditEventsToCsv` (quoted, RFC 4180-friendly) and records the export as a new data event in both demo and live mode.
+
+---
+
 ## Nova Live
 
 Nova Live runs the meeting inside the workspace: video/audio, screen sharing, chat, live captions, a transcript-grounded copilot and a report that becomes tasks, decisions and a Knowledge note.

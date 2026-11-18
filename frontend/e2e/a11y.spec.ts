@@ -11,6 +11,7 @@ const routes = [
   '/meetings',
   '/meetings/m-product-sync-past',
   '/calendar',
+  '/templates',
   '/search',
   '/live',
   '/decisions',
@@ -20,6 +21,7 @@ const routes = [
   '/intelligence',
   '/analytics',
   '/team',
+  '/audit',
   '/settings',
 ];
 

@@ -2,6 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   asAccent,
   asActivityType,
+  asAuditCategory,
+  asAuditSeverity,
+  asComplianceFramework,
+  asComplianceStatus,
   asDecisionStatus,
   asImpact,
   asIntegrationIcon,
@@ -14,6 +18,7 @@ import {
   asProjectStatus,
   asTaskPriority,
   asTaskStatus,
+  asTemplateCategory,
 } from './enum-guards';
 
 describe('enum guards', () => {
@@ -66,5 +71,25 @@ describe('enum guards', () => {
   it('normalizes decision status', () => {
     expect(asDecisionStatus('accepted')).toBe('accepted');
     expect(asDecisionStatus('pending')).toBe('proposed');
+  });
+
+  it('normalizes template categories', () => {
+    expect(asTemplateCategory('one_on_one')).toBe('one_on_one');
+    expect(asTemplateCategory('retrospective')).toBe('retrospective');
+    expect(asTemplateCategory('workshop')).toBe('custom');
+  });
+
+  it('normalizes audit categories and severities', () => {
+    expect(asAuditCategory('security')).toBe('security');
+    expect(asAuditCategory('billing')).toBe('access');
+    expect(asAuditSeverity('critical')).toBe('critical');
+    expect(asAuditSeverity('debug')).toBe('info');
+  });
+
+  it('normalizes compliance frameworks and statuses', () => {
+    expect(asComplianceFramework('soc2')).toBe('soc2');
+    expect(asComplianceFramework('pci')).toBe('gdpr');
+    expect(asComplianceStatus('passing')).toBe('passing');
+    expect(asComplianceStatus('unknown')).toBe('attention');
   });
 });

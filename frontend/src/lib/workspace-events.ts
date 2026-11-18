@@ -10,7 +10,9 @@ export type WorkspaceEventResource =
   | 'team'
   | 'insights'
   | 'integrations'
-  | 'calendar';
+  | 'calendar'
+  | 'templates'
+  | 'audit';
 
 export interface WorkspaceEvent {
   resource: WorkspaceEventResource;

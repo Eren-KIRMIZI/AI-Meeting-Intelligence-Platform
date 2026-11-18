@@ -656,3 +656,95 @@ export interface SetMemberProjectsInput {
   memberId: string;
   projectIds: string[];
 }
+
+export type TemplateCategory =
+  | 'one_on_one'
+  | 'standup'
+  | 'retrospective'
+  | 'planning'
+  | 'sales'
+  | 'interview'
+  | 'customer'
+  | 'custom';
+
+export interface MeetingTemplatePhase {
+  id: string;
+  title: string;
+  durationMinutes: number;
+  prompts: string[];
+}
+
+export interface MeetingTemplate {
+  id: string;
+  name: string;
+  description: string;
+  category: TemplateCategory;
+  accent: AccentColor;
+  durationMinutes: number;
+  phases: MeetingTemplatePhase[];
+  tags: string[];
+  usageCount: number;
+  isFavorite: boolean;
+  lastUsedAt: string | null;
+  owner: UserProfile;
+  updatedAt: string;
+}
+
+export interface CreateMeetingTemplateInput {
+  name: string;
+  description: string;
+  category: TemplateCategory;
+  durationMinutes: number;
+  phases: Array<{
+    title: string;
+    durationMinutes: number;
+    prompts: string[];
+  }>;
+  tags: string[];
+}
+
+export type AuditCategory =
+  | 'access'
+  | 'data'
+  | 'integration'
+  | 'security'
+  | 'compliance';
+
+export type AuditSeverity = 'info' | 'warning' | 'critical';
+
+export interface AuditEvent {
+  id: string;
+  category: AuditCategory;
+  severity: AuditSeverity;
+  action: string;
+  actor: UserProfile;
+  target: string;
+  occurredAt: string;
+  ipAddress?: string;
+  metadata?: string;
+}
+
+export interface AuditFilters {
+  query: string;
+  category: AuditCategory | 'all';
+  severity: AuditSeverity | 'all';
+  /** Only include events newer than this many days. `null` keeps everything. */
+  days: number | null;
+}
+
+export type ComplianceFramework = 'gdpr' | 'soc2' | 'iso27001' | 'hipaa';
+
+export type ComplianceStatus = 'passing' | 'attention' | 'failing';
+
+export interface ComplianceControl {
+  id: string;
+  framework: ComplianceFramework;
+  code: string;
+  title: string;
+  description: string;
+  status: ComplianceStatus;
+  owner: UserProfile;
+  lastCheckedAt: string;
+  evidenceCount: number;
+  remediation?: string;
+}
