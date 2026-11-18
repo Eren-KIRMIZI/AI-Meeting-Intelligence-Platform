@@ -93,7 +93,7 @@ Open the printed URL (default `http://localhost:5173`). Use **Continue with demo
 
 ### Testing & CI
 
-Tests use Vitest with jsdom, Testing Library and jest-dom. The suite covers pure helpers, metric builders, range-derived analytics, enum guards, the transcript analyzer, the live-meeting intelligence and Knowledge note, the demo data store and its meeting pipeline (analyze → commit), Nova Live persistence, recording formatting and archive storage, notification preference filtering and deep-link safety, the demo workspace event bus, action-driven notification delivery, team role hierarchy rules, member removal and project-access sync, the insight review queue and its task/decision conversion, the workflow run log, sidebar accessibility, route metadata and document titles, the error boundaries, the 404 page, locale switching and locale-aware formatting, and a task-board interaction end to end.
+Tests use Vitest with jsdom, Testing Library and jest-dom. The suite covers pure helpers, metric builders, range-derived analytics, enum guards, the transcript analyzer, the live-meeting intelligence and Knowledge note, the demo data store and its meeting pipeline (analyze → commit), Nova Live persistence, recording formatting and archive storage, notification preference filtering and deep-link safety, the demo workspace event bus, action-driven notification delivery, team role hierarchy rules, member removal and project-access sync, the insight review queue and its task/decision conversion, the workflow run log, sidebar accessibility, route metadata and document titles, the error boundaries, the 404 page, locale switching and locale-aware formatting, translation coverage (AST-based key, placeholder and JSX guard), and a task-board interaction end to end.
 
 ```bash
 cd frontend
@@ -369,6 +369,25 @@ The Team directory is a working permission surface. Clicking a member card opens
 - The preference is stored under `nova-preferences`, so the choice survives reloads. Components rendered without the provider (isolated unit tests) always fall back to English.
 - UI copy is translated; workspace data such as meeting titles, project names and AI answers stay in their original language. CSV export headers and values remain English for portability, and workflow trigger/step values stay in English as canonical storage keys while their labels are translated.
 - `e2e/a11y.spec.ts` runs in the default English locale, so the axe gate covers the shipped default experience.
+
+### Translation coverage guard
+
+`src/i18n/translation-coverage.test.ts` walks the TypeScript AST (not regex) and fails CI when:
+
+- a literal `t('…')`, `translate('…')`, `translateFor('en' | 'tr', '…')` or `plural(…, '…', '…')` key has no entry in `messages/tr.ts`;
+- a Turkish entry drops, adds or renames an `{{interpolation}}` placeholder;
+- a Turkish entry is empty;
+- visible JSX text or a literal UI attribute (`placeholder`, `title`, `aria-label`, `label`, `alt`, …) is not wrapped in `t()`.
+
+Run it alone with `npm run test -- src/i18n/translation-coverage.test.ts`. Dynamic keys such as `t(roleLabel)` cannot be verified statically; those labels stay canonical English strings in the data layer and are translated at render.
+
+### Adding a page or component
+
+1. Wrap every user-visible string in `t('English source string')` and use `plural()` for counts.
+2. Add the Turkish entry to `messages/tr.ts`, keeping every `{{placeholder}}` intact.
+3. Keep workspace data (names, titles, AI answers, CSV values) untranslated; translate only the label around it.
+4. Brand names, keyboard hints and timezone identifiers that must stay identical belong in `UNTRANSLATED_TEXT` (or `UNTRANSLATED_ATTRIBUTES` for attributes) in the guard, with a comment explaining why.
+5. Run the guard before pushing; a missing entry fails the unit-test job instead of silently shipping English.
 
 ---
 

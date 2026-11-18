@@ -95,7 +95,7 @@ function StepIcon({ status }: { status: 'pending' | 'running' | 'done' | 'failed
 }
 
 export function MeetingDetailPage() {
-  const { t } = useI18n();
+  const { t, plural } = useI18n();
   const { meetingId } = useParams();
   const meetingQuery = useMeeting(meetingId);
   const teamQuery = useTeam();
@@ -186,22 +186,33 @@ export function MeetingDetailPage() {
       { meetingId: meeting.id, actionIds, decisionIds },
       {
         onSuccess: (result) => {
-          const parts = [
-            result.tasks.length > 0
-              ? t('{{count}} task', { count: result.tasks.length })
-              : null,
-            result.decisions.length > 0
-              ? t('{{count}} decision', { count: result.decisions.length })
-              : null,
-          ].filter(Boolean);
-
-          toast.success(
-            parts.length > 0
-              ? t('Created {{items}} from this meeting.', {
-                  items: parts.join(t(' and ')),
-                })
-              : t('Follow-ups were already created.')
+          const tasks = plural(
+            result.tasks.length,
+            '{{count}} task',
+            '{{count}} tasks'
           );
+          const decisions = plural(
+            result.decisions.length,
+            '{{count}} decision',
+            '{{count}} decisions'
+          );
+
+          if (result.tasks.length > 0 && result.decisions.length > 0) {
+            toast.success(
+              t('Created {{tasks}} and {{decisions}} from this meeting.', {
+                tasks,
+                decisions,
+              })
+            );
+          } else if (result.tasks.length > 0 || result.decisions.length > 0) {
+            toast.success(
+              t('Created {{items}} from this meeting.', {
+                items: result.tasks.length > 0 ? tasks : decisions,
+              })
+            );
+          } else {
+            toast.success(t('Follow-ups were already created.'));
+          }
           setSelectedActionIds([]);
           setSelectedDecisionIds([]);
         },

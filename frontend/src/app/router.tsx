@@ -6,6 +6,7 @@ import { NovaMark } from '@/components/common/nova-mark';
 import { useAuth } from '@/features/auth/auth-provider';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { NotFoundPage } from '@/features/auth/NotFoundPage';
+import { useI18n } from '@/i18n';
 
 // Route-level code splitting keeps the first paint small: the workspace shell,
 // auth and login load immediately, and each module arrives on first visit.
@@ -87,6 +88,8 @@ const SettingsPage = lazy(() =>
 );
 
 function AuthLoadingScreen() {
+  const { t } = useI18n();
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-4 bg-background">
       <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.16)]">
@@ -94,7 +97,7 @@ function AuthLoadingScreen() {
       </div>
       <div className="flex items-center gap-2 text-xs text-muted-foreground">
         <Loader2 className="h-3.5 w-3.5 animate-spin" />
-        Loading your workspace
+        {t('Loading your workspace')}
       </div>
     </div>
   );

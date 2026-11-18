@@ -38,6 +38,7 @@ export const tr: Record<string, string> = {
   'Signed out': 'Çıkış yapıldı',
   'Profile': 'Profil',
   'Command menu': 'Komut menüsü',
+  'Loading your workspace': 'Çalışma alanınız yükleniyor',
   'Search for tasks, projects, meetings, or team members...':
     'Görev, proje, toplantı veya ekip üyesi arayın...',
   'Search workspace...': 'Çalışma alanında ara...',
@@ -514,7 +515,8 @@ export const tr: Record<string, string> = {
   '{{count}} decisions': '{{count}} karar',
   'Created {{items}} from this meeting.':
     'Bu toplantıdan {{items}} oluşturuldu.',
-  and: 've',
+  'Created {{tasks}} and {{decisions}} from this meeting.':
+    'Bu toplantıdan {{tasks}} ve {{decisions}} oluşturuldu.',
   'Follow-ups were already created.': 'Takipler zaten oluşturulmuş.',
   'Could not create the follow-ups.': 'Takipler oluşturulamadı.',
   'Analyze transcript': 'Transkripti analiz et',
@@ -730,6 +732,7 @@ export const tr: Record<string, string> = {
   'A workflow name is required': 'Akış adı gerekli',
   'Add at least one action': 'En az bir eylem ekleyin',
   '“{{name}}” is now active': '“{{name}}” artık etkin',
+  '“{{name}}” is active': '“{{name}}” etkin',
   '“{{name}}” paused': '“{{name}}” duraklatıldı',
   'Could not create workflow': 'Akış oluşturulamadı',
   'Could not update workflow': 'Akış güncellenemedi',
@@ -793,6 +796,10 @@ export const tr: Record<string, string> = {
   'Extraction quality': 'Çıkarım kalitesi',
   'Average confidence': 'Ortalama güven',
   'Average insight confidence': 'Ortalama içgörü güveni',
+  'The signal your meetings leave behind — summaries, decisions, risks and the actions that follow.':
+    'Toplantılarınızın geride bıraktığı sinyal — özetler, kararlar, riskler ve ardından gelen aksiyonlar.',
+  'Review the signal, accept what matters and turn the rest into owned work.':
+    'Sinyali inceleyin, önemli olanı kabul edin ve gerisini sahipli işlere dönüştürün.',
   'Insight queue': 'İçgörü kuyruğu',
   '{{shown}} of {{total}} signals': '{{total}} sinyalden {{shown}} tanesi',
   'Search title, owner, meeting or project':
@@ -881,6 +888,8 @@ export const tr: Record<string, string> = {
   '14 days': '14 gün',
   '30 days': '30 gün',
   'Execution velocity': 'Yürütme hızı',
+  'Execution velocity, meeting output and the capacity behind every commitment.':
+    'Yürütme hızı, toplantı çıktısı ve her taahhüdün arkasındaki kapasite.',
   'Tasks completed against tasks created each day.':
     'Her gün tamamlanan görevler, oluşturulan görevlere karşı.',
   'Net {{value}}': 'Net {{value}}',
