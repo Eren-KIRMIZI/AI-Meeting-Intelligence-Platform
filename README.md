@@ -87,6 +87,8 @@ Open the printed URL (default `http://localhost:5173`). Use **Continue with demo
 | `npm run test` | Run the Vitest suite once |
 | `npm run test:watch` | Run Vitest in watch mode |
 | `npm run test:coverage` | Run the suite with a V8 coverage report |
+| `npm run test:e2e` | Run the Playwright browser suite |
+| `npm run test:e2e:ui` | Open the Playwright UI runner |
 
 ### Testing & CI
 
@@ -99,7 +101,17 @@ npm run test
 
 `src/test/setup.ts` provides the small browser API shims Radix and Recharts need. Tests never call Supabase or the network — demo mode keeps them deterministic.
 
-GitHub Actions runs `lint → typecheck → test → build` on every push and pull request to `main` (`.github/workflows/ci.yml`).
+The Playwright suite drives the real app in Chromium: every workspace route, keyboard skip navigation, 404 recovery, task creation, the insight review flow, filters and the mobile navigation drawer. Install the browser once, then run the suite:
+
+```bash
+cd frontend
+npx playwright install chromium
+npm run test:e2e
+```
+
+Playwright starts its own Vite server on `127.0.0.1:4173`, so the dev server does not need to be running. CI runs the browser suite in a separate job and uploads the HTML report when it fails.
+
+GitHub Actions runs `lint → typecheck → test → build` plus the Playwright job on every push and pull request to `main` (`.github/workflows/ci.yml`).
 
 ---
 

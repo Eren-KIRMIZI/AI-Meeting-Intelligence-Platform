@@ -11,6 +11,11 @@ build/
 *.tsbuildinfo
 coverage/
 
+# Playwright
+playwright-report/
+test-results/
+blob-report/
+
 # Environment — never commit real secrets
 .env
 .env.*
