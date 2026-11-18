@@ -67,7 +67,7 @@ export function AiBriefCard() {
           ))}
         </div>
 
-        <p className="mt-3 text-[10px] text-muted-foreground/70">
+        <p className="mt-3 text-[10px] text-muted-foreground">
           Updated {formatRelativeTime(aiBrief.updatedAt)}
         </p>
       </CardContent>

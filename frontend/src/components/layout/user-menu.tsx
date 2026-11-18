@@ -33,16 +33,20 @@ export function UserMenu() {
   };
 
   return (
-    <DropdownMenu>
+    <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
           size="sm"
           className="h-8 gap-2 px-1.5 text-muted-foreground hover:text-foreground"
-          aria-label="Open user menu"
         >
-          <UserAvatar user={user} size="md" />
-          <ChevronDown className="hidden h-3 w-3 sm:block" />
+          <span className="flex items-center gap-2">
+            <UserAvatar user={user} size="md" />
+            <span className="sr-only">
+              {user?.fullName ?? 'Workspace member'} account menu
+            </span>
+            <ChevronDown aria-hidden="true" className="hidden h-3 w-3 sm:block" />
+          </span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-64">

@@ -564,7 +564,7 @@ export function MeetingDetailPage() {
                         key={`${line.at}-${index}`}
                         className="flex gap-3 py-2.5"
                       >
-                        <span className="w-10 shrink-0 pt-0.5 text-right font-mono text-[10px] text-muted-foreground/70">
+                        <span className="w-10 shrink-0 pt-0.5 text-right font-mono text-[10px] text-muted-foreground">
                           {formatTimestamp(line.at)}
                         </span>
                         <div className="min-w-0">
@@ -598,7 +598,11 @@ export function MeetingDetailPage() {
                       {confidence}%
                     </span>
                   </div>
-                  <Progress value={confidence} className="mt-2" />
+                  <Progress
+                    value={confidence}
+                    aria-label="Extraction confidence"
+                    className="mt-2"
+                  />
                 </div>
 
                 <div className="grid grid-cols-3 gap-2">
@@ -670,7 +674,7 @@ export function MeetingDetailPage() {
                     )}
                     {commit.isPending ? 'Creating…' : 'Create follow-ups'}
                   </Button>
-                  <p className="text-[10px] leading-relaxed text-muted-foreground/80">
+                  <p className="text-[10px] leading-relaxed text-muted-foreground">
                     Tasks land in the project. Decisions go to the decision log.
                     Nothing is written until you confirm.
                   </p>

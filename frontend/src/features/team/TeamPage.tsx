@@ -282,7 +282,7 @@ export function TeamPage() {
                       <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
                         {member.jobTitle ?? 'Team member'}
                       </p>
-                      <p className="mt-1 truncate text-[10px] text-muted-foreground/80">
+                      <p className="mt-1 truncate text-[10px] text-muted-foreground">
                         {member.email || 'Email pending'}
                       </p>
                     </div>
@@ -308,6 +308,7 @@ export function TeamPage() {
                     </div>
                     <Progress
                       value={member.workload}
+                      aria-label={`${member.fullName} workload`}
                       className="mt-1.5 h-1"
                       indicatorClassName={cn(
                         member.workload > 85

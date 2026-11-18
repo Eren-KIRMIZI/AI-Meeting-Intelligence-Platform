@@ -415,6 +415,7 @@ export function AnalyticsPage() {
                   </div>
                   <Progress
                     value={item.utilization}
+                    aria-label={`${item.member.fullName} workload`}
                     className="mt-1.5 h-1"
                     indicatorClassName={cn(
                       item.utilization > 85
@@ -463,7 +464,11 @@ export function AnalyticsPage() {
                     <ProjectStatusBadge status={item.project.status} />
                   </div>
                   <div className="mt-2 flex items-center gap-2">
-                    <Progress value={item.progress} className="h-1" />
+                    <Progress
+                      value={item.progress}
+                      aria-label={`${item.project.name} progress`}
+                      className="h-1"
+                    />
                     <span className="w-9 shrink-0 text-right text-[10px] tabular text-muted-foreground">
                       {item.progress}%
                     </span>

@@ -46,17 +46,19 @@ export function Header() {
         <button
           type="button"
           onClick={() => setCommandOpen(true)}
-          aria-label="Search the workspace"
           className="group flex h-8 w-full max-w-[460px] items-center gap-2 rounded-md border border-border/80 bg-secondary/30 px-3 text-left text-xs text-muted-foreground outline-none transition-colors hover:border-border hover:bg-secondary/60 focus-visible:ring-1 focus-visible:ring-ring"
         >
-          <Search className="h-3.5 w-3.5 shrink-0" />
+          <Search className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           <span className="truncate">
             <span className="hidden sm:inline">
               Search for tasks, projects, meetings, or team members...
             </span>
             <span className="sm:hidden">Search workspace...</span>
           </span>
-          <span className="ml-auto hidden shrink-0 items-center gap-1 sm:flex">
+          <span
+            className="ml-auto hidden shrink-0 items-center gap-1 sm:flex"
+            aria-hidden="true"
+          >
             <kbd className="kbd">⌘</kbd>
             <kbd className="kbd">K</kbd>
           </span>

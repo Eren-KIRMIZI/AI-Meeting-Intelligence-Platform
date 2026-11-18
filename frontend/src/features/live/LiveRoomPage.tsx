@@ -745,7 +745,7 @@ export function LiveRoomPage() {
                     {formatRecordingLength(recording.clip.durationSeconds)} ·{' '}
                     {recording.clip.filename}
                   </p>
-                  <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground/80">
+                  <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground">
                     {archived
                       ? 'Archived on the meeting. Everyone with workspace access can play it there.'
                       : savedMeeting

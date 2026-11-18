@@ -32,7 +32,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
                   'border border-border bg-card text-foreground shadow-float rounded-lg',
                 title: 'text-sm font-medium',
                 description: 'text-xs text-muted-foreground',
-                actionButton: 'bg-primary text-primary-foreground',
+                actionButton: 'bg-primary-strong text-primary-foreground',
                 cancelButton: 'bg-secondary text-secondary-foreground',
                 closeButton: 'border-border bg-card text-muted-foreground',
               },

@@ -228,6 +228,7 @@ export function ProjectDetailPage() {
             </div>
             <Progress
               value={project.progress}
+              aria-label="Delivery progress"
               className="mt-2"
               indicatorClassName={accent.solidBg}
             />
@@ -376,7 +377,7 @@ export function ProjectDetailPage() {
                           <p className="mt-1 line-clamp-1 text-[11px] text-muted-foreground">
                             {meeting.summary ?? 'No brief yet.'}
                           </p>
-                          <p className="mt-1 text-[10px] text-muted-foreground/80">
+                          <p className="mt-1 text-[10px] text-muted-foreground">
                             {formatDate(meeting.startsAt, {
                               month: 'short',
                               day: 'numeric',

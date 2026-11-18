@@ -20,7 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { SegmentedControl } from '@/components/ui/segmented-control';
 import { useMeetings } from '@/hooks/use-workspace';
 import { buildMeetingStats, countUpcomingMeetings } from '@/lib/metrics';
 import { cn, formatDate, formatTime } from '@/lib/utils';
@@ -46,6 +46,7 @@ export function MeetingsPage() {
   const list = meetings.data ?? [];
   const stats = buildMeetingStats(list);
   const upcomingCount = countUpcomingMeetings(list);
+  const pastCount = list.length - upcomingCount;
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -155,22 +156,15 @@ export function MeetingsPage() {
       </Card>
 
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <Tabs value={tab} onValueChange={(value) => setTab(value as MeetingTab)}>
-          <TabsList>
-            <TabsTrigger value="upcoming">
-              Upcoming
-              <span className="ml-1 text-[10px] text-muted-foreground">
-                {list.filter((meeting) => meeting.status === 'scheduled' || meeting.status === 'live').length}
-              </span>
-            </TabsTrigger>
-            <TabsTrigger value="past">
-              Past briefs
-              <span className="ml-1 text-[10px] text-muted-foreground">
-                {list.filter((meeting) => meeting.status !== 'scheduled' && meeting.status !== 'live').length}
-              </span>
-            </TabsTrigger>
-          </TabsList>
-        </Tabs>
+        <SegmentedControl
+          value={tab}
+          onValueChange={setTab}
+          label="Meeting timeline"
+          options={[
+            { value: 'upcoming', label: 'Upcoming', count: upcomingCount },
+            { value: 'past', label: 'Past briefs', count: pastCount },
+          ]}
+        />
 
         <div className="relative w-full sm:max-w-[300px]">
           <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -245,7 +239,7 @@ export function MeetingsPage() {
                         {meeting.projectName ? <span>{meeting.projectName}</span> : null}
                       </p>
                       {meeting.agenda.length > 0 ? (
-                        <p className="mt-1.5 line-clamp-1 text-[10px] text-muted-foreground/80">
+                        <p className="mt-1.5 line-clamp-1 text-[10px] text-muted-foreground">
                           Agenda: {meeting.agenda.join(' · ')}
                         </p>
                       ) : null}

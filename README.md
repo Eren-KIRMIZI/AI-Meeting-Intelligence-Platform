@@ -109,6 +109,8 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
+`e2e/a11y.spec.ts` runs an axe-core audit (`@axe-core/playwright`) against WCAG 2.0/2.1/2.2 A and AA rules on every route plus the insight detail dialog, the create-task dialog, the command palette, the notifications panel and the user menu. The suite fails on any violation, so accessibility regressions block CI just like a broken test.
+
 Playwright starts its own Vite server on `127.0.0.1:4173`, so the dev server does not need to be running. CI runs the browser suite in a separate job and uploads the HTML report when it fails.
 
 GitHub Actions runs `lint → typecheck → test → build` plus the Playwright job on every push and pull request to `main` (`.github/workflows/ci.yml`).
@@ -372,6 +374,9 @@ The Team directory is a working permission surface. Clicking a member card opens
 - Navigating moves focus to the `<main>` landmark and resets scroll, while the first load leaves focus untouched.
 - A skip link jumps straight to `#main-content`, and every route sets a meaningful document title (`Tasks — Nova`, `Meeting detail — Nova`, …). Detail routes resolve their breadcrumb to the owning module instead of falling back to Overview.
 - Unknown paths are labelled "Not found" in both the breadcrumb and the tab title.
+- **WCAG 2.2 AA is enforced in CI.** `e2e/a11y.spec.ts` audits all 14 workspace routes and the main overlays with axe and fails on any violation.
+- Solid primary buttons, badges and toast actions use `--primary-strong` so white text clears 4.5:1, while `--primary` stays for links and icons on dark surfaces. Muted captions use the full `--muted-foreground` token instead of a reduced opacity.
+- Scrollable transcript and notification regions are keyboard focusable, every `Progress` bar has an accessible name, charts inside `aria-hidden` wrappers opt out of the Recharts accessibility layer, and the meeting timeline filter is a labelled toggle group (`aria-pressed`) instead of tabs without panels.
 
 ---
 

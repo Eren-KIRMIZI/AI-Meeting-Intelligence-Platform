@@ -1,5 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { cn, getInitials } from '@/lib/utils';
+import { cn, avatarTextColor, getInitials } from '@/lib/utils';
 import type { UserProfile } from '@/types';
 import { UserRound } from 'lucide-react';
 
@@ -40,7 +40,7 @@ export function UserAvatar({
       <AvatarFallback
         style={{
           backgroundColor: `${color}26`,
-          color,
+          color: avatarTextColor(color),
           borderColor: `${color}40`,
         }}
         className="border"

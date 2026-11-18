@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Bell,
@@ -10,14 +11,7 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Skeleton } from '@/components/ui/skeleton';
 import { cn, formatRelativeTime } from '@/lib/utils';
@@ -60,14 +54,16 @@ function NotificationRow({
 }) {
   const Icon = notificationIcons[notification.type];
   return (
-    <DropdownMenuItem
-      onSelect={() => onOpen(notification)}
+    <button
+      type="button"
+      onClick={() => onOpen(notification)}
       className={cn(
-        'flex cursor-pointer items-start gap-3 rounded-none px-3 py-3 focus:bg-secondary/40 [&_svg]:!size-3.5 [&_svg]:!text-current',
+        'flex w-full items-start gap-3 px-3 py-3 text-left transition-colors hover:bg-secondary/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring',
         !notification.read && 'bg-primary/[0.035]'
       )}
     >
       <span
+        aria-hidden="true"
         className={cn(
           'mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-md border',
           notificationTones[notification.type]
@@ -81,22 +77,26 @@ function NotificationRow({
             {notification.title}
           </p>
           {!notification.read ? (
-            <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
+            <span
+              aria-hidden="true"
+              className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-primary"
+            />
           ) : null}
         </div>
         <p className="mt-0.5 line-clamp-2 text-[11px] leading-relaxed text-muted-foreground">
           {notification.body}
         </p>
-        <p className="mt-1 text-[10px] text-muted-foreground/70">
+        <p className="mt-1 text-[10px] text-muted-foreground">
           {formatRelativeTime(notification.createdAt)}
         </p>
       </div>
-    </DropdownMenuItem>
+    </button>
   );
 }
 
 export function NotificationsMenu() {
   const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
   const { data, isLoading } = useNotifications();
   const preferences = usePreferencesStore((state) => state.notifications);
   const markAllRead = useMarkNotificationsRead();
@@ -109,28 +109,43 @@ export function NotificationsMenu() {
 
   const openNotification = (notification: AppNotification) => {
     if (!notification.read) markRead.mutate(notification.id);
+    setOpen(false);
     navigate(notificationPath(notification));
   };
 
+  const goToSettings = () => {
+    setOpen(false);
+    navigate('/settings?tab=notifications');
+  };
+
   return (
-    <DropdownMenu>
-      <DropdownMenuTrigger asChild>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
         <Button
           variant="ghost"
           size="icon-sm"
           className="relative text-muted-foreground hover:text-foreground"
           aria-label={`Notifications${unread > 0 ? `, ${unread} unread` : ''}`}
         >
-          <Bell className="h-4 w-4" />
+          <Bell className="h-4 w-4" aria-hidden="true" />
           {unread > 0 ? (
-            <span className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-primary ring-2 ring-background" />
+            <span
+              aria-hidden="true"
+              className="absolute right-1.5 top-1.5 h-1.5 w-1.5 rounded-full bg-primary ring-2 ring-background"
+            />
           ) : null}
         </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-[340px] p-0">
+      </PopoverTrigger>
+      <PopoverContent
+        align="end"
+        sideOffset={8}
+        role="dialog"
+        aria-label="Notifications"
+        className="w-[340px] p-0"
+      >
         <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
           <div className="flex items-center gap-2">
-            <DropdownMenuLabel className="p-0">Notifications</DropdownMenuLabel>
+            <p className="text-sm font-semibold">Notifications</p>
             {unread > 0 ? (
               <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-blue-300">
                 {unread} new
@@ -148,7 +163,7 @@ export function NotificationsMenu() {
               })
             }
           >
-            <CheckCheck className="h-3 w-3" />
+            <CheckCheck className="h-3 w-3" aria-hidden="true" />
             Mark all read
           </Button>
         </div>
@@ -178,9 +193,9 @@ export function NotificationsMenu() {
                   variant="ghost"
                   size="sm"
                   className="mt-2 h-7 text-[10px]"
-                  onClick={() => navigate('/settings?tab=notifications')}
+                  onClick={goToSettings}
                 >
-                  <Settings2 className="h-3 w-3" />
+                  <Settings2 className="h-3 w-3" aria-hidden="true" />
                   Review notification settings
                 </Button>
               ) : null}
@@ -201,34 +216,37 @@ export function NotificationsMenu() {
         {hidden > 0 && visible.length > 0 ? (
           <button
             type="button"
-            onClick={() => navigate('/settings?tab=notifications')}
-            className="flex w-full items-center gap-1.5 border-t border-border/70 px-3 py-2 text-left text-[10px] text-muted-foreground transition-colors hover:text-foreground"
+            onClick={goToSettings}
+            className="flex w-full items-center gap-1.5 border-t border-border/70 px-3 py-2 text-left text-[10px] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring"
           >
-            <Settings2 className="h-3 w-3" />
+            <Settings2 className="h-3 w-3" aria-hidden="true" />
             {hidden} notification{hidden === 1 ? '' : 's'} hidden by your
             preferences
           </button>
         ) : null}
 
-        <DropdownMenuSeparator className="m-0" />
+        <div className="border-t border-border" />
         <div className="flex items-center justify-between px-3 py-2">
           <button
             type="button"
-            onClick={() => navigate('/settings?tab=notifications')}
-            className="flex items-center gap-1 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground"
+            onClick={goToSettings}
+            className="flex h-7 items-center gap-1 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           >
-            <Settings2 className="h-3 w-3" />
+            <Settings2 className="h-3 w-3" aria-hidden="true" />
             Notification settings
           </button>
           <button
             type="button"
-            onClick={() => navigate('/overview')}
-            className="flex items-center gap-1 text-[10px] font-medium text-blue-400 transition-colors hover:text-blue-300"
+            onClick={() => {
+              setOpen(false);
+              navigate('/overview');
+            }}
+            className="flex h-7 items-center gap-1 text-[10px] font-medium text-blue-400 transition-colors hover:text-blue-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           >
             View workspace activity
           </button>
         </div>
-      </DropdownMenuContent>
-    </DropdownMenu>
+      </PopoverContent>
+    </Popover>
   );
 }

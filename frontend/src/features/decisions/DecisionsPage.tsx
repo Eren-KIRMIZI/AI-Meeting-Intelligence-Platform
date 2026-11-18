@@ -211,7 +211,6 @@ export function DecisionsPage() {
                       <button
                         type="button"
                         onClick={() => setSelectedId(decision.id)}
-                        aria-label={`Open decision ${decision.title}`}
                         className="group flex w-full items-start gap-2 rounded-md text-left focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                       >
                         <span className="min-w-0 flex-1">

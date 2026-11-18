@@ -89,18 +89,7 @@ function InsightCard({
   const confidence = Math.round(insight.confidence * 100);
 
   return (
-    <Card
-      className="flex cursor-pointer flex-col transition-colors hover:border-primary/40 hover:bg-secondary/20"
-      role="button"
-      tabIndex={0}
-      onClick={onOpen}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter' || event.key === ' ') {
-          event.preventDefault();
-          onOpen();
-        }
-      }}
-    >
+    <Card className="relative flex flex-col transition-colors focus-within:border-primary/40 hover:border-primary/40 hover:bg-secondary/20">
       <CardContent className="flex flex-1 flex-col p-4">
         <div className="flex flex-wrap items-center gap-1.5">
           <Badge variant={meta.badge}>
@@ -144,14 +133,18 @@ function InsightCard({
             </span>
             <span className="tabular text-foreground">{confidence}%</span>
           </div>
-          <Progress value={confidence} className="mt-1.5" />
+          <Progress
+            value={confidence}
+            aria-label={`${insight.title} confidence`}
+            className="mt-1.5"
+          />
 
           <div className="mt-2 flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
             <span className="truncate">{insight.meetingTitle}</span>
             {conversion ? (
               <Link
                 to={conversion.href}
-                className="inline-flex shrink-0 items-center gap-1 text-primary hover:underline"
+                className="relative z-10 inline-flex min-h-6 shrink-0 items-center gap-1 py-0.5 text-primary hover:underline"
                 onClick={(event) => event.stopPropagation()}
               >
                 {conversion.label}
@@ -161,6 +154,12 @@ function InsightCard({
           </div>
         </div>
       </CardContent>
+      <button
+        type="button"
+        onClick={onOpen}
+        aria-label={`Review insight: ${insight.title}`}
+        className="absolute inset-0 rounded-xl focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+      />
     </Card>
   );
 }
@@ -437,7 +436,11 @@ export function IntelligencePage() {
                   {averageConfidence}%
                 </span>
               </div>
-              <Progress value={averageConfidence} className="mt-2" />
+              <Progress
+                value={averageConfidence}
+                aria-label="Average insight confidence"
+                className="mt-2"
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-2">

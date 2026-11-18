@@ -29,6 +29,27 @@ export function avatarColorFor(seed: string) {
   return AVATAR_PALETTE[hashString(seed) % AVATAR_PALETTE.length];
 }
 
+/**
+ * Avatar initials sit on a 15%-alpha tint of their accent colour, so mid-tone
+ * accents fall below 4.5:1. Lightening the text keeps the identity hue while
+ * meeting WCAG AA on the dark surface.
+ */
+export function avatarTextColor(hex: string) {
+  const normalized = hex.replace('#', '');
+  if (!/^[0-9a-f]{6}$/i.test(normalized)) return hex;
+
+  const channels = [0, 2, 4].map((index) =>
+    Number.parseInt(normalized.slice(index, index + 2), 16)
+  );
+  const lightened = channels.map((channel) =>
+    Math.round(channel + (255 - channel) * 0.3)
+  );
+
+  return `#${lightened
+    .map((value) => value.toString(16).padStart(2, '0'))
+    .join('')}`;
+}
+
 export function getInitials(name: string) {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return 'NA';

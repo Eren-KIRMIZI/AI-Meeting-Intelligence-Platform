@@ -79,7 +79,7 @@ export function ActivityFeed({ activities }: { activities: Activity[] }) {
                       <p className="text-[11px] font-medium text-foreground">
                         {activity.title}
                       </p>
-                      <span className="shrink-0 text-[10px] text-muted-foreground/70">
+                      <span className="shrink-0 text-[10px] text-muted-foreground">
                         {formatRelativeTime(activity.createdAt)}
                       </span>
                     </div>

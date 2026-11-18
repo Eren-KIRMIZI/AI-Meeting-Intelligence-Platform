@@ -225,6 +225,7 @@ export function MemberDetailDialog({
             </p>
             <Progress
               value={member.workload}
+              aria-label={`${member.fullName} workload`}
               className="mt-1.5 h-1"
               indicatorClassName={cn(
                 member.workload > 85
