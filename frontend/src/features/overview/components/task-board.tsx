@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { UserAvatar } from '@/components/common/user-avatar';
 import { TaskPriorityBadge, TaskStatusBadge } from '@/components/common/status-badges';
 import { cn, formatDueDate, isOverdue } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import type { Task, TaskStatus } from '@/types';
 
 export type BoardView = 'board' | 'list';
@@ -22,6 +23,7 @@ const columns: Array<{
 ];
 
 function BoardTaskCard({ task }: { task: Task }) {
+  const { t } = useI18n();
   return (
     <div className="rounded-lg border border-border/70 bg-card p-2.5 shadow-sm transition-colors hover:border-border">
       <div className="flex items-start justify-between gap-2">
@@ -39,7 +41,9 @@ function BoardTaskCard({ task }: { task: Task }) {
                   ? 'bg-blue-400'
                   : 'bg-slate-400'
           )}
-          title={`${task.priority} priority`}
+          title={t('{{priority}} priority', {
+            priority: t(task.priority.charAt(0).toUpperCase() + task.priority.slice(1)),
+          })}
         />
       </div>
       <p className="mt-1.5 truncate text-[10px] text-muted-foreground">
@@ -71,23 +75,24 @@ export function TaskBoard({
   view: BoardView;
   onAddTask: () => void;
 }) {
+  const { t } = useI18n();
   return (
     <Card>
       <CardHeader className="flex-row items-start justify-between gap-3 space-y-0 pb-3">
         <div>
-          <CardTitle>Execution board</CardTitle>
+          <CardTitle>{t('Execution board')}</CardTitle>
           <CardDescription className="mt-1">
-            Tasks moving through the current cycle
+            {t('Tasks moving through the current cycle')}
           </CardDescription>
         </div>
         <div className="flex shrink-0 items-center gap-1.5">
           <Button variant="ghost" size="sm" onClick={onAddTask}>
             <Plus className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Add task</span>
+            <span className="hidden sm:inline">{t('Add task')}</span>
           </Button>
           <Button asChild variant="ghost" size="sm">
             <Link to="/tasks">
-              Open board
+              {t('Open board')}
               <ChevronRight className="h-3.5 w-3.5" />
             </Link>
           </Button>
@@ -111,7 +116,7 @@ export function TaskBoard({
                     <div className="flex items-center gap-1.5">
                       <span className={cn('h-1.5 w-1.5 rounded-full', column.dot)} />
                       <span className="text-[11px] font-medium text-foreground">
-                        {column.label}
+                        {t(column.label)}
                       </span>
                     </div>
                     <span className="text-[10px] tabular text-muted-foreground">
@@ -125,7 +130,7 @@ export function TaskBoard({
                   <div className="space-y-2">
                     {columnTasks.length === 0 ? (
                       <div className="rounded-md border border-dashed border-border/70 px-2 py-5 text-center text-[10px] text-muted-foreground">
-                        No tasks
+                        {t('No tasks')}
                       </div>
                     ) : (
                       columnTasks.map((task) => (
@@ -188,10 +193,14 @@ export function TaskBoard({
         <div className="mt-3 flex items-center justify-between rounded-md bg-secondary/25 px-3 py-2 text-[10px] text-muted-foreground">
           <span className="flex items-center gap-1.5">
             <ListTodo className="h-3 w-3" />
-            {tasks.filter((task) => task.status !== 'done').length} open tasks
+            {t('{{count}} open tasks', {
+              count: tasks.filter((task) => task.status !== 'done').length,
+            })}
           </span>
           <span>
-            {tasks.filter((task) => task.status === 'done').length} completed
+            {t('{{count}} completed', {
+              count: tasks.filter((task) => task.status === 'done').length,
+            })}
           </span>
         </div>
       </CardContent>

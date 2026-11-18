@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Badge, type BadgeProps } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import {
   decisionStatusMeta,
   integrationStatusMeta,
@@ -20,13 +21,14 @@ import type {
 } from '@/types';
 
 function DotBadge({ meta, className }: { meta: StatusMeta; className?: string }) {
+  const { t } = useI18n();
   return (
     <Badge
       variant={meta.tone as BadgeProps['variant']}
       className={cn('gap-1.5', className)}
     >
       <span className={cn('h-1.5 w-1.5 rounded-full', meta.dot)} />
-      {meta.label}
+      {t(meta.label)}
     </Badge>
   );
 }
@@ -40,9 +42,10 @@ export function TaskStatusBadge({ status }: { status: TaskStatus }) {
 }
 
 export function TaskPriorityBadge({ priority }: { priority: TaskPriority }) {
+  const { t } = useI18n();
   return (
     <Badge variant={taskPriorityMeta[priority].tone as BadgeProps['variant']}>
-      {taskPriorityMeta[priority].label}
+      {t(taskPriorityMeta[priority].label)}
     </Badge>
   );
 }

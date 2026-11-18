@@ -12,11 +12,13 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { Button } from '@/components/ui/button';
 import { useKnowledge } from '@/hooks/use-workspace';
 import { cn, formatDate, formatRelativeTime } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import type { KnowledgeDocument, KnowledgeKind } from '@/types';
 import { KnowledgeReader } from './components/knowledge-reader';
 import { kindMeta, knowledgeFilters } from './knowledge-meta';
 
 export function KnowledgePage() {
+  const { t } = useI18n();
   const knowledge = useKnowledge();
   const [filter, setFilter] = useState<'all' | KnowledgeKind>('all');
   const [query, setQuery] = useState('');
@@ -46,7 +48,7 @@ export function KnowledgePage() {
         description={
           knowledge.error instanceof Error
             ? knowledge.error.message
-            : 'Knowledge documents could not be loaded.'
+            : t('Knowledge documents could not be loaded.')
         }
         onRetry={() => void knowledge.refetch()}
       />
@@ -66,11 +68,16 @@ export function KnowledgePage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Knowledge"
-        description="The searchable memory of the workspace — meeting notes, transcripts and the playbooks that follow."
+        title={t('Knowledge')}
+        description={t(
+          'The searchable memory of the workspace — meeting notes, transcripts and the playbooks that follow.'
+        )}
         badge={
           <Badge variant="outline" className="bg-secondary/30">
-            {list.length} documents · {totalMinutes} min read
+            {t('{{documents}} documents · {{minutes}} min read', {
+              documents: list.length,
+              minutes: totalMinutes,
+            })}
           </Badge>
         }
       />
@@ -86,7 +93,7 @@ export function KnowledgePage() {
                 className="h-7 text-[11px]"
                 onClick={() => setFilter(item.value)}
               >
-                {item.label}
+                {t(item.label)}
               </Button>
             ))}
           </div>
@@ -95,9 +102,9 @@ export function KnowledgePage() {
             <Input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search notes, transcripts, tags..."
+              placeholder={t('Search notes, transcripts, tags...')}
               className="h-8 pl-8 text-xs"
-              aria-label="Search knowledge"
+              aria-label={t('Search knowledge')}
             />
           </div>
         </CardContent>
@@ -106,8 +113,10 @@ export function KnowledgePage() {
       {filtered.length === 0 ? (
         <EmptyState
           icon={BookOpen}
-          title="No documents match this view"
-          description="Try another type or search term. Meeting notes and transcripts appear here after a call is processed."
+          title={t('No documents match this view')}
+          description={t(
+            'Try another type or search term. Meeting notes and transcripts appear here after a call is processed.'
+          )}
         />
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 2xl:grid-cols-3">
@@ -127,7 +136,7 @@ export function KnowledgePage() {
                       <span className={cn('icon-tile h-9 w-9 border', meta.tone)}>
                         <Icon className="h-4 w-4" />
                       </span>
-                      <Badge variant="outline">{meta.label}</Badge>
+                      <Badge variant="outline">{t(meta.label)}</Badge>
                     </div>
 
                     <p className="mt-3 line-clamp-2 text-sm font-semibold leading-snug text-foreground">
@@ -156,7 +165,10 @@ export function KnowledgePage() {
                         </span>
                       </div>
                       <span className="shrink-0 text-[10px] text-muted-foreground">
-                        {document.readMinutes} min · {formatRelativeTime(document.updatedAt)}
+                        {t('{{minutes}} min read · {{time}}', {
+                          minutes: document.readMinutes,
+                          time: formatRelativeTime(document.updatedAt),
+                        })}
                       </span>
                     </div>
                   </CardContent>
@@ -173,8 +185,15 @@ export function KnowledgePage() {
             <>
               <DialogTitle className="sr-only">{selected.title}</DialogTitle>
               <DialogDescription className="sr-only">
-                {kindMeta[selected.kind].label} by {selected.author.fullName},
-                updated {formatDate(selected.updatedAt, { month: 'long', day: 'numeric', year: 'numeric' })}.
+                {t('{{kind}} by {{author}}, updated {{date}}.', {
+                  kind: t(kindMeta[selected.kind].label),
+                  author: selected.author.fullName,
+                  date: formatDate(selected.updatedAt, {
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric',
+                  }),
+                })}
               </DialogDescription>
               <KnowledgeReader
                 key={selected.id}

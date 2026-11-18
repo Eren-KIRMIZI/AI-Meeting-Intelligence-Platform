@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { defaultLocale, type Locale } from '@/i18n/locale';
 
 export type NotificationPreferenceKey =
   | 'meetingBriefs'
@@ -15,8 +16,10 @@ export interface PreferencesState {
   jobTitle: string;
   timezone: string;
   weekStart: 'monday' | 'sunday';
+  locale: Locale;
   notifications: Record<NotificationPreferenceKey, boolean>;
   security: Record<SecurityPreferenceKey, boolean>;
+  setLocale: (locale: Locale) => void;
   setProfile: (profile: { displayName: string; jobTitle: string }) => void;
   setWorkspace: (workspace: {
     timezone: string;
@@ -33,6 +36,7 @@ export const usePreferencesStore = create<PreferencesState>()(
       jobTitle: 'Product Lead',
       timezone: 'Europe/Istanbul',
       weekStart: 'monday',
+      locale: defaultLocale,
       notifications: {
         meetingBriefs: true,
         actionItems: true,
@@ -44,6 +48,7 @@ export const usePreferencesStore = create<PreferencesState>()(
         twoFactor: false,
         sessionAlerts: true,
       },
+      setLocale: (locale) => set({ locale }),
       setProfile: ({ displayName, jobTitle }) =>
         set({ displayName, jobTitle }),
       setWorkspace: ({ timezone, weekStart }) =>

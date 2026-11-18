@@ -40,6 +40,7 @@ import {
   type TeamActor,
 } from '@/lib/team';
 import { cn, formatDate, formatDueDate, isOverdue } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import { roleMeta, statusMeta } from '../team-meta';
 import type { OrgRole, Project, Task, TeamMember } from '@/types';
 
@@ -69,6 +70,7 @@ export function MemberDetailDialog({
   const updateRole = useUpdateMemberRole();
   const setProjects = useSetMemberProjects();
   const removeMember = useRemoveMember();
+  const { t } = useI18n();
 
   const [role, setRole] = useState<OrgRole>('member');
   const [selectedProjectIds, setSelectedProjectIds] = useState<string[]>([]);
@@ -143,12 +145,17 @@ export function MemberDetailDialog({
       {
         onSuccess: () => {
           toast.success(
-            `${member.fullName} is now ${roleLabel(role).toLowerCase()}`
+            t('{{name}} is now {{role}}', {
+              name: member.fullName,
+              role: t(roleLabel(role)).toLowerCase(),
+            })
           );
         },
         onError: (error) => {
           toast.error(
-            error instanceof Error ? error.message : 'Could not update the role'
+            error instanceof Error
+              ? error.message
+              : t('Could not update the role')
           );
         },
       }
@@ -160,13 +167,17 @@ export function MemberDetailDialog({
       { memberId: member.id, projectIds: selectedProjectIds },
       {
         onSuccess: () => {
-          toast.success(`Project access updated for ${member.fullName}`);
+          toast.success(
+            t('Project access updated for {{name}}', {
+              name: member.fullName,
+            })
+          );
         },
         onError: (error) => {
           toast.error(
             error instanceof Error
               ? error.message
-              : 'Could not update project access'
+              : t('Could not update project access')
           );
         },
       }
@@ -178,14 +189,18 @@ export function MemberDetailDialog({
       onSuccess: () => {
         toast.success(
           isInvited
-            ? `Invitation for ${member.email} revoked`
-            : `${member.fullName} removed from the workspace`
+            ? t('Invitation for {{email}} revoked', { email: member.email })
+            : t('{{name}} removed from the workspace', {
+                name: member.fullName,
+              })
         );
         onOpenChange(false);
       },
       onError: (error) => {
         toast.error(
-          error instanceof Error ? error.message : 'Could not update the team'
+          error instanceof Error
+            ? error.message
+            : t('Could not update the team')
         );
       },
     });
@@ -200,16 +215,17 @@ export function MemberDetailDialog({
             <div className="min-w-0 flex-1">
               <div className="flex flex-wrap items-center gap-1.5">
                 <DialogTitle className="truncate">{member.fullName}</DialogTitle>
-                <Badge variant={roleInfo.variant}>{roleInfo.label}</Badge>
+                <Badge variant={roleInfo.variant}>{t(roleInfo.label)}</Badge>
                 <span className="inline-flex items-center gap-1.5 text-[10px] text-muted-foreground">
                   <span
                     className={cn('h-1.5 w-1.5 rounded-full', statusInfo.dot)}
                   />
-                  {statusInfo.label}
+                  {t(statusInfo.label)}
                 </span>
               </div>
               <DialogDescription className="mt-1">
-                {member.jobTitle ?? 'Team member'} · {member.email || 'Email pending'}
+                {member.jobTitle ?? t('Team member')} ·{' '}
+                {member.email || t('Email pending')}
               </DialogDescription>
             </div>
           </div>
@@ -218,14 +234,14 @@ export function MemberDetailDialog({
         <div className="grid grid-cols-3 divide-x divide-border/70 rounded-lg border border-border/70 bg-secondary/20">
           <div className="px-3 py-2.5">
             <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-              Workload
+              {t('Workload')}
             </p>
             <p className="mt-0.5 font-display text-sm font-semibold tabular">
               {member.workload}%
             </p>
             <Progress
               value={member.workload}
-              aria-label={`${member.fullName} workload`}
+              aria-label={t('{{name}} workload', { name: member.fullName })}
               className="mt-1.5 h-1"
               indicatorClassName={cn(
                 member.workload > 85
@@ -238,19 +254,20 @@ export function MemberDetailDialog({
           </div>
           <div className="px-3 py-2.5">
             <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-              Open tasks
+              {t('Open tasks')}
             </p>
             <p className="mt-0.5 font-display text-sm font-semibold tabular">
               {openTasks.length}
             </p>
             <p className="mt-1 text-[10px] text-muted-foreground">
-              Across {assignedProjects.length} project
-              {assignedProjects.length === 1 ? '' : 's'}
+              {t('Across {{count}} projects', {
+                count: assignedProjects.length,
+              })}
             </p>
           </div>
           <div className="px-3 py-2.5">
             <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-              Member since
+              {t('Member since')}
             </p>
             <p className="mt-0.5 text-sm font-medium">
               {member.joinedAt
@@ -261,7 +278,7 @@ export function MemberDetailDialog({
                 : '—'}
             </p>
             <p className="mt-1 text-[10px] text-muted-foreground">
-              {isInvited ? 'Invitation pending' : 'Workspace member'}
+              {isInvited ? t('Invitation pending') : t('Workspace member')}
             </p>
           </div>
         </div>
@@ -271,27 +288,32 @@ export function MemberDetailDialog({
             <div>
               <p className="flex items-center gap-1.5 text-xs font-semibold">
                 <ShieldCheck className="h-3.5 w-3.5 text-violet-400" />
-                Workspace role
+                {t('Workspace role')}
               </p>
               <p className="mt-0.5 text-[11px] text-muted-foreground">
-                Admins manage the team; members create and edit work; viewers
-                read only.
+                {t(
+                  'Admins manage the team; members create and edit work; viewers read only.'
+                )}
               </p>
             </div>
-            <Badge variant={roleInfo.variant}>{roleInfo.label}</Badge>
+            <Badge variant={roleInfo.variant}>{t(roleInfo.label)}</Badge>
           </div>
 
           <div className="space-y-3 px-4 py-3">
             {!manager || currentRole === 'owner' ? (
               <p className="text-[11px] text-muted-foreground">
                 {currentRole === 'owner'
-                  ? 'The workspace owner role is fixed and cannot be changed.'
-                  : 'Only workspace owners and admins can change this role.'}
+                  ? t('The workspace owner role is fixed and cannot be changed.')
+                  : t('Only workspace owners and admins can change this role.')}
               </p>
             ) : (
               <>
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-                  <Field label="Assign role" htmlFor="member-role" className="flex-1">
+                  <Field
+                    label={t('Assign role')}
+                    htmlFor="member-role"
+                    className="flex-1"
+                  >
                     <NativeSelect
                       id="member-role"
                       value={role}
@@ -301,7 +323,7 @@ export function MemberDetailDialog({
                     >
                       {roleOptions.map((option) => (
                         <option key={option} value={option}>
-                          {roleLabel(option)}
+                          {t(roleLabel(option))}
                         </option>
                       ))}
                     </NativeSelect>
@@ -319,18 +341,19 @@ export function MemberDetailDialog({
                     ) : (
                       <UserRoundCheck className="h-3.5 w-3.5" />
                     )}
-                    Save role
+                    {t('Save role')}
                   </Button>
                 </div>
                 {roleChanged && !roleCheck.allowed ? (
                   <p className="flex items-center gap-1.5 text-[11px] text-amber-400">
                     <AlertTriangle className="h-3 w-3" />
-                    {roleCheck.reason}
+                    {roleCheck.reason ? t(roleCheck.reason) : null}
                   </p>
                 ) : (
                   <p className="text-[10px] text-muted-foreground">
-                    Role changes are recorded in the workspace activity log and
-                    notify the member.
+                    {t(
+                      'Role changes are recorded in the workspace activity log and notify the member.'
+                    )}
                   </p>
                 )}
               </>
@@ -343,12 +366,16 @@ export function MemberDetailDialog({
             <div>
               <p className="flex items-center gap-1.5 text-xs font-semibold">
                 <FolderKanban className="h-3.5 w-3.5 text-blue-400" />
-                Project access
+                {t('Project access')}
               </p>
               <p className="mt-0.5 text-[11px] text-muted-foreground">
                 {isInvited
-                  ? 'Project access can be assigned after the invitation is accepted.'
-                  : 'Choose which projects this member can see and work in.'}
+                  ? t(
+                      'Project access can be assigned after the invitation is accepted.'
+                    )
+                  : t(
+                      'Choose which projects this member can see and work in.'
+                    )}
               </p>
             </div>
             <Badge variant="outline">{assignedProjects.length}</Badge>
@@ -358,7 +385,7 @@ export function MemberDetailDialog({
             {isInvited || !projectCheck.allowed ? (
               <div className="flex flex-wrap gap-1.5">
                 {assignedProjects.length === 0 ? (
-                  <Badge variant="outline">No project access</Badge>
+                  <Badge variant="outline">{t('No project access')}</Badge>
                 ) : (
                   assignedProjects.map((project) => (
                     <Badge
@@ -397,7 +424,7 @@ export function MemberDetailDialog({
                         </span>
                         {owned ? (
                           <Badge variant="outline" className="text-[9px]">
-                            Owner
+                            {t('Owner')}
                           </Badge>
                         ) : null}
                       </label>
@@ -407,10 +434,10 @@ export function MemberDetailDialog({
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-[10px] text-muted-foreground">
                     {projectsChanged
-                      ? `${selectedProjectIds.length} project${
-                          selectedProjectIds.length === 1 ? '' : 's'
-                        } selected`
-                      : 'No unsaved project changes'}
+                      ? t('{{count}} projects selected', {
+                          count: selectedProjectIds.length,
+                        })
+                      : t('No unsaved project changes')}
                   </p>
                   <Button
                     size="sm"
@@ -424,7 +451,7 @@ export function MemberDetailDialog({
                     ) : (
                       <Check className="h-3.5 w-3.5" />
                     )}
-                    Save access
+                    {t('Save access')}
                   </Button>
                 </div>
               </>
@@ -436,14 +463,14 @@ export function MemberDetailDialog({
           <div className="flex items-center justify-between gap-3 border-b border-border/70 px-4 py-3">
             <p className="flex items-center gap-1.5 text-xs font-semibold">
               <ListChecks className="h-3.5 w-3.5 text-emerald-400" />
-              Open assignments
+              {t('Open assignments')}
             </p>
             <Badge variant="outline">{openTasks.length}</Badge>
           </div>
           <div className="divide-y divide-border/60">
             {recentTasks.length === 0 ? (
               <p className="px-4 py-3 text-[11px] text-muted-foreground">
-                No open tasks assigned to this member.
+                {t('No open tasks assigned to this member.')}
               </p>
             ) : (
               recentTasks.map((task) => (
@@ -472,9 +499,9 @@ export function MemberDetailDialog({
             )}
             {openTasks.length > recentTasks.length ? (
               <p className="px-4 py-2 text-[10px] text-muted-foreground">
-                +{openTasks.length - recentTasks.length} more open task
-                {openTasks.length - recentTasks.length === 1 ? '' : 's'} in the
-                task board.
+                {t('+{{count}} more open tasks in the task board.', {
+                  count: openTasks.length - recentTasks.length,
+                })}
               </p>
             ) : null}
           </div>
@@ -485,14 +512,18 @@ export function MemberDetailDialog({
             <div>
               <p className="flex items-center gap-1.5 text-xs font-semibold text-rose-300">
                 <Trash2 className="h-3.5 w-3.5" />
-                {isInvited ? 'Revoke invitation' : 'Remove member'}
+                {isInvited ? t('Revoke invitation') : t('Remove member')}
               </p>
               <p className="mt-0.5 text-[11px] text-muted-foreground">
                 {removeCheck.allowed
                   ? isInvited
-                    ? 'The pending invitation will stop working immediately.'
-                    : 'Project access is revoked. Existing tasks keep their history.'
-                  : removeCheck.reason}
+                    ? t('The pending invitation will stop working immediately.')
+                    : t(
+                        'Project access is revoked. Existing tasks keep their history.'
+                      )
+                  : removeCheck.reason
+                    ? t(removeCheck.reason)
+                    : null}
               </p>
             </div>
 
@@ -505,7 +536,7 @@ export function MemberDetailDialog({
                     onClick={() => setConfirmRemove(false)}
                     disabled={removeMember.isPending}
                   >
-                    Cancel
+                    {t('Cancel')}
                   </Button>
                   <Button
                     size="sm"
@@ -518,7 +549,7 @@ export function MemberDetailDialog({
                     ) : (
                       <Trash2 className="h-3.5 w-3.5" />
                     )}
-                    {isInvited ? 'Revoke' : 'Remove'}
+                    {isInvited ? t('Revoke') : t('Remove')}
                   </Button>
                 </div>
               ) : (
@@ -528,7 +559,7 @@ export function MemberDetailDialog({
                   className="shrink-0 border-rose-500/30 text-rose-300 hover:bg-rose-500/10 hover:text-rose-200"
                   onClick={() => setConfirmRemove(true)}
                 >
-                  {isInvited ? 'Revoke invitation' : 'Remove member'}
+                  {isInvited ? t('Revoke invitation') : t('Remove member')}
                 </Button>
               )
             ) : null}
@@ -541,10 +572,10 @@ export function MemberDetailDialog({
             className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground transition-colors hover:text-foreground"
           >
             <Mail className="h-3 w-3" />
-            {member.email || 'Email pending'}
+            {member.email || t('Email pending')}
           </a>
           <p className="text-[10px] text-muted-foreground">
-            Changes apply to the whole workspace.
+            {t('Changes apply to the whole workspace.')}
           </p>
         </div>
       </DialogContent>

@@ -11,8 +11,10 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { aiBrief } from '@/mocks/data';
 import { formatRelativeTime } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 
 export function AiBriefCard() {
+  const { t } = useI18n();
   return (
     <Card className="overflow-hidden">
       <CardHeader className="flex-row items-start justify-between gap-3 space-y-0 pb-3">
@@ -21,15 +23,15 @@ export function AiBriefCard() {
             <Sparkles className="h-4 w-4" />
           </span>
           <div className="min-w-0">
-            <CardTitle>AI brief</CardTitle>
+            <CardTitle>{t('AI brief')}</CardTitle>
             <CardDescription className="mt-1">
-              The latest meeting, distilled
+              {t('The latest meeting, distilled')}
             </CardDescription>
           </div>
         </div>
         <Button asChild variant="ghost" size="sm" className="shrink-0">
           <Link to="/intelligence">
-            Open
+            {t('Open')}
             <ArrowUpRight className="h-3.5 w-3.5" />
           </Link>
         </Button>
@@ -41,7 +43,7 @@ export function AiBriefCard() {
             {aiBrief.meetingTitle}
           </p>
           <Badge variant="info" className="shrink-0">
-            Summary ready
+            {t('Summary ready')}
           </Badge>
         </div>
         <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
@@ -68,7 +70,9 @@ export function AiBriefCard() {
         </div>
 
         <p className="mt-3 text-[10px] text-muted-foreground">
-          Updated {formatRelativeTime(aiBrief.updatedAt)}
+          {t('Updated {{time}}', {
+            time: formatRelativeTime(aiBrief.updatedAt),
+          })}
         </p>
       </CardContent>
     </Card>

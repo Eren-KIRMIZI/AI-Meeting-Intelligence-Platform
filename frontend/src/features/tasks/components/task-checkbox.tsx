@@ -1,16 +1,21 @@
 import { toast } from 'sonner';
 import { Checkbox } from '@/components/ui/checkbox';
 import { useToggleTask } from '@/hooks/use-workspace';
+import { useI18n } from '@/i18n';
 import type { Task } from '@/types';
 
 export function TaskCheckbox({ task }: { task: Task }) {
   const toggle = useToggleTask();
+  const { t } = useI18n();
 
   return (
     <Checkbox
       checked={task.status === 'done'}
       disabled={toggle.isPending}
-      aria-label={`Mark “${task.title}” as ${task.status === 'done' ? 'open' : 'done'}`}
+      aria-label={t('Mark “{{title}}” as {{state}}', {
+        title: task.title,
+        state: task.status === 'done' ? t('open') : t('done'),
+      })}
       onCheckedChange={(checked) => {
         const done = checked === true;
         toggle.mutate(
@@ -19,15 +24,15 @@ export function TaskCheckbox({ task }: { task: Task }) {
             onSuccess: () => {
               toast.success(
                 done
-                  ? `“${task.title}” completed`
-                  : `“${task.title}” reopened`
+                  ? t('“{{title}}” completed', { title: task.title })
+                  : t('“{{title}}” reopened', { title: task.title })
               );
             },
             onError: (error) => {
               toast.error(
                 error instanceof Error
                   ? error.message
-                  : 'Could not update the task'
+                  : t('Could not update the task')
               );
             },
           }

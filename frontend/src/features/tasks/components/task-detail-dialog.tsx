@@ -26,6 +26,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useUpdateTask } from '@/hooks/use-workspace';
 import { formatRelativeTime } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import type { Task, TaskPriority, TaskStatus } from '@/types';
 
 interface TaskDetailDialogProps {
@@ -40,6 +41,7 @@ export function TaskDetailDialog({
   onOpenChange,
 }: TaskDetailDialogProps) {
   const update = useUpdateTask();
+  const { t } = useI18n();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [status, setStatus] = useState<TaskStatus>('todo');
@@ -67,7 +69,7 @@ export function TaskDetailDialog({
   const save = () => {
     const trimmedTitle = title.trim();
     if (!trimmedTitle) {
-      toast.error('A task title is required');
+      toast.error(t('A task title is required'));
       return;
     }
 
@@ -84,12 +86,12 @@ export function TaskDetailDialog({
       },
       {
         onSuccess: (updated) => {
-          toast.success(`“${updated.title}” updated`);
+          toast.success(t('“{{title}}” updated', { title: updated.title }));
           onOpenChange(false);
         },
         onError: (error) => {
           toast.error(
-            error instanceof Error ? error.message : 'Could not update the task'
+            error instanceof Error ? error.message : t('Could not update the task')
           );
         },
       }
@@ -104,14 +106,14 @@ export function TaskDetailDialog({
         onSuccess: () => {
           toast.success(
             nextStatus === 'done'
-              ? `“${task.title}” completed`
-              : `“${task.title}” reopened`
+              ? t('“{{title}}” completed', { title: task.title })
+              : t('“{{title}}” reopened', { title: task.title })
           );
           setStatus(nextStatus);
         },
         onError: (error) => {
           toast.error(
-            error instanceof Error ? error.message : 'Could not update the task'
+            error instanceof Error ? error.message : t('Could not update the task')
           );
         },
       }
@@ -124,7 +126,7 @@ export function TaskDetailDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <TaskStatusBadge status={task.status} />
-            Task details
+            {t('Task details')}
           </DialogTitle>
           <DialogDescription>
             {task.projectName}
@@ -133,7 +135,7 @@ export function TaskDetailDialog({
         </DialogHeader>
 
         <div className="space-y-4">
-          <Field label="Task title" htmlFor="task-detail-title">
+          <Field label={t('Task title')} htmlFor="task-detail-title">
             <Input
               id="task-detail-title"
               value={title}
@@ -142,32 +144,32 @@ export function TaskDetailDialog({
             />
           </Field>
 
-          <Field label="Description" htmlFor="task-detail-description">
+          <Field label={t('Description')} htmlFor="task-detail-description">
             <Textarea
               id="task-detail-description"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder="Add context, links or acceptance criteria..."
+              placeholder={t('Add context, links or acceptance criteria...')}
               className="min-h-[90px]"
             />
           </Field>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <Field label="Status" htmlFor="task-detail-status">
+            <Field label={t('Status')} htmlFor="task-detail-status">
               <NativeSelect
                 id="task-detail-status"
                 value={status}
                 onChange={(event) => setStatus(event.target.value as TaskStatus)}
               >
-                <option value="backlog">Backlog</option>
-                <option value="todo">To do</option>
-                <option value="in_progress">In progress</option>
-                <option value="in_review">In review</option>
-                <option value="done">Done</option>
+                <option value="backlog">{t('Backlog')}</option>
+                <option value="todo">{t('To do')}</option>
+                <option value="in_progress">{t('In progress')}</option>
+                <option value="in_review">{t('In review')}</option>
+                <option value="done">{t('Done')}</option>
               </NativeSelect>
             </Field>
 
-            <Field label="Priority" htmlFor="task-detail-priority">
+            <Field label={t('Priority')} htmlFor="task-detail-priority">
               <NativeSelect
                 id="task-detail-priority"
                 value={priority}
@@ -175,15 +177,15 @@ export function TaskDetailDialog({
                   setPriority(event.target.value as TaskPriority)
                 }
               >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="urgent">Urgent</option>
+                <option value="low">{t('Low')}</option>
+                <option value="medium">{t('Medium')}</option>
+                <option value="high">{t('High')}</option>
+                <option value="urgent">{t('Urgent')}</option>
               </NativeSelect>
             </Field>
           </div>
 
-          <Field label="Due date" htmlFor="task-detail-due">
+          <Field label={t('Due date')} htmlFor="task-detail-due">
             <Input
               id="task-detail-due"
               type="date"
@@ -197,13 +199,17 @@ export function TaskDetailDialog({
           <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
               <UserAvatar user={task.assignee} size="xs" />
-              {task.assignee?.fullName ?? 'Unassigned'}
+              {task.assignee?.fullName ?? t('Unassigned')}
             </span>
-            <span>Created {formatRelativeTime(task.createdAt)}</span>
+            <span>
+              {t('Created {{time}}', {
+                time: formatRelativeTime(task.createdAt),
+              })}
+            </span>
             {task.sourceMeetingId ? (
               <Badge variant="outline" className="bg-secondary/30">
                 <Sparkles className="h-3 w-3" />
-                From a meeting
+                {t('From a meeting')}
               </Badge>
             ) : null}
           </div>
@@ -211,7 +217,7 @@ export function TaskDetailDialog({
           {task.sourceMeetingId ? (
             <Button asChild variant="ghost" size="sm" className="h-7 px-2 text-[11px]">
               <Link to={`/meetings/${task.sourceMeetingId}`}>
-                Open source meeting
+                {t('Open source meeting')}
               </Link>
             </Button>
           ) : null}
@@ -230,7 +236,7 @@ export function TaskDetailDialog({
             ) : (
               <CheckCircle2 className="h-3.5 w-3.5" />
             )}
-            {task.status === 'done' ? 'Reopen task' : 'Mark done'}
+            {task.status === 'done' ? t('Reopen task') : t('Mark done')}
           </Button>
           <div className="flex items-center gap-2">
             <Button
@@ -240,7 +246,7 @@ export function TaskDetailDialog({
               onClick={() => onOpenChange(false)}
               disabled={update.isPending}
             >
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button
               type="button"
@@ -253,7 +259,7 @@ export function TaskDetailDialog({
               ) : (
                 <Save className="h-3.5 w-3.5" />
               )}
-              Save changes
+              {t('Save changes')}
             </Button>
           </div>
         </DialogFooter>

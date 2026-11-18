@@ -35,6 +35,7 @@ import { useMeetings, useProjects } from '@/hooks/use-workspace';
 import { useAuth } from '@/features/auth/auth-provider';
 import { newRoomId, parseRoomCode } from '@/lib/live/room';
 import { formatDate, formatTime } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import type { LiveRoomMode } from '@/types';
 
 const capabilities = [
@@ -65,6 +66,7 @@ const capabilities = [
 ];
 
 export function LiveLobbyPage() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { isDemo } = useAuth();
   const projects = useProjects();
@@ -87,7 +89,7 @@ export function LiveLobbyPage() {
   const startRoom = () => {
     const trimmed = title.trim();
     if (!trimmed) {
-      toast.error('Give the room a title');
+      toast.error(t('Give the room a title'));
       return;
     }
 
@@ -105,7 +107,7 @@ export function LiveLobbyPage() {
   const joinRoom = () => {
     const parsed = parseRoomCode(code);
     if (!parsed) {
-      toast.error('Paste a valid room link or room code');
+      toast.error(t('Paste a valid room link or room code'));
       return;
     }
     navigate(`/live/${parsed}`);
@@ -115,24 +117,28 @@ export function LiveLobbyPage() {
     const link = `${window.location.origin}/live/${newRoomId()}`;
     try {
       await navigator.clipboard.writeText(link);
-      toast.success('Sample room link copied', {
-        description: 'Open it in another tab to test the mesh as a second participant.',
+      toast.success(t('Sample room link copied'), {
+        description: t(
+          'Open it in another tab to test the mesh as a second participant.'
+        ),
       });
     } catch {
-      toast.message('Sample room link', { description: link });
+      toast.message(t('Sample room link'), { description: link });
     }
   };
 
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Nova Live"
-        description="Run the meeting inside Nova: video, screen share, live captions and a copilot that turns the conversation into owned follow-ups."
+        title={t('Nova Live')}
+        description={t(
+          'Run the meeting inside Nova: video, screen share, live captions and a copilot that turns the conversation into owned follow-ups.'
+        )}
         badge={
           <div className="flex items-center gap-2">
             <Badge variant="outline" className="gap-1 bg-secondary/30">
               <Radio className="h-3 w-3 text-rose-400" />
-              Real-time
+              {t('Real-time')}
             </Badge>
             <DataSourceBadge />
           </div>
@@ -140,7 +146,7 @@ export function LiveLobbyPage() {
         actions={
           <Badge variant="outline" className="gap-1">
             <ShieldCheck className="h-3 w-3 text-emerald-400" />
-            Consent-first
+            {t('Consent-first')}
           </Badge>
         }
       />
@@ -156,49 +162,49 @@ export function LiveLobbyPage() {
               <div>
                 <Badge variant="outline" className="gap-1 bg-primary/10 text-primary">
                   <Sparkles className="h-3 w-3" />
-                  Meet · decide · remember
+                  {t('Meet · decide · remember')}
                 </Badge>
                 <h2 className="mt-3 max-w-md font-display text-2xl font-semibold leading-tight tracking-[-0.02em]">
-                  Start a room that leaves a brief, not a pile of notes.
+                  {t('Start a room that leaves a brief, not a pile of notes.')}
                 </h2>
                 <p className="mt-2 max-w-md text-sm leading-relaxed text-muted-foreground">
-                  Nova listens for decisions and action items while you talk, then
-                  writes the report, the tasks and the Knowledge note when you end
-                  the call.
+                  {t(
+                    'Nova listens for decisions and action items while you talk, then writes the report, the tasks and the Knowledge note when you end the call.'
+                  )}
                 </p>
               </div>
 
               <div className="grid gap-2 text-[11px] text-muted-foreground sm:grid-cols-2">
                 <span className="inline-flex items-center gap-2 rounded-lg border border-border/60 bg-secondary/30 px-2.5 py-2">
                   <Lock className="h-3.5 w-3.5 text-emerald-400" />
-                  Private workspace room
+                  {t('Private workspace room')}
                 </span>
                 <span className="inline-flex items-center gap-2 rounded-lg border border-border/60 bg-secondary/30 px-2.5 py-2">
                   <Wifi className="h-3.5 w-3.5 text-blue-400" />
-                  {isDemo ? 'Mesh across tabs' : 'LiveKit SFU'}
+                  {isDemo ? t('Mesh across tabs') : t('LiveKit SFU')}
                 </span>
                 <span className="inline-flex items-center gap-2 rounded-lg border border-border/60 bg-secondary/30 px-2.5 py-2">
                   <Keyboard className="h-3.5 w-3.5 text-violet-400" />
-                  No install required
+                  {t('No install required')}
                 </span>
                 <span className="inline-flex items-center gap-2 rounded-lg border border-border/60 bg-secondary/30 px-2.5 py-2">
                   <ShieldCheck className="h-3.5 w-3.5 text-amber-400" />
-                  KVKK/GDPR notice
+                  {t('KVKK/GDPR notice')}
                 </span>
               </div>
             </div>
 
             <div className="rounded-xl border border-border/70 bg-background/50 p-4 backdrop-blur">
               <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                New room
+                {t('New room')}
               </p>
               <div className="mt-3 space-y-3">
-                <Field label="Meeting title" htmlFor="live-lobby-title">
+                <Field label={t('Meeting title')} htmlFor="live-lobby-title">
                   <Input
                     id="live-lobby-title"
                     value={title}
                     onChange={(event) => setTitle(event.target.value)}
-                    placeholder="e.g. Launch readiness review"
+                    placeholder={t('e.g. Launch readiness review')}
                     maxLength={90}
                     onKeyDown={(event) => {
                       if (event.key === 'Enter') startRoom();
@@ -224,9 +230,9 @@ export function LiveLobbyPage() {
                       >
                         <Icon className="h-4 w-4" />
                         <span>
-                          {option === 'video' ? 'Video room' : 'Audio room'}
+                          {option === 'video' ? t('Video room') : t('Audio room')}
                           <span className="mt-0.5 block text-[10px] font-normal opacity-70">
-                            {option === 'video' ? 'Camera + mic' : 'Mic only'}
+                            {option === 'video' ? t('Camera + mic') : t('Mic only')}
                           </span>
                         </span>
                       </button>
@@ -235,16 +241,18 @@ export function LiveLobbyPage() {
                 </div>
 
                 <Field
-                  label="Link to a project"
+                  label={t('Link to a project')}
                   htmlFor="live-lobby-project"
-                  hint="Follow-ups inherit the project when you create them."
+                  hint={t(
+                    'Follow-ups inherit the project when you create them.'
+                  )}
                 >
                   <NativeSelect
                     id="live-lobby-project"
                     value={projectId}
                     onChange={(event) => setProjectId(event.target.value)}
                   >
-                    <option value="">No project</option>
+                    <option value="">{t('No project')}</option>
                     {projectList.map((project) => (
                       <option key={project.id} value={project.id}>
                         {project.name}
@@ -259,7 +267,7 @@ export function LiveLobbyPage() {
                   ) : (
                     <Video className="h-4 w-4" />
                   )}
-                  Start Nova Live room
+                  {t('Start Nova Live room')}
                 </Button>
               </div>
             </div>
@@ -274,9 +282,9 @@ export function LiveLobbyPage() {
                   <Users className="h-4 w-4" />
                 </span>
                 <div>
-                  <p className="text-sm font-medium">Join a room</p>
+                  <p className="text-sm font-medium">{t('Join a room')}</p>
                   <p className="text-[11px] text-muted-foreground">
-                    Paste a room code or the full invite link.
+                    {t('Paste a room code or the full invite link.')}
                   </p>
                 </div>
               </div>
@@ -285,15 +293,15 @@ export function LiveLobbyPage() {
                 <Input
                   value={code}
                   onChange={(event) => setCode(event.target.value)}
-                  placeholder="nova-abc123 or https://…/live/nova-abc123"
+                  placeholder={t('nova-abc123 or https://…/live/nova-abc123')}
                   className="h-9 text-xs"
-                  aria-label="Room code or invite link"
+                  aria-label={t('Room code or invite link')}
                   onKeyDown={(event) => {
                     if (event.key === 'Enter') joinRoom();
                   }}
                 />
                 <Button variant="secondary" onClick={joinRoom} disabled={!code.trim()}>
-                  Join
+                  {t('Join')}
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -304,7 +312,7 @@ export function LiveLobbyPage() {
                 className="mt-2 inline-flex items-center gap-1 text-[10px] text-primary transition-colors hover:text-primary/80"
               >
                 <Copy className="h-3 w-3" />
-                Copy a sample room link for a second tab
+                {t('Copy a sample room link for a second tab')}
               </button>
             </CardContent>
           </Card>
@@ -313,20 +321,26 @@ export function LiveLobbyPage() {
             <CardContent className="p-4 sm:p-5">
               <div className="flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-primary" />
-                <p className="text-sm font-medium">What happens when you end</p>
+                <p className="text-sm font-medium">
+                  {t('What happens when you end')}
+                </p>
               </div>
               <ul className="mt-2.5 space-y-1.5 text-[11px] text-muted-foreground">
                 <li className="flex gap-2">
                   <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
-                  Meeting saved as a completed Nova Live record with the full transcript.
+                  {t(
+                    'Meeting saved as a completed Nova Live record with the full transcript.'
+                  )}
                 </li>
                 <li className="flex gap-2">
                   <GitBranch className="mt-0.5 h-3.5 w-3.5 shrink-0 text-violet-400" />
-                  Decisions and tasks created only after you review the owners.
+                  {t('Decisions and tasks created only after you review the owners.')}
                 </li>
                 <li className="flex gap-2">
                   <BookOpen className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400" />
-                  A Knowledge note links the summary and transcript back to company memory.
+                  {t(
+                    'A Knowledge note links the summary and transcript back to company memory.'
+                  )}
                 </li>
               </ul>
             </CardContent>
@@ -343,9 +357,9 @@ export function LiveLobbyPage() {
                 <span className={`icon-tile h-8 w-8 ${capability.tone}`}>
                   <Icon className="h-4 w-4" />
                 </span>
-                <p className="mt-2.5 text-sm font-medium">{capability.title}</p>
+                <p className="mt-2.5 text-sm font-medium">{t(capability.title)}</p>
                 <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-                  {capability.text}
+                  {t(capability.text)}
                 </p>
               </CardContent>
             </Card>
@@ -361,15 +375,17 @@ export function LiveLobbyPage() {
                 <Radio className="h-3.5 w-3.5" />
               </span>
               <div>
-                <p className="text-xs font-medium">Recent Nova Live meetings</p>
+                <p className="text-xs font-medium">
+                  {t('Recent Nova Live meetings')}
+                </p>
                 <p className="text-[10px] text-muted-foreground">
-                  Reports and transcripts from this workspace
+                  {t('Reports and transcripts from this workspace')}
                 </p>
               </div>
             </div>
             <Button asChild variant="ghost" size="sm" className="h-7 text-[11px]">
               <Link to="/meetings">
-                All meetings
+                {t('All meetings')}
                 <ArrowRight className="h-3 w-3" />
               </Link>
             </Button>
@@ -378,17 +394,18 @@ export function LiveLobbyPage() {
           {meetings.isLoading ? (
             <div className="flex items-center justify-center gap-2 px-4 py-10 text-xs text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
-              Loading live meetings
+              {t('Loading live meetings')}
             </div>
           ) : liveMeetings.length === 0 ? (
             <div className="flex flex-col items-center justify-center gap-2 px-4 py-10 text-center">
               <span className="icon-tile h-9 w-9 text-muted-foreground">
                 <CalendarDays className="h-4 w-4" />
               </span>
-              <p className="text-sm font-medium">No live meetings yet</p>
+              <p className="text-sm font-medium">{t('No live meetings yet')}</p>
               <p className="max-w-sm text-[11px] text-muted-foreground">
-                Start a room, run the demo dialogue and end it to see the report,
-                tasks, decisions and Knowledge note land here.
+                {t(
+                  'Start a room, run the demo dialogue and end it to see the report, tasks, decisions and Knowledge note land here.'
+                )}
               </p>
             </div>
           ) : (
@@ -408,7 +425,7 @@ export function LiveLobbyPage() {
                       {meeting.transcriptReady ? (
                         <Badge variant="outline" className="gap-1 text-[9px]">
                           <Captions className="h-2.5 w-2.5" />
-                          Transcript
+                          {t('Transcript')}
                         </Badge>
                       ) : null}
                     </div>
@@ -417,14 +434,17 @@ export function LiveLobbyPage() {
                         month: 'short',
                         day: 'numeric',
                       })}{' '}
-                      · {formatTime(meeting.startsAt)} · {meeting.durationMinutes} min
+                      · {formatTime(meeting.startsAt)} ·{' '}
+                      {t('{{count}} min', { count: meeting.durationMinutes })}
                       {meeting.projectName ? ` · ${meeting.projectName}` : ''}
                     </p>
                   </div>
                   <div className="flex shrink-0 items-center gap-3">
                     <span className="text-[10px] text-muted-foreground">
-                      {meeting.analysis?.actions.length ?? 0} actions ·{' '}
-                      {meeting.analysis?.decisions.length ?? 0} decisions
+                      {t('{{actions}} actions · {{decisions}} decisions', {
+                        actions: meeting.analysis?.actions.length ?? 0,
+                        decisions: meeting.analysis?.decisions.length ?? 0,
+                      })}
                     </span>
                     <AvatarStack users={meeting.participants} max={3} size="xs" />
                     <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />

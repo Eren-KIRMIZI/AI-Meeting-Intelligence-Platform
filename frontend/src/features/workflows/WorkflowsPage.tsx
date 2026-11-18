@@ -23,11 +23,13 @@ import {
 } from '@/hooks/use-workspace';
 import { accentConfig } from '@/lib/status';
 import { cn, formatRelativeTime } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import { CreateWorkflowDialog } from './components/create-workflow-dialog';
 import { WorkflowRunHistory } from './components/workflow-run-history';
 import type { Workflow } from '@/types';
 
 function WorkflowRow({ workflow }: { workflow: Workflow }) {
+  const { t } = useI18n();
   const toggle = useToggleWorkflow();
   const accent = accentConfig[workflow.accent];
   const [expanded, setExpanded] = useState(false);
@@ -39,13 +41,13 @@ function WorkflowRow({ workflow }: { workflow: Workflow }) {
         onSuccess: () => {
           toast.success(
             active
-              ? `“${workflow.name}” is active`
-              : `“${workflow.name}” paused`
+              ? t('“{{name}}” is active', { name: workflow.name })
+              : t('“{{name}}” paused', { name: workflow.name })
           );
         },
         onError: (error) => {
           toast.error(
-            error instanceof Error ? error.message : 'Could not update workflow'
+            error instanceof Error ? error.message : t('Could not update workflow')
           );
         },
       }
@@ -72,23 +74,23 @@ function WorkflowRow({ workflow }: { workflow: Workflow }) {
                 {workflow.name}
               </p>
               <Badge variant={workflow.isActive ? 'success' : 'neutral'}>
-                {workflow.isActive ? 'Active' : 'Paused'}
+                {workflow.isActive ? t('Active') : t('Paused')}
               </Badge>
             </div>
             <p className="mt-1 line-clamp-1 text-xs text-muted-foreground">
-              {workflow.description || 'No description yet.'}
+              {workflow.description || t('No description yet.')}
             </p>
 
             <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[10px]">
               <span className="inline-flex items-center gap-1 rounded-md border border-border/70 bg-secondary/30 px-2 py-1 text-muted-foreground">
                 <Zap className="h-3 w-3 text-amber-400" />
-                {workflow.triggerLabel}
+                {t(workflow.triggerLabel)}
               </span>
               {workflow.actionLabels.map((action) => (
                 <span key={action} className="inline-flex items-center gap-1">
                   <ArrowRight className="h-3 w-3 text-muted-foreground/50" />
                   <span className="rounded-md border border-border/70 bg-secondary/30 px-2 py-1 text-muted-foreground">
-                    {action}
+                    {t(action)}
                   </span>
                 </span>
               ))}
@@ -99,12 +101,14 @@ function WorkflowRow({ workflow }: { workflow: Workflow }) {
         <div className="flex shrink-0 items-center justify-between gap-4 pl-12 lg:pl-0">
           <div className="text-right">
             <p className="text-xs font-medium tabular text-foreground">
-              {workflow.runCount} runs
+              {t('{{count}} runs', { count: workflow.runCount })}
             </p>
             <p className="mt-0.5 text-[10px] text-muted-foreground">
               {workflow.lastRunAt
-                ? `Last run ${formatRelativeTime(workflow.lastRunAt)}`
-                : 'Not run yet'}
+                ? t('Last run {{time}}', {
+                    time: formatRelativeTime(workflow.lastRunAt),
+                  })
+                : t('Not run yet')}
             </p>
           </div>
           <div className="flex items-center gap-1">
@@ -114,11 +118,14 @@ function WorkflowRow({ workflow }: { workflow: Workflow }) {
               className="h-8 gap-1 px-2 text-[11px]"
               aria-expanded={expanded}
               aria-controls={`workflow-runs-${workflow.id}`}
-              aria-label={`${expanded ? 'Hide' : 'Show'} run history for ${workflow.name}`}
+              aria-label={t('{{action}} run history for {{name}}', {
+                action: expanded ? t('Hide') : t('Show'),
+                name: workflow.name,
+              })}
               onClick={() => setExpanded((value) => !value)}
             >
               <History className="h-3.5 w-3.5" />
-              History
+              {t('History')}
               <ChevronDown
                 className={cn(
                   'h-3 w-3 transition-transform',
@@ -130,7 +137,10 @@ function WorkflowRow({ workflow }: { workflow: Workflow }) {
               checked={workflow.isActive}
               disabled={toggle.isPending}
               onCheckedChange={handleToggle}
-              aria-label={`${workflow.isActive ? 'Pause' : 'Activate'} ${workflow.name}`}
+              aria-label={t('{{action}} {{name}}', {
+                action: workflow.isActive ? t('Pause') : t('Activate'),
+                name: workflow.name,
+              })}
             />
           </div>
         </div>
@@ -149,6 +159,7 @@ function WorkflowRow({ workflow }: { workflow: Workflow }) {
 }
 
 export function WorkflowsPage() {
+  const { t } = useI18n();
   const workflows = useWorkflows();
   const [dialogOpen, setDialogOpen] = useState(false);
 
@@ -162,7 +173,7 @@ export function WorkflowsPage() {
         description={
           workflows.error instanceof Error
             ? workflows.error.message
-            : 'Workflows could not be loaded.'
+            : t('Workflows could not be loaded.')
         }
         onRetry={() => void workflows.refetch()}
       />
@@ -173,26 +184,38 @@ export function WorkflowsPage() {
   const runs = list.reduce((total, workflow) => total + workflow.runCount, 0);
 
   const summary = [
-    { label: 'Total workflows', value: list.length, icon: WorkflowIcon, tone: 'text-blue-400' },
-    { label: 'Active', value: active, icon: Zap, tone: 'text-emerald-400' },
-    { label: 'Paused', value: list.length - active, icon: WorkflowIcon, tone: 'text-slate-400' },
-    { label: 'Total runs', value: runs, icon: Activity, tone: 'text-violet-400' },
+    {
+      label: t('Total workflows'),
+      value: list.length,
+      icon: WorkflowIcon,
+      tone: 'text-blue-400',
+    },
+    { label: t('Active'), value: active, icon: Zap, tone: 'text-emerald-400' },
+    {
+      label: t('Paused'),
+      value: list.length - active,
+      icon: WorkflowIcon,
+      tone: 'text-slate-400',
+    },
+    { label: t('Total runs'), value: runs, icon: Activity, tone: 'text-violet-400' },
   ];
 
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Workflows"
-        description="Automations that move a meeting signal into a summary, a decision or an owned action."
+        title={t('Workflows')}
+        description={t(
+          'Automations that move a meeting signal into a summary, a decision or an owned action.'
+        )}
         badge={
           <Badge variant="outline" className="bg-secondary/30">
-            {active} active
+            {t('{{count}} active', { count: active })}
           </Badge>
         }
         actions={
           <Button size="sm" onClick={() => setDialogOpen(true)}>
             <Plus className="h-3.5 w-3.5" />
-            New workflow
+            {t('New workflow')}
           </Button>
         }
       />
@@ -223,12 +246,14 @@ export function WorkflowsPage() {
       {list.length === 0 ? (
         <EmptyState
           icon={WorkflowIcon}
-          title="No workflows yet"
-          description="Create an automation that turns meeting outcomes into consistent follow-through."
+          title={t('No workflows yet')}
+          description={t(
+            'Create an automation that turns meeting outcomes into consistent follow-through.'
+          )}
           action={
             <Button size="sm" onClick={() => setDialogOpen(true)}>
               <Plus className="h-3.5 w-3.5" />
-              New workflow
+              {t('New workflow')}
             </Button>
           }
         />

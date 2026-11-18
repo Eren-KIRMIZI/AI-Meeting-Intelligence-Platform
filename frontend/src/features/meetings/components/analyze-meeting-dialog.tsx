@@ -15,6 +15,7 @@ import { Field } from '@/components/common/field';
 import { useAnalyzeMeeting } from '@/hooks/use-workspace';
 import { analysisSteps } from '@/lib/meeting-intelligence';
 import { sampleTranscriptFor } from '@/mocks/transcripts';
+import { useI18n } from '@/i18n';
 import type { Meeting } from '@/types';
 
 interface AnalyzeMeetingDialogProps {
@@ -29,6 +30,7 @@ export function AnalyzeMeetingDialog({
   onOpenChange,
 }: AnalyzeMeetingDialogProps) {
   const analyze = useAnalyzeMeeting();
+  const { t } = useI18n();
   const [transcript, setTranscript] = useState('');
 
   useEffect(() => {
@@ -47,7 +49,7 @@ export function AnalyzeMeetingDialog({
     if (!meeting) return;
 
     if (transcript.trim().length < 40) {
-      toast.error('Paste a transcript with at least a few lines.');
+      toast.error(t('Paste a transcript with at least a few lines.'));
       return;
     }
 
@@ -55,12 +57,14 @@ export function AnalyzeMeetingDialog({
       { meetingId: meeting.id, transcript },
       {
         onSuccess: () => {
-          toast.success('Analysis ready — review the extracted signal.');
+          toast.success(t('Analysis ready — review the extracted signal.'));
           onOpenChange(false);
         },
         onError: (error) => {
           toast.error(
-            error instanceof Error ? error.message : 'Could not analyze this meeting.'
+            error instanceof Error
+              ? error.message
+              : t('Could not analyze this meeting.')
           );
         },
       }
@@ -73,12 +77,15 @@ export function AnalyzeMeetingDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <BrainCircuit className="h-4 w-4 text-blue-400" />
-            Analyze transcript
+            {t('Analyze transcript')}
           </DialogTitle>
           <DialogDescription>
             {meeting
-              ? `Turn “${meeting.title}” into a summary, decisions, risks and owned action items.`
-              : 'Paste a transcript to extract the meeting signal.'}
+              ? t(
+                  'Turn “{{title}}” into a summary, decisions, risks and owned action items.',
+                  { title: meeting.title }
+                )
+              : t('Paste a transcript to extract the meeting signal.')}
           </DialogDescription>
         </DialogHeader>
 
@@ -86,7 +93,7 @@ export function AnalyzeMeetingDialog({
           <div className="rounded-lg border border-border/60 bg-secondary/20 px-3 py-2.5">
             <p className="flex items-center gap-1.5 text-[11px] font-medium text-foreground">
               <Sparkles className="h-3 w-3 text-blue-400" />
-              What runs
+              {t('What runs')}
             </p>
             <div className="mt-2 grid gap-1.5 sm:grid-cols-3">
               {steps.map((step) => (
@@ -95,10 +102,10 @@ export function AnalyzeMeetingDialog({
                   className="rounded-md border border-border/60 bg-card/60 px-2.5 py-2"
                 >
                   <p className="text-[10px] font-medium text-foreground">
-                    {step.label}
+                    {t(step.label)}
                   </p>
                   <p className="mt-0.5 text-[10px] leading-snug text-muted-foreground">
-                    {step.detail}
+                    {t(step.detail)}
                   </p>
                 </div>
               ))}
@@ -106,16 +113,18 @@ export function AnalyzeMeetingDialog({
           </div>
 
           <Field
-            label="Transcript"
+            label={t('Transcript')}
             htmlFor="meeting-transcript"
-            hint="Demo mode uses the same deterministic extractor as the sample data, so you can try the full flow without a provider."
+            hint={t(
+              'Demo mode uses the same deterministic extractor as the sample data, so you can try the full flow without a provider.'
+            )}
           >
             <Textarea
               id="meeting-transcript"
               value={transcript}
               onChange={(event) => setTranscript(event.target.value)}
               className="min-h-[240px] font-mono text-[11px] leading-relaxed"
-              placeholder="Ayşe: Let's review the launch plan..."
+              placeholder={t("Ayşe: Let's review the launch plan...")}
               disabled={analyze.isPending}
             />
           </Field>
@@ -130,11 +139,13 @@ export function AnalyzeMeetingDialog({
               disabled={analyze.isPending}
             >
               <RotateCcw className="h-3 w-3" />
-              Reset to sample transcript
+              {t('Reset to sample transcript')}
             </Button>
             <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
               <FileText className="h-3 w-3" />
-              {transcript.trim().split(/\s+/).filter(Boolean).length} words
+              {t('{{count}} words', {
+                count: transcript.trim().split(/\s+/).filter(Boolean).length,
+              })}
             </span>
           </div>
         </div>
@@ -146,7 +157,7 @@ export function AnalyzeMeetingDialog({
             onClick={() => onOpenChange(false)}
             disabled={analyze.isPending}
           >
-            Cancel
+            {t('Cancel')}
           </Button>
           <Button size="sm" onClick={submit} disabled={analyze.isPending}>
             {analyze.isPending ? (
@@ -154,7 +165,7 @@ export function AnalyzeMeetingDialog({
             ) : (
               <Sparkles className="h-3.5 w-3.5" />
             )}
-            {analyze.isPending ? 'Analyzing…' : 'Run analysis'}
+            {analyze.isPending ? t('Analyzing…') : t('Run analysis')}
           </Button>
         </DialogFooter>
       </DialogContent>

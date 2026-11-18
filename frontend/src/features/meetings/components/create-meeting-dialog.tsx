@@ -14,6 +14,7 @@ import { Input, Textarea } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/select-native';
 import { Field } from '@/components/common/field';
 import { useCreateMeeting } from '@/hooks/use-workspace';
+import { useI18n } from '@/i18n';
 import type { MeetingPlatform } from '@/types';
 
 interface CreateMeetingDialogProps {
@@ -33,6 +34,7 @@ export function CreateMeetingDialog({
   onOpenChange,
 }: CreateMeetingDialogProps) {
   const createMeeting = useCreateMeeting();
+  const { t } = useI18n();
   const [title, setTitle] = useState('');
   const [date, setDate] = useState(localDate());
   const [time, setTime] = useState('10:00');
@@ -54,13 +56,13 @@ export function CreateMeetingDialog({
     event.preventDefault();
     const trimmedTitle = title.trim();
     if (!trimmedTitle) {
-      toast.error('A meeting title is required');
+      toast.error(t('A meeting title is required'));
       return;
     }
 
     const startsAt = new Date(`${date}T${time}:00`);
     if (Number.isNaN(startsAt.getTime())) {
-      toast.error('Choose a valid date and time');
+      toast.error(t('Choose a valid date and time'));
       return;
     }
 
@@ -82,14 +84,14 @@ export function CreateMeetingDialog({
       },
       {
         onSuccess: (meeting) => {
-          toast.success(`“${meeting.title}” scheduled`);
+          toast.success(t('“{{title}}” scheduled', { title: meeting.title }));
           onOpenChange(false);
         },
         onError: (error) => {
           toast.error(
             error instanceof Error
               ? error.message
-              : 'Could not schedule the meeting'
+              : t('Could not schedule the meeting')
           );
         },
       }
@@ -100,26 +102,28 @@ export function CreateMeetingDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Schedule a meeting</DialogTitle>
+          <DialogTitle>{t('Schedule a meeting')}</DialogTitle>
           <DialogDescription>
-            Add the conversation and agenda so Nova can prepare the brief.
+            {t(
+              'Add the conversation and agenda so Nova can prepare the brief.'
+            )}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Field label="Meeting title" htmlFor="meeting-title">
+          <Field label={t('Meeting title')} htmlFor="meeting-title">
             <Input
               id="meeting-title"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              placeholder="e.g. Weekly product sync"
+              placeholder={t('e.g. Weekly product sync')}
               autoFocus
               required
             />
           </Field>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <Field label="Date" htmlFor="meeting-date">
+            <Field label={t('Date')} htmlFor="meeting-date">
               <Input
                 id="meeting-date"
                 type="date"
@@ -127,7 +131,7 @@ export function CreateMeetingDialog({
                 onChange={(event) => setDate(event.target.value)}
               />
             </Field>
-            <Field label="Time" htmlFor="meeting-time">
+            <Field label={t('Time')} htmlFor="meeting-time">
               <Input
                 id="meeting-time"
                 type="time"
@@ -135,7 +139,7 @@ export function CreateMeetingDialog({
                 onChange={(event) => setTime(event.target.value)}
               />
             </Field>
-            <Field label="Minutes" htmlFor="meeting-duration">
+            <Field label={t('Minutes')} htmlFor="meeting-duration">
               <Input
                 id="meeting-duration"
                 type="number"
@@ -148,7 +152,7 @@ export function CreateMeetingDialog({
             </Field>
           </div>
 
-          <Field label="Platform" htmlFor="meeting-platform">
+          <Field label={t('Platform')} htmlFor="meeting-platform">
             <NativeSelect
               id="meeting-platform"
               value={platform}
@@ -159,21 +163,23 @@ export function CreateMeetingDialog({
               <option value="google_meet">Google Meet</option>
               <option value="microsoft_teams">Microsoft Teams</option>
               <option value="zoom">Zoom</option>
-              <option value="in_person">In person</option>
+              <option value="in_person">{t('In person')}</option>
               <option value="nova_live">Nova Live</option>
             </NativeSelect>
           </Field>
 
           <Field
-            label="Agenda"
+            label={t('Agenda')}
             htmlFor="meeting-agenda"
-            hint="One agenda item per line. Nova uses these to prepare the brief."
+            hint={t(
+              'One agenda item per line. Nova uses these to prepare the brief.'
+            )}
           >
             <Textarea
               id="meeting-agenda"
               value={agenda}
               onChange={(event) => setAgenda(event.target.value)}
-              placeholder={'Launch readiness\nOpen decisions\nNext steps'}
+              placeholder={t('Launch readiness\nOpen decisions\nNext steps')}
               className="min-h-[92px]"
             />
           </Field>
@@ -184,7 +190,7 @@ export function CreateMeetingDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button type="submit" disabled={createMeeting.isPending}>
               {createMeeting.isPending ? (
@@ -192,7 +198,7 @@ export function CreateMeetingDialog({
               ) : (
                 <CalendarPlus className="h-4 w-4" />
               )}
-              Schedule meeting
+              {t('Schedule meeting')}
             </Button>
           </DialogFooter>
         </form>

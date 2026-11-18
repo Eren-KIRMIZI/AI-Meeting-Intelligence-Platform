@@ -7,6 +7,7 @@ import {
 } from '@/components/common/error-boundary';
 import { useDocumentTitle } from '@/hooks/use-document-title';
 import { resolveRouteMeta } from '@/lib/navigation';
+import { useI18n } from '@/i18n';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { CommandPalette } from './CommandPalette';
@@ -20,6 +21,7 @@ function RouteTitle() {
 
 export function AppLayout() {
   const location = useLocation();
+  const { t } = useI18n();
   const mainRef = useRef<HTMLElement>(null);
   const previousPath = useRef(location.pathname);
   useWorkspaceRealtime();
@@ -39,7 +41,7 @@ export function AppLayout() {
     <div className="min-h-screen bg-background">
       <RouteTitle />
       <a href="#main-content" className="skip-link">
-        Skip to content
+        {t('Skip to content')}
       </a>
       <Sidebar />
       <div className="min-w-0 lg:pl-[68px]">

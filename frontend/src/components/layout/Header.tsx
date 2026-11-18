@@ -5,18 +5,20 @@ import { useAuth } from '@/features/auth/auth-provider';
 import { useUiStore } from '@/stores/ui-store';
 import { Button } from '@/components/ui/button';
 import { DataSourceBadge } from '@/components/common/data-source-badge';
+import { useI18n } from '@/i18n';
 import { NotificationsMenu } from './notifications-menu';
 import { UserMenu } from './user-menu';
 
 export function Header() {
   const location = useLocation();
   const { orgName } = useAuth();
+  const { t } = useI18n();
   const setMobileNavOpen = useUiStore((state) => state.setMobileNavOpen);
   const setCommandOpen = useUiStore((state) => state.setCommandOpen);
 
   const meta = resolveRouteMeta(location.pathname);
-  const title = meta.title;
-  const parent = meta.parent ?? orgName ?? 'Workspace';
+  const title = t(meta.title);
+  const parent = t(meta.parent ?? orgName ?? 'Workspace');
 
   return (
     <header className="sticky top-0 z-30 flex h-[60px] items-center gap-2 border-b border-border/80 bg-background/85 px-3 backdrop-blur-md sm:px-5 lg:px-8">
@@ -25,13 +27,13 @@ export function Header() {
         size="icon-sm"
         className="shrink-0 lg:hidden"
         onClick={() => setMobileNavOpen(true)}
-        aria-label="Open navigation"
+        aria-label={t('Open navigation')}
       >
         <Menu className="h-4 w-4" />
       </Button>
 
       <nav
-        aria-label="Breadcrumb"
+        aria-label={t('Breadcrumb')}
         className="hidden min-w-0 shrink-0 items-center gap-1.5 text-xs sm:flex"
       >
         <span className="max-w-[150px] truncate text-muted-foreground">
@@ -51,9 +53,9 @@ export function Header() {
           <Search className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
           <span className="truncate">
             <span className="hidden sm:inline">
-              Search for tasks, projects, meetings, or team members...
+              {t('Search for tasks, projects, meetings, or team members...')}
             </span>
-            <span className="sm:hidden">Search workspace...</span>
+            <span className="sm:hidden">{t('Search workspace...')}</span>
           </span>
           <span
             className="ml-auto hidden shrink-0 items-center gap-1 sm:flex"
@@ -71,7 +73,7 @@ export function Header() {
           size="icon-sm"
           className="sm:hidden"
           onClick={() => setCommandOpen(true)}
-          aria-label="Search workspace"
+          aria-label={t('Search workspace')}
         >
           <Search className="h-4 w-4" />
         </Button>

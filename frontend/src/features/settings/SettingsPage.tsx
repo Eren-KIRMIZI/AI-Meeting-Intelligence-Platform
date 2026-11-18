@@ -14,6 +14,7 @@ import {
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/common/page-header';
 import { Field } from '@/components/common/field';
+import { LanguageSwitcher } from '@/components/common/language-switcher';
 import { UserAvatar } from '@/components/common/user-avatar';
 import { IntegrationIcon } from '@/components/common/integration-icon';
 import { IntegrationStatusBadge } from '@/components/common/status-badges';
@@ -41,6 +42,7 @@ import {
   useToggleIntegration,
 } from '@/hooks/use-workspace';
 import { downloadJson } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import {
   usePreferencesStore,
   type NotificationPreferenceKey,
@@ -90,6 +92,7 @@ export function SettingsPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { user, orgName, orgRole, isDemo, signOut } = useAuth();
+  const { t } = useI18n();
 
   const requestedTab = searchParams.get('tab');
   const activeTab = tabs.some((tab) => tab.value === requestedTab)
@@ -127,17 +130,17 @@ export function SettingsPage() {
     event.preventDefault();
     const name = displayName.trim();
     if (name.length < 2) {
-      toast.error('Enter a display name with at least 2 characters');
+      toast.error(t('Enter a display name with at least 2 characters'));
       return;
     }
     preferences.setProfile({ displayName: name, jobTitle: jobTitle.trim() });
-    toast.success('Profile preferences saved');
+    toast.success(t('Profile preferences saved'));
   };
 
   const saveWorkspace = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     preferences.setWorkspace({ timezone, weekStart });
-    toast.success('Workspace preferences saved');
+    toast.success(t('Workspace preferences saved'));
   };
 
   const handleIntegrationToggle = (
@@ -150,14 +153,16 @@ export function SettingsPage() {
       {
         onSuccess: () => {
           toast.success(
-            connect ? `${name} connected` : `${name} disconnected`
+            connect
+              ? t('{{name}} connected', { name })
+              : t('{{name}} disconnected', { name })
           );
         },
         onError: (error) => {
           toast.error(
             error instanceof Error
               ? error.message
-              : 'Could not update the integration'
+              : t('Could not update the integration')
           );
         },
       }
@@ -175,7 +180,7 @@ export function SettingsPage() {
       team: team.data ?? [],
       integrations: integrationList,
     });
-    toast.success('Workspace export downloaded');
+    toast.success(t('Workspace export downloaded'));
   };
 
   const handleSignOut = async () => {
@@ -188,7 +193,7 @@ export function SettingsPage() {
     label: string
   ) => {
     preferences.toggleNotification(key);
-    toast.success(`${label} preference updated`);
+    toast.success(t('{{label}} preference updated', { label }));
   };
 
   const handleSecurityToggle = (
@@ -196,17 +201,19 @@ export function SettingsPage() {
     label: string
   ) => {
     preferences.toggleSecurity(key);
-    toast.success(`${label} preference updated`);
+    toast.success(t('{{label}} preference updated', { label }));
   };
 
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Settings"
-        description="Your profile, workspace defaults and the controls that keep work predictable."
+        title={t('Settings')}
+        description={t(
+          'Your profile, workspace defaults and the controls that keep work predictable.'
+        )}
         badge={
           <Badge variant="outline" className="bg-secondary/30">
-            {isDemo ? 'Demo workspace' : 'Live workspace'}
+            {isDemo ? t('Demo workspace') : t('Live workspace')}
           </Badge>
         }
       />
@@ -227,7 +234,7 @@ export function SettingsPage() {
                 className="justify-start px-3 py-2 text-xs"
               >
                 <Icon className="h-3.5 w-3.5" />
-                {tab.label}
+                {t(tab.label)}
               </TabsTrigger>
             );
           })}
@@ -237,9 +244,11 @@ export function SettingsPage() {
           <TabsContent value="profile" className="mt-0">
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle>Profile</CardTitle>
+                <CardTitle>{t('Profile')}</CardTitle>
                 <p className="text-xs text-muted-foreground">
-                  How you appear across meetings, projects and the decision log.
+                  {t(
+                    'How you appear across meetings, projects and the decision log.'
+                  )}
                 </p>
               </CardHeader>
               <CardContent>
@@ -248,43 +257,47 @@ export function SettingsPage() {
                     <UserAvatar user={user} size="xl" />
                     <div className="min-w-0">
                       <p className="truncate text-sm font-medium text-foreground">
-                        {displayName || user?.fullName || 'Workspace member'}
+                        {displayName || user?.fullName || t('Workspace member')}
                       </p>
                       <p className="truncate text-[11px] text-muted-foreground">
-                        {user?.email ?? 'No email on this account'}
+                        {user?.email ?? t('No email on this account')}
                       </p>
                       <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
                         <Badge variant="outline" className="bg-secondary/30">
-                          {orgRole ?? 'member'}
+                          {orgRole ?? t('Workspace member')}
                         </Badge>
-                        {isDemo ? <Badge variant="neutral">Demo profile</Badge> : null}
+                        {isDemo ? (
+                          <Badge variant="neutral">{t('Demo profile')}</Badge>
+                        ) : null}
                       </div>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <Field label="Display name" htmlFor="settings-name">
+                    <Field label={t('Display name')} htmlFor="settings-name">
                       <Input
                         id="settings-name"
                         value={displayName}
                         onChange={(event) => setDisplayName(event.target.value)}
-                        placeholder="Your name"
+                        placeholder={t('Your name')}
                       />
                     </Field>
-                    <Field label="Job title" htmlFor="settings-title">
+                    <Field label={t('Job title')} htmlFor="settings-title">
                       <Input
                         id="settings-title"
                         value={jobTitle}
                         onChange={(event) => setJobTitle(event.target.value)}
-                        placeholder="Product Lead"
+                        placeholder={t('Product Lead')}
                       />
                     </Field>
                   </div>
 
                   <Field
-                    label="Work email"
+                    label={t('Work email')}
                     htmlFor="settings-email"
-                    hint="Email is managed by your authentication provider and cannot be changed here."
+                    hint={t(
+                      'Email is managed by your authentication provider and cannot be changed here.'
+                    )}
                   >
                     <Input
                       id="settings-email"
@@ -294,10 +307,12 @@ export function SettingsPage() {
                     />
                   </Field>
 
+                  <LanguageSwitcher />
+
                   <div className="flex justify-end">
                     <Button type="submit" size="sm">
                       <Check className="h-3.5 w-3.5" />
-                      Save profile
+                      {t('Save profile')}
                     </Button>
                   </div>
                 </form>
@@ -308,9 +323,9 @@ export function SettingsPage() {
           <TabsContent value="workspace" className="mt-0">
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle>Workspace</CardTitle>
+                <CardTitle>{t('Workspace')}</CardTitle>
                 <p className="text-xs text-muted-foreground">
-                  Organization defaults for dates, planning and reporting.
+                  {t('Organization defaults for dates, planning and reporting.')}
                 </p>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -321,21 +336,23 @@ export function SettingsPage() {
                     </span>
                     <div>
                       <p className="text-sm font-medium text-foreground">
-                        {orgName ?? 'Workspace'}
+                        {orgName ?? t('Workspace')}
                       </p>
                       <p className="text-[11px] text-muted-foreground">
-                        Pro plan · {team.data?.length ?? 0} members
+                        {t('Pro plan · {{count}} members', {
+                          count: team.data?.length ?? 0,
+                        })}
                       </p>
                     </div>
                   </div>
                   <Badge variant={isDemo ? 'outline' : 'success'}>
-                    {isDemo ? 'Demo data' : 'Live'}
+                    {isDemo ? t('Demo data') : t('Live')}
                   </Badge>
                 </div>
 
                 <form onSubmit={saveWorkspace} className="space-y-4">
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <Field label="Timezone" htmlFor="settings-timezone">
+                    <Field label={t('Timezone')} htmlFor="settings-timezone">
                       <NativeSelect
                         id="settings-timezone"
                         value={timezone}
@@ -349,7 +366,7 @@ export function SettingsPage() {
                         <option value="Asia/Singapore">Asia/Singapore</option>
                       </NativeSelect>
                     </Field>
-                    <Field label="Week starts on" htmlFor="settings-week-start">
+                    <Field label={t('Week starts on')} htmlFor="settings-week-start">
                       <NativeSelect
                         id="settings-week-start"
                         value={weekStart}
@@ -357,8 +374,8 @@ export function SettingsPage() {
                           setWeekStart(event.target.value as 'monday' | 'sunday')
                         }
                       >
-                        <option value="monday">Monday</option>
-                        <option value="sunday">Sunday</option>
+                        <option value="monday">{t('Monday')}</option>
+                        <option value="sunday">{t('Sunday')}</option>
                       </NativeSelect>
                     </Field>
                   </div>
@@ -368,11 +385,12 @@ export function SettingsPage() {
                   <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                       <p className="text-xs font-medium text-foreground">
-                        Workspace data
+                        {t('Workspace data')}
                       </p>
                       <p className="mt-0.5 text-[11px] text-muted-foreground">
-                        Download a JSON snapshot of projects, tasks, meetings and
-                        decisions.
+                        {t(
+                          'Download a JSON snapshot of projects, tasks, meetings and decisions.'
+                        )}
                       </p>
                     </div>
                     <Button
@@ -382,14 +400,14 @@ export function SettingsPage() {
                       onClick={exportWorkspace}
                     >
                       <Download className="h-3.5 w-3.5" />
-                      Export data
+                      {t('Export data')}
                     </Button>
                   </div>
 
                   <div className="flex justify-end">
                     <Button type="submit" size="sm">
                       <Check className="h-3.5 w-3.5" />
-                      Save workspace
+                      {t('Save workspace')}
                     </Button>
                   </div>
                 </form>
@@ -400,9 +418,9 @@ export function SettingsPage() {
           <TabsContent value="notifications" className="mt-0">
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle>Notifications</CardTitle>
+                <CardTitle>{t('Notifications')}</CardTitle>
                 <p className="text-xs text-muted-foreground">
-                  Choose which meeting and delivery signals reach you.
+                  {t('Choose which meeting and delivery signals reach you.')}
                 </p>
               </CardHeader>
               <CardContent className="divide-y divide-border/70 p-0">
@@ -413,25 +431,27 @@ export function SettingsPage() {
                   >
                     <div className="min-w-0">
                       <p className="text-xs font-medium text-foreground">
-                        {option.label}
+                        {t(option.label)}
                       </p>
                       <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
-                        {option.description}
+                        {t(option.description)}
                       </p>
                     </div>
                     <Switch
                       checked={preferences.notifications[option.key]}
                       onCheckedChange={() =>
-                        handleNotificationToggle(option.key, option.label)
+                        handleNotificationToggle(option.key, t(option.label))
                       }
-                      aria-label={`Toggle ${option.label}`}
+                      aria-label={t('Toggle {{label}}', {
+                        label: t(option.label),
+                      })}
                     />
                   </div>
                 ))}
                 <p className="px-5 py-3 text-[10px] text-muted-foreground">
-                  These switches filter the notification menu immediately and
-                  are stored in this browser. Email delivery is configured when
-                  a live workspace is connected.
+                  {t(
+                    'These switches filter the notification menu immediately and are stored in this browser. Email delivery is configured when a live workspace is connected.'
+                  )}
                 </p>
               </CardContent>
             </Card>
@@ -441,21 +461,25 @@ export function SettingsPage() {
             <Card>
               <CardHeader className="flex-row items-start justify-between gap-3 space-y-0 pb-3">
                 <div>
-                  <CardTitle>Integrations</CardTitle>
+                  <CardTitle>{t('Integrations')}</CardTitle>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    Connect the tools where your meetings and follow-ups already
-                    live.
+                    {t(
+                      'Connect the tools where your meetings and follow-ups already live.'
+                    )}
                   </p>
                 </div>
                 <Badge variant="outline" className="bg-secondary/30">
-                  {integrationList.filter((item) => item.status === 'connected').length}{' '}
-                  connected
+                  {t('{{count}} connected', {
+                    count: integrationList.filter(
+                      (item) => item.status === 'connected'
+                    ).length,
+                  })}
                 </Badge>
               </CardHeader>
               <CardContent className="p-0">
                 {integrationList.length === 0 ? (
                   <p className="px-5 py-10 text-center text-xs text-muted-foreground">
-                    No integrations are available yet.
+                    {t('No integrations are available yet.')}
                   </p>
                 ) : (
                   <div className="divide-y divide-border/70">
@@ -479,7 +503,9 @@ export function SettingsPage() {
                               </div>
                               <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
                                 {integration.description ||
-                                  `${integration.category} integration`}
+                                  t('{{category}} integration', {
+                                    category: integration.category,
+                                  })}
                               </p>
                             </div>
                           </div>
@@ -495,9 +521,12 @@ export function SettingsPage() {
                                   next
                                 )
                               }
-                              aria-label={`${
-                                isConnected ? 'Disconnect' : 'Connect'
-                              } ${integration.name}`}
+                              aria-label={t(
+                                isConnected
+                                  ? 'Disconnect {{name}}'
+                                  : 'Connect {{name}}',
+                                { name: integration.name }
+                              )}
                             />
                           </div>
                         </div>
@@ -506,8 +535,9 @@ export function SettingsPage() {
                   </div>
                 )}
                 <p className="px-5 py-3 text-[10px] text-muted-foreground">
-                  Connections are simulated in demo mode and never store
-                  provider secrets in the browser.
+                  {t(
+                    'Connections are simulated in demo mode and never store provider secrets in the browser.'
+                  )}
                 </p>
               </CardContent>
             </Card>
@@ -516,9 +546,9 @@ export function SettingsPage() {
           <TabsContent value="security" className="mt-0 space-y-4">
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle>Access and sessions</CardTitle>
+                <CardTitle>{t('Access and sessions')}</CardTitle>
                 <p className="text-xs text-muted-foreground">
-                  Controls for account protection and workspace data.
+                  {t('Controls for account protection and workspace data.')}
                 </p>
               </CardHeader>
               <CardContent className="divide-y divide-border/70 p-0">
@@ -529,20 +559,24 @@ export function SettingsPage() {
                     </span>
                     <div>
                       <p className="text-xs font-medium text-foreground">
-                        Require two-factor for admins
+                        {t('Require two-factor for admins')}
                       </p>
                       <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
-                        Enforce a second factor before an admin can manage members
-                        or integrations.
+                        {t(
+                          'Enforce a second factor before an admin can manage members or integrations.'
+                        )}
                       </p>
                     </div>
                   </div>
                   <Switch
                     checked={preferences.security.twoFactor}
                     onCheckedChange={() =>
-                      handleSecurityToggle('twoFactor', 'Two-factor requirement')
+                      handleSecurityToggle(
+                        'twoFactor',
+                        t('Two-factor requirement')
+                      )
                     }
-                    aria-label="Toggle two-factor requirement"
+                    aria-label={t('Toggle two-factor requirement')}
                   />
                 </div>
 
@@ -553,29 +587,29 @@ export function SettingsPage() {
                     </span>
                     <div>
                       <p className="text-xs font-medium text-foreground">
-                        Session alerts
+                        {t('Session alerts')}
                       </p>
                       <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
-                        Email me when a new device signs in to this workspace.
+                        {t('Email me when a new device signs in to this workspace.')}
                       </p>
                     </div>
                   </div>
                   <Switch
                     checked={preferences.security.sessionAlerts}
                     onCheckedChange={() =>
-                      handleSecurityToggle('sessionAlerts', 'Session alerts')
+                      handleSecurityToggle('sessionAlerts', t('Session alerts'))
                     }
-                    aria-label="Toggle session alerts"
+                    aria-label={t('Toggle session alerts')}
                   />
                 </div>
 
                 <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-4">
                   <div>
                     <p className="text-xs font-medium text-foreground">
-                      Download workspace data
+                      {t('Download workspace data')}
                     </p>
                     <p className="mt-0.5 text-[11px] text-muted-foreground">
-                      A portable snapshot of the records you can already see.
+                      {t('A portable snapshot of the records you can already see.')}
                     </p>
                   </div>
                   <Button
@@ -584,7 +618,7 @@ export function SettingsPage() {
                     onClick={exportWorkspace}
                   >
                     <Download className="h-3.5 w-3.5" />
-                    Download
+                    {t('Download')}
                   </Button>
                 </div>
               </CardContent>
@@ -592,26 +626,26 @@ export function SettingsPage() {
 
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle>Current session</CardTitle>
+                <CardTitle>{t('Current session')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="rounded-lg border border-border/60 bg-secondary/20 px-3 py-2.5">
                   <p className="text-xs font-medium text-foreground">
-                    This browser
+                    {t('This browser')}
                   </p>
                   <p className="mt-0.5 text-[11px] text-muted-foreground">
-                    {user?.email ?? 'Signed in'} ·{' '}
-                    {isDemo ? 'Demo session' : 'Supabase session'}
+                    {user?.email ?? t('Signed in')} ·{' '}
+                    {isDemo ? t('Demo session') : t('Supabase session')}
                   </p>
                 </div>
                 <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 px-3 py-2.5 text-[10px] leading-relaxed text-amber-200/80">
-                  Security toggles are stored locally in this build. They are
-                  ready to be wired to server-side policy enforcement before
-                  production use.
+                  {t(
+                    'Security toggles are stored locally in this build. They are ready to be wired to server-side policy enforcement before production use.'
+                  )}
                 </div>
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <p className="text-[11px] text-muted-foreground">
-                    Signing out clears this browser session.
+                    {t('Signing out clears this browser session.')}
                   </p>
                   <Button
                     variant="outline"
@@ -619,7 +653,7 @@ export function SettingsPage() {
                     onClick={() => void handleSignOut()}
                   >
                     <LogOut className="h-3.5 w-3.5" />
-                    Sign out
+                    {t('Sign out')}
                   </Button>
                 </div>
               </CardContent>

@@ -420,6 +420,8 @@ export interface DashboardStat {
   label: string;
   value: number;
   change: string;
+  /** Values interpolated into the translated `change` string. */
+  changeVars?: Record<string, string | number>;
   period: string;
   direction: 'up' | 'down' | 'flat';
   tone?: 'positive' | 'negative' | 'neutral';

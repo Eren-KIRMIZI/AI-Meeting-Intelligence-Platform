@@ -20,15 +20,17 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { UserAvatar } from '@/components/common/user-avatar';
+import { useI18n } from '@/i18n';
 
 export function UserMenu() {
   const navigate = useNavigate();
   const { user, orgName, isDemo, signOut } = useAuth();
+  const { t } = useI18n();
   const setCommandOpen = useUiStore((state) => state.setCommandOpen);
 
   const handleSignOut = async () => {
     await signOut();
-    toast.success(isDemo ? 'Demo session ended' : 'Signed out');
+    toast.success(t(isDemo ? 'Demo session ended' : 'Signed out'));
     navigate('/login');
   };
 
@@ -43,7 +45,9 @@ export function UserMenu() {
           <span className="flex items-center gap-2">
             <UserAvatar user={user} size="md" />
             <span className="sr-only">
-              {user?.fullName ?? 'Workspace member'} account menu
+              {t('{{name}} account menu', {
+                name: user?.fullName ?? t('Workspace member'),
+              })}
             </span>
             <ChevronDown aria-hidden="true" className="hidden h-3 w-3 sm:block" />
           </span>
@@ -55,32 +59,34 @@ export function UserMenu() {
             <UserAvatar user={user} size="lg" />
             <div className="min-w-0">
               <p className="truncate text-sm font-medium text-foreground">
-                {user?.fullName ?? 'Workspace member'}
+                {user?.fullName ?? t('Workspace member')}
               </p>
               <p className="truncate text-[11px] font-normal text-muted-foreground">
-                {user?.email ?? 'No email'}
+                {user?.email ?? t('No email')}
               </p>
             </div>
           </div>
         </DropdownMenuLabel>
         <div className="mx-2.5 mb-1 flex items-center justify-between rounded-md border border-border/60 bg-secondary/30 px-2 py-1.5">
-          <span className="text-[10px] text-muted-foreground">{orgName ?? 'Workspace'}</span>
+          <span className="text-[10px] text-muted-foreground">
+            {orgName ?? t('Workspace')}
+          </span>
           <span className="text-[10px] font-medium text-muted-foreground">
-            {isDemo ? 'Demo' : 'Live'}
+            {isDemo ? t('Demo') : t('Live')}
           </span>
         </div>
         <DropdownMenuSeparator />
         <DropdownMenuItem onSelect={() => navigate('/settings')}>
           <UserRound />
-          Profile
+          {t('Profile')}
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => navigate('/settings')}>
           <Settings />
-          Workspace settings
+          {t('Workspace settings')}
         </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => setCommandOpen(true)}>
           <Command />
-          Command menu
+          {t('Command menu')}
           <DropdownMenuShortcut>⌘K</DropdownMenuShortcut>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
@@ -89,7 +95,7 @@ export function UserMenu() {
           onSelect={() => void handleSignOut()}
         >
           <LogOut />
-          Sign out
+          {t('Sign out')}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

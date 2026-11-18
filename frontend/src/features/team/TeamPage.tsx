@@ -23,6 +23,7 @@ import { useAuth } from '@/features/auth/auth-provider';
 import { useProjects, useTasks, useTeam } from '@/hooks/use-workspace';
 import { canManageTeam } from '@/lib/team';
 import { cn, downloadCsv } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import { InviteMemberDialog } from './components/invite-member-dialog';
 import { MemberDetailDialog } from './components/member-detail-dialog';
 import { roleMeta, statusMeta } from './team-meta';
@@ -39,6 +40,7 @@ const roleFilters: Array<{ value: RoleFilter; label: string }> = [
 ];
 
 export function TeamPage() {
+  const { t } = useI18n();
   const team = useTeam();
   const projects = useProjects();
   const tasks = useTasks();
@@ -91,7 +93,7 @@ export function TeamPage() {
         description={
           team.error instanceof Error
             ? team.error.message
-            : 'The team could not be loaded.'
+            : t('The team could not be loaded.')
         }
         onRetry={() => void team.refetch()}
       />
@@ -107,7 +109,7 @@ export function TeamPage() {
 
   const exportTeam = () => {
     if (filtered.length === 0) {
-      toast.error('There are no members to export');
+      toast.error(t('There are no members to export'));
       return;
     }
     downloadCsv(
@@ -127,30 +129,30 @@ export function TeamPage() {
           .join(' | '),
       }))
     );
-    toast.success('Team directory exported');
+    toast.success(t('Team directory exported'));
   };
 
   const summary = [
     {
-      label: 'Members',
+      label: t('Members'),
       value: list.length,
       icon: Users,
       tone: 'text-blue-400',
     },
     {
-      label: 'Active',
+      label: t('Active'),
       value: active,
       icon: ShieldCheck,
       tone: 'text-emerald-400',
     },
     {
-      label: 'Invited',
+      label: t('Invited'),
       value: invited,
       icon: Mail,
       tone: 'text-violet-400',
     },
     {
-      label: 'Avg workload',
+      label: t('Avg workload'),
       value: `${averageWorkload}%`,
       icon: Users,
       tone: 'text-amber-400',
@@ -160,23 +162,25 @@ export function TeamPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Team"
-        description="Who is in the workspace, what they own and how much is on their plate."
+        title={t('Team')}
+        description={t(
+          'Who is in the workspace, what they own and how much is on their plate.'
+        )}
         badge={
           <Badge variant="outline" className="bg-secondary/30">
-            {list.length} members
+            {t('{{count}} members', { count: list.length })}
           </Badge>
         }
         actions={
           <>
             <Button variant="outline" size="sm" onClick={exportTeam}>
               <Download className="h-3.5 w-3.5" />
-              Export
+              {t('Export')}
             </Button>
             {manage ? (
               <Button size="sm" onClick={() => setInviteOpen(true)}>
                 <UserPlus className="h-3.5 w-3.5" />
-                Invite member
+                {t('Invite member')}
               </Button>
             ) : null}
           </>
@@ -216,7 +220,7 @@ export function TeamPage() {
               className="h-7 text-[11px]"
               onClick={() => setRoleFilter(item.value)}
             >
-              {item.label}
+              {t(item.label)}
             </Button>
           ))}
         </div>
@@ -226,9 +230,9 @@ export function TeamPage() {
           <Input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search members..."
+            placeholder={t('Search members...')}
             className="h-8 pl-8 text-xs"
-            aria-label="Search team members"
+            aria-label={t('Search team members')}
           />
         </div>
       </div>
@@ -236,17 +240,21 @@ export function TeamPage() {
       {filtered.length === 0 ? (
         <EmptyState
           icon={Users}
-          title={query ? 'No members match this search' : 'No members in this role'}
+          title={
+            query
+              ? t('No members match this search')
+              : t('No members in this role')
+          }
           description={
             query
-              ? 'Try another name, email address or job title.'
-              : 'Invite a teammate or switch to another role filter.'
+              ? t('Try another name, email address or job title.')
+              : t('Invite a teammate or switch to another role filter.')
           }
           action={
             !query && manage ? (
               <Button size="sm" onClick={() => setInviteOpen(true)}>
                 <UserPlus className="h-3.5 w-3.5" />
-                Invite member
+                {t('Invite member')}
               </Button>
             ) : null
           }
@@ -277,24 +285,24 @@ export function TeamPage() {
                         <p className="truncate text-sm font-semibold text-foreground">
                           {member.fullName}
                         </p>
-                        <Badge variant={role.variant}>{role.label}</Badge>
+                        <Badge variant={role.variant}>{t(role.label)}</Badge>
                       </div>
                       <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
-                        {member.jobTitle ?? 'Team member'}
+                        {member.jobTitle ?? t('Team member')}
                       </p>
                       <p className="mt-1 truncate text-[10px] text-muted-foreground">
-                        {member.email || 'Email pending'}
+                        {member.email || t('Email pending')}
                       </p>
                     </div>
                     <span className="inline-flex shrink-0 items-center gap-1.5 text-[10px] text-muted-foreground">
                       <span className={cn('h-1.5 w-1.5 rounded-full', status.dot)} />
-                      {status.label}
+                      {t(status.label)}
                     </span>
                   </div>
 
                   <div className="mt-4">
                     <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                      <span>Workload</span>
+                      <span>{t('Workload')}</span>
                       <span
                         className={cn(
                           'tabular',
@@ -308,7 +316,9 @@ export function TeamPage() {
                     </div>
                     <Progress
                       value={member.workload}
-                      aria-label={`${member.fullName} workload`}
+                      aria-label={t('{{name}} workload', {
+                        name: member.fullName,
+                      })}
                       className="mt-1.5 h-1"
                       indicatorClassName={cn(
                         member.workload > 85
@@ -322,11 +332,11 @@ export function TeamPage() {
 
                   <div className="mt-4">
                     <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                      Projects
+                      {t('Projects')}
                     </p>
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
                       {memberProjects.length === 0 ? (
-                        <Badge variant="outline">No project yet</Badge>
+                        <Badge variant="outline">{t('No project yet')}</Badge>
                       ) : (
                         memberProjects.map((project) => (
                           <Badge
@@ -344,10 +354,10 @@ export function TeamPage() {
                   <div className="mt-auto flex items-center justify-between gap-2 pt-4">
                     <span className="text-[10px] text-muted-foreground">
                       {member.status === 'invited'
-                        ? 'Invitation pending'
-                        : `${memberProjects.length} active ${
-                            memberProjects.length === 1 ? 'project' : 'projects'
-                          }`}
+                        ? t('Invitation pending')
+                        : t('{{count}} active projects', {
+                            count: memberProjects.length,
+                          })}
                     </span>
                     <div className="flex items-center gap-1.5">
                       <Button
@@ -358,8 +368,12 @@ export function TeamPage() {
                       >
                         <a
                           href={`mailto:${member.email}`}
-                          aria-label={`Email ${member.fullName}`}
-                          title={`Email ${member.fullName}`}
+                          aria-label={t('Email {{name}}', {
+                            name: member.fullName,
+                          })}
+                          title={t('Email {{name}}', {
+                            name: member.fullName,
+                          })}
                           onClick={(event) => event.stopPropagation()}
                         >
                           <Mail className="h-3.5 w-3.5" />
@@ -376,9 +390,9 @@ export function TeamPage() {
                       >
                         {manage
                           ? member.status === 'invited'
-                            ? 'Review invite'
-                            : 'Manage'
-                          : 'View profile'}
+                            ? t('Review invite')
+                            : t('Manage')
+                          : t('View profile')}
                       </Button>
                     </div>
                   </div>

@@ -16,6 +16,7 @@ import { useUpdateDecision } from '@/hooks/use-workspace';
 import { decisionActions, decisionActivityTitle, type DecisionActionKey } from '@/lib/decisions';
 import { decisionStatusMeta } from '@/lib/status';
 import { cn, formatDate, formatRelativeTime } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import type { Decision } from '@/types';
 
 const impactVariant: Record<Decision['impact'], BadgeProps['variant']> = {
@@ -41,6 +42,7 @@ export function DecisionDetailDialog({
   onOpenChange,
 }: DecisionDetailDialogProps) {
   const updateDecision = useUpdateDecision();
+  const { t } = useI18n();
   const [note, setNote] = useState('');
 
   if (!decision) return null;
@@ -54,12 +56,14 @@ export function DecisionDetailDialog({
       {
         onSuccess: () => {
           setNote('');
-          toast.success(decisionActivityTitle(target), { description });
+          toast.success(t(decisionActivityTitle(target)), {
+            description: t(description),
+          });
         },
         onError: (error) => {
-          toast.error('Decision could not be updated', {
+          toast.error(t('Decision could not be updated'), {
             description:
-              error instanceof Error ? error.message : 'Try again in a moment.',
+              error instanceof Error ? error.message : t('Try again in a moment.'),
           });
         },
       }
@@ -73,7 +77,7 @@ export function DecisionDetailDialog({
           <div className="flex flex-wrap items-center gap-2">
             <DecisionStatusBadge status={decision.status} />
             <Badge variant={impactVariant[decision.impact]}>
-              {decision.impact} impact
+              {t('{{impact}} impact', { impact: t(decision.impact) })}
             </Badge>
             {decision.projectName ? (
               <Badge variant="outline">{decision.projectName}</Badge>
@@ -90,7 +94,7 @@ export function DecisionDetailDialog({
           <dl className="mt-3 grid grid-cols-2 gap-x-4 gap-y-2 text-[11px] sm:grid-cols-4">
             <div>
               <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                Owner
+                {t('Owner')}
               </dt>
               <dd className="mt-1 flex items-center gap-1.5 text-foreground/85">
                 <UserAvatar user={decision.owner} size="xs" />
@@ -99,7 +103,7 @@ export function DecisionDetailDialog({
             </div>
             <div>
               <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                Source
+                {t('Source')}
               </dt>
               <dd className="mt-1 flex items-center gap-1.5 truncate text-foreground/85">
                 <Link2 className="h-3 w-3 shrink-0 text-muted-foreground" />
@@ -108,7 +112,7 @@ export function DecisionDetailDialog({
             </div>
             <div>
               <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                Logged
+                {t('Logged')}
               </dt>
               <dd className="mt-1 text-foreground/85">
                 {formatDate(decision.decidedAt, {
@@ -120,7 +124,7 @@ export function DecisionDetailDialog({
             </div>
             <div>
               <dt className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                Updates
+                {t('Updates')}
               </dt>
               <dd className="mt-1 text-foreground/85">
                 {decision.history.length}
@@ -130,15 +134,15 @@ export function DecisionDetailDialog({
         </header>
 
         <ScrollArea className="min-h-0 flex-1">
-          <section className="px-5 py-4" aria-label="Decision status history">
+          <section className="px-5 py-4" aria-label={t('Decision status history')}>
             <div className="flex items-center gap-1.5 text-[10px] uppercase tracking-wide text-muted-foreground">
               <History className="h-3 w-3" />
-              Status history
+              {t('Status history')}
             </div>
 
             {history.length === 0 ? (
               <p className="mt-3 text-xs text-muted-foreground">
-                No status changes have been recorded yet.
+                {t('No status changes have been recorded yet.')}
               </p>
             ) : (
               <ol className="mt-3 space-y-3">
@@ -182,13 +186,15 @@ export function DecisionDetailDialog({
             htmlFor="decision-status-note"
             className="text-[10px] uppercase tracking-wide text-muted-foreground"
           >
-            Reason for the change
+            {t('Reason for the change')}
           </label>
           <textarea
             id="decision-status-note"
             value={note}
             onChange={(event) => setNote(event.target.value)}
-            placeholder="Optional, but useful when someone reads this decision later."
+            placeholder={t(
+              'Optional, but useful when someone reads this decision later.'
+            )}
             rows={2}
             maxLength={280}
             className="mt-1.5 w-full resize-none rounded-md border border-border bg-transparent px-2.5 py-2 text-xs leading-relaxed text-foreground placeholder:text-muted-foreground/70 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
@@ -209,13 +215,13 @@ export function DecisionDetailDialog({
                 onClick={() =>
                   applyStatus(action.target, action.description)
                 }
-                title={action.description}
+                title={t(action.description)}
               >
                 {updateDecision.isPending &&
                 updateDecision.variables?.input.status === action.target ? (
                   <Loader2 className="h-3.5 w-3.5 animate-spin" />
                 ) : null}
-                {action.label}
+                {t(action.label)}
               </Button>
             ))}
           </div>

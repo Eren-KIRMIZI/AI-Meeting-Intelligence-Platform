@@ -12,6 +12,7 @@ import { DateTile } from '@/components/common/date-tile';
 import { AvatarStack } from '@/components/common/user-avatar';
 import { MeetingStatusBadge } from '@/components/common/status-badges';
 import { formatTime } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import type { Meeting } from '@/types';
 
 const platformLabels: Record<Meeting['platform'], string> = {
@@ -29,6 +30,7 @@ export function UpcomingMeetings({
   meetings: Meeting[];
   onSchedule: () => void;
 }) {
+  const { t } = useI18n();
   const upcoming = meetings
     .filter((meeting) => meeting.status === 'scheduled' || meeting.status === 'live')
     .sort(
@@ -40,14 +42,14 @@ export function UpcomingMeetings({
     <Card>
       <CardHeader className="flex-row items-start justify-between gap-3 space-y-0 pb-3">
         <div>
-          <CardTitle>Upcoming meetings</CardTitle>
+          <CardTitle>{t('Upcoming meetings')}</CardTitle>
           <CardDescription className="mt-1">
-            Agendas and briefs for the next conversations
+            {t('Agendas and briefs for the next conversations')}
           </CardDescription>
         </div>
         <Button asChild variant="ghost" size="sm" className="shrink-0">
           <Link to="/meetings">
-            View all
+            {t('View all')}
             <ChevronRight className="h-3.5 w-3.5" />
           </Link>
         </Button>
@@ -57,10 +59,10 @@ export function UpcomingMeetings({
         {upcoming.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border px-3 py-8 text-center">
             <p className="text-xs font-medium text-foreground">
-              No meetings scheduled
+              {t('No meetings scheduled')}
             </p>
             <p className="mt-1 text-[11px] text-muted-foreground">
-              Put the next conversation on the calendar.
+              {t('Put the next conversation on the calendar.')}
             </p>
             <Button
               variant="outline"
@@ -69,7 +71,7 @@ export function UpcomingMeetings({
               onClick={onSchedule}
             >
               <CalendarPlus className="h-3.5 w-3.5" />
-              Schedule meeting
+              {t('Schedule meeting')}
             </Button>
           </div>
         ) : (
@@ -85,9 +87,10 @@ export function UpcomingMeetings({
                     {meeting.title}
                   </p>
                   <p className="mt-0.5 text-[10px] text-muted-foreground">
-                    {formatTime(meeting.startsAt)} · {meeting.durationMinutes} min
+                    {formatTime(meeting.startsAt)} ·{' '}
+                    {t('{{count}} min', { count: meeting.durationMinutes })}
                     {' · '}
-                    {platformLabels[meeting.platform]}
+                    {t(platformLabels[meeting.platform])}
                   </p>
                   <div className="mt-2 flex items-center justify-between gap-2">
                     <AvatarStack users={meeting.participants} max={4} size="xs" />
@@ -107,7 +110,7 @@ export function UpcomingMeetings({
             onClick={onSchedule}
           >
             <CalendarPlus className="h-3.5 w-3.5" />
-            Schedule another meeting
+            {t('Schedule another meeting')}
           </Button>
         ) : null}
       </CardContent>

@@ -13,6 +13,7 @@ import { Switch } from '@/components/ui/switch';
 import { IntegrationIcon } from '@/components/common/integration-icon';
 import { IntegrationStatusBadge } from '@/components/common/status-badges';
 import { useToggleIntegration } from '@/hooks/use-workspace';
+import { useI18n } from '@/i18n';
 import { cn } from '@/lib/utils';
 import type { Integration } from '@/types';
 
@@ -22,6 +23,7 @@ export function IntegrationsCard({
   integrations: Integration[];
 }) {
   const toggle = useToggleIntegration();
+  const { t } = useI18n();
   const connected = integrations.filter(
     (integration) => integration.status === 'connected'
   ).length;
@@ -33,15 +35,15 @@ export function IntegrationsCard({
         onSuccess: () => {
           toast.success(
             next
-              ? `${integration.name} connected`
-              : `${integration.name} disconnected`
+              ? t('{{name}} connected', { name: integration.name })
+              : t('{{name}} disconnected', { name: integration.name })
           );
         },
         onError: (error) => {
           toast.error(
             error instanceof Error
               ? error.message
-              : 'Could not update the integration'
+              : t('Could not update the integration')
           );
         },
       }
@@ -52,14 +54,17 @@ export function IntegrationsCard({
     <Card>
       <CardHeader className="flex-row items-start justify-between gap-3 space-y-0 pb-3">
         <div>
-          <CardTitle>Integrations</CardTitle>
+          <CardTitle>{t('Integrations')}</CardTitle>
           <CardDescription className="mt-1">
-            {connected} of {integrations.length} tools connected
+            {t('{{connected}} of {{total}} tools connected', {
+              connected,
+              total: integrations.length,
+            })}
           </CardDescription>
         </div>
         <Button asChild variant="ghost" size="sm" className="shrink-0">
           <Link to="/settings">
-            Manage
+            {t('Manage')}
             <ChevronRight className="h-3.5 w-3.5" />
           </Link>
         </Button>
@@ -68,7 +73,7 @@ export function IntegrationsCard({
       <CardContent className="pt-0">
         {integrations.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border px-3 py-8 text-center text-xs text-muted-foreground">
-            No integrations available yet.
+            {t('No integrations available yet.')}
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
@@ -97,7 +102,12 @@ export function IntegrationsCard({
                     checked={isConnected}
                     disabled={toggle.isPending}
                     onCheckedChange={(next) => handleToggle(integration, next)}
-                    aria-label={`${isConnected ? 'Disconnect' : 'Connect'} ${integration.name}`}
+                    aria-label={t(
+                      isConnected
+                        ? 'Disconnect {{name}}'
+                        : 'Connect {{name}}',
+                      { name: integration.name }
+                    )}
                   />
                 </div>
               );
@@ -107,7 +117,7 @@ export function IntegrationsCard({
 
         <div className="mt-3 flex items-center gap-1.5 rounded-md bg-secondary/25 px-3 py-2 text-[10px] text-muted-foreground">
           <Plug className="h-3 w-3" />
-          Connections are simulated in demo mode.
+          {t('Connections are simulated in demo mode.')}
         </div>
       </CardContent>
     </Card>

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useWorkflowRuns } from '@/hooks/use-workspace';
 import { cn, formatDuration, formatRelativeTime } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import type { WorkflowRunStatus } from '@/types';
 
 const runStatus = {
@@ -44,6 +45,7 @@ const runStatus = {
 >;
 
 export function WorkflowRunHistory({ workflowId }: { workflowId: string }) {
+  const { t } = useI18n();
   const runs = useWorkflowRuns(workflowId);
   const list = runs.data ?? [];
   const succeeded = list.filter((run) => run.status === 'success').length;
@@ -61,7 +63,7 @@ export function WorkflowRunHistory({ workflowId }: { workflowId: string }) {
   if (runs.error) {
     return (
       <p className="text-[11px] text-rose-400">
-        Run history could not be loaded.
+        {t('Run history could not be loaded.')}
       </p>
     );
   }
@@ -70,7 +72,7 @@ export function WorkflowRunHistory({ workflowId }: { workflowId: string }) {
     return (
       <div className="flex items-center gap-2 py-2 text-[11px] text-muted-foreground">
         <History className="h-3.5 w-3.5" />
-        No runs recorded yet. The next trigger will appear here.
+        {t('No runs recorded yet. The next trigger will appear here.')}
       </div>
     );
   }
@@ -80,10 +82,13 @@ export function WorkflowRunHistory({ workflowId }: { workflowId: string }) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <span className="inline-flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
           <History className="h-3 w-3" />
-          Last {list.length} runs
+          {t('Last {{count}} runs', { count: list.length })}
         </span>
         <Badge variant={succeeded === list.length ? 'success' : 'warning'}>
-          {succeeded}/{list.length} succeeded
+          {t('{{succeeded}}/{{total}} succeeded', {
+            succeeded,
+            total: list.length,
+          })}
         </Badge>
       </div>
 
@@ -109,12 +114,12 @@ export function WorkflowRunHistory({ workflowId }: { workflowId: string }) {
                 <div className="min-w-0">
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="truncate text-xs font-medium text-foreground">
-                      {run.trigger}
+                      {t(run.trigger)}
                     </p>
-                    <Badge variant={config.badge}>{config.label}</Badge>
+                    <Badge variant={config.badge}>{t(config.label)}</Badge>
                   </div>
                   <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-                    {run.summary}
+                    {t(run.summary)}
                   </p>
                   {run.steps.length > 0 ? (
                     <div className="mt-1.5 flex flex-wrap items-center gap-1">
@@ -126,7 +131,7 @@ export function WorkflowRunHistory({ workflowId }: { workflowId: string }) {
                             runStatus[step.status].step
                           )}
                         >
-                          {step.label}
+                          {t(step.label)}
                         </span>
                       ))}
                     </div>

@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/select-native';
 import { Field } from '@/components/common/field';
 import { useCreateTask } from '@/hooks/use-workspace';
+import { useI18n } from '@/i18n';
 import type { Project, TaskPriority, TaskStatus } from '@/types';
 
 interface CreateTaskDialogProps {
@@ -37,6 +38,7 @@ export function CreateTaskDialog({
   defaultProjectId,
 }: CreateTaskDialogProps) {
   const createTask = useCreateTask();
+  const { t } = useI18n();
   const [title, setTitle] = useState('');
   const [projectId, setProjectId] = useState('');
   const [priority, setPriority] = useState<TaskPriority>('medium');
@@ -56,7 +58,7 @@ export function CreateTaskDialog({
     event.preventDefault();
     const trimmedTitle = title.trim();
     if (!trimmedTitle) {
-      toast.error('A task title is required');
+      toast.error(t('A task title is required'));
       return;
     }
 
@@ -70,12 +72,17 @@ export function CreateTaskDialog({
       },
       {
         onSuccess: (task) => {
-          toast.success(`“${task.title}” added to ${task.projectName}`);
+          toast.success(
+            t('“{{title}}” added to {{project}}', {
+              title: task.title,
+              project: task.projectName,
+            })
+          );
           onOpenChange(false);
         },
         onError: (error) => {
           toast.error(
-            error instanceof Error ? error.message : 'Could not create task'
+            error instanceof Error ? error.message : t('Could not create task')
           );
         },
       }
@@ -86,32 +93,32 @@ export function CreateTaskDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create a task</DialogTitle>
+          <DialogTitle>{t('Create a task')}</DialogTitle>
           <DialogDescription>
-            Turn the next commitment into a clear, owned piece of work.
+            {t('Turn the next commitment into a clear, owned piece of work.')}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Field label="Task title" htmlFor="task-title">
+          <Field label={t('Task title')} htmlFor="task-title">
             <Input
               id="task-title"
               value={title}
               onChange={(event) => setTitle(event.target.value)}
-              placeholder="e.g. Finalize the launch cohort list"
+              placeholder={t('e.g. Finalize the launch cohort list')}
               autoFocus
               required
             />
           </Field>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Project" htmlFor="task-project">
+            <Field label={t('Project')} htmlFor="task-project">
               <NativeSelect
                 id="task-project"
                 value={projectId}
                 onChange={(event) => setProjectId(event.target.value)}
               >
-                <option value="">No project</option>
+                <option value="">{t('No project')}</option>
                 {projects.map((project) => (
                   <option key={project.id} value={project.id}>
                     {project.name}
@@ -120,7 +127,7 @@ export function CreateTaskDialog({
               </NativeSelect>
             </Field>
 
-            <Field label="Status" htmlFor="task-status">
+            <Field label={t('Status')} htmlFor="task-status">
               <NativeSelect
                 id="task-status"
                 value={status}
@@ -128,16 +135,16 @@ export function CreateTaskDialog({
                   setStatus(event.target.value as TaskStatus)
                 }
               >
-                <option value="backlog">Backlog</option>
-                <option value="todo">To do</option>
-                <option value="in_progress">In progress</option>
-                <option value="in_review">In review</option>
+                <option value="backlog">{t('Backlog')}</option>
+                <option value="todo">{t('To do')}</option>
+                <option value="in_progress">{t('In progress')}</option>
+                <option value="in_review">{t('In review')}</option>
               </NativeSelect>
             </Field>
           </div>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Priority" htmlFor="task-priority">
+            <Field label={t('Priority')} htmlFor="task-priority">
               <NativeSelect
                 id="task-priority"
                 value={priority}
@@ -145,14 +152,14 @@ export function CreateTaskDialog({
                   setPriority(event.target.value as TaskPriority)
                 }
               >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-                <option value="urgent">Urgent</option>
+                <option value="low">{t('Low')}</option>
+                <option value="medium">{t('Medium')}</option>
+                <option value="high">{t('High')}</option>
+                <option value="urgent">{t('Urgent')}</option>
               </NativeSelect>
             </Field>
 
-            <Field label="Due date" htmlFor="task-due-date">
+            <Field label={t('Due date')} htmlFor="task-due-date">
               <Input
                 id="task-due-date"
                 type="date"
@@ -168,7 +175,7 @@ export function CreateTaskDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button type="submit" disabled={createTask.isPending}>
               {createTask.isPending ? (
@@ -176,7 +183,7 @@ export function CreateTaskDialog({
               ) : (
                 <Plus className="h-4 w-4" />
               )}
-              Create task
+              {t('Create task')}
             </Button>
           </DialogFooter>
         </form>

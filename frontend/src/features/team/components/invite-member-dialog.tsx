@@ -14,6 +14,7 @@ import { Input } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/select-native';
 import { Field } from '@/components/common/field';
 import { useInviteMember } from '@/hooks/use-workspace';
+import { useI18n } from '@/i18n';
 import type { OrgRole } from '@/types';
 
 interface InviteMemberDialogProps {
@@ -26,6 +27,7 @@ export function InviteMemberDialog({
   onOpenChange,
 }: InviteMemberDialogProps) {
   const inviteMember = useInviteMember();
+  const { t } = useI18n();
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<OrgRole>('member');
 
@@ -39,7 +41,7 @@ export function InviteMemberDialog({
     event.preventDefault();
     const trimmedEmail = email.trim().toLowerCase();
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)) {
-      toast.error('Enter a valid email address');
+      toast.error(t('Enter a valid email address'));
       return;
     }
 
@@ -47,12 +49,16 @@ export function InviteMemberDialog({
       { email: trimmedEmail, role },
       {
         onSuccess: (member) => {
-          toast.success(`Invitation ready for ${member.email}`);
+          toast.success(
+            t('Invitation ready for {{email}}', { email: member.email })
+          );
           onOpenChange(false);
         },
         onError: (error) => {
           toast.error(
-            error instanceof Error ? error.message : 'Could not invite member'
+            error instanceof Error
+              ? error.message
+              : t('Could not invite member')
           );
         },
       }
@@ -63,39 +69,42 @@ export function InviteMemberDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Invite a teammate</DialogTitle>
+          <DialogTitle>{t('Invite a teammate')}</DialogTitle>
           <DialogDescription>
-            Give someone access to the workspace and the work that follows each
-            meeting.
+            {t(
+              'Give someone access to the workspace and the work that follows each meeting.'
+            )}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Field label="Work email" htmlFor="invite-email">
+          <Field label={t('Work email')} htmlFor="invite-email">
             <Input
               id="invite-email"
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              placeholder="teammate@company.com"
+              placeholder={t('teammate@company.com')}
               autoFocus
               required
             />
           </Field>
 
           <Field
-            label="Workspace role"
+            label={t('Workspace role')}
             htmlFor="invite-role"
-            hint="Admins can manage members. Members can create and edit work."
+            hint={t(
+              'Admins can manage members. Members can create and edit work.'
+            )}
           >
             <NativeSelect
               id="invite-role"
               value={role}
               onChange={(event) => setRole(event.target.value as OrgRole)}
             >
-              <option value="admin">Admin</option>
-              <option value="member">Member</option>
-              <option value="viewer">Viewer</option>
+              <option value="admin">{t('Admin')}</option>
+              <option value="member">{t('Member')}</option>
+              <option value="viewer">{t('Viewer')}</option>
             </NativeSelect>
           </Field>
 
@@ -105,7 +114,7 @@ export function InviteMemberDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button type="submit" disabled={inviteMember.isPending}>
               {inviteMember.isPending ? (
@@ -113,7 +122,7 @@ export function InviteMemberDialog({
               ) : (
                 <Send className="h-4 w-4" />
               )}
-              Send invitation
+              {t('Send invitation')}
             </Button>
           </DialogFooter>
         </form>

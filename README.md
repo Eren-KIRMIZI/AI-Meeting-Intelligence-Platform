@@ -38,6 +38,7 @@ Nova turns meetings into execution: every conversation becomes a brief with deci
 │  │  ├─ components/           layout, common, UI primitives
 │  │  ├─ features/             one folder per module + auth
 │  │  ├─ hooks/                query + mutation hooks
+│  │  ├─ i18n/                 locale state, dictionaries and formatters
 │  │  ├─ lib/                  env, supabase clients, utils, config
 │  │  ├─ mocks/                demo seed data + mutable demo store
 │  │  ├─ services/             live Supabase services with demo fallback
@@ -92,7 +93,7 @@ Open the printed URL (default `http://localhost:5173`). Use **Continue with demo
 
 ### Testing & CI
 
-Tests use Vitest with jsdom, Testing Library and jest-dom. The suite covers pure helpers, metric builders, range-derived analytics, enum guards, the transcript analyzer, the live-meeting intelligence and Knowledge note, the demo data store and its meeting pipeline (analyze → commit), Nova Live persistence, recording formatting and archive storage, notification preference filtering and deep-link safety, the demo workspace event bus, action-driven notification delivery, team role hierarchy rules, member removal and project-access sync, the insight review queue and its task/decision conversion, the workflow run log, sidebar accessibility, route metadata and document titles, the error boundaries, the 404 page and a task-board interaction end to end.
+Tests use Vitest with jsdom, Testing Library and jest-dom. The suite covers pure helpers, metric builders, range-derived analytics, enum guards, the transcript analyzer, the live-meeting intelligence and Knowledge note, the demo data store and its meeting pipeline (analyze → commit), Nova Live persistence, recording formatting and archive storage, notification preference filtering and deep-link safety, the demo workspace event bus, action-driven notification delivery, team role hierarchy rules, member removal and project-access sync, the insight review queue and its task/decision conversion, the workflow run log, sidebar accessibility, route metadata and document titles, the error boundaries, the 404 page, locale switching and locale-aware formatting, and a task-board interaction end to end.
 
 ```bash
 cd frontend
@@ -360,11 +361,22 @@ The Team directory is a working permission surface. Clicking a member card opens
 
 ---
 
+## Internationalization
+
+- English is the source language and the default; Turkish is available from **Settings → Profile → Interface language**.
+- The layer is intentionally small (`src/i18n/`): English strings are the keys, `messages/tr.ts` maps them to Turkish, and a missing entry falls back to readable English instead of a raw key.
+- `I18nProvider` reads the persisted locale from `usePreferencesStore`, keeps `<html lang>` in sync and exposes `t`, `plural` and locale-aware `Intl` formatters for dates, times, numbers, relative time, due dates and greetings.
+- The preference is stored under `nova-preferences`, so the choice survives reloads. Components rendered without the provider (isolated unit tests) always fall back to English.
+- UI copy is translated; workspace data such as meeting titles, project names and AI answers stay in their original language. CSV export headers and values remain English for portability, and workflow trigger/step values stay in English as canonical storage keys while their labels are translated.
+- `e2e/a11y.spec.ts` runs in the default English locale, so the axe gate covers the shipped default experience.
+
+---
+
 ## Performance
 
 - The shell, auth guard and login screen load eagerly; every workspace page is a `React.lazy` route chunk that arrives on first visit.
 - `AppLayout` owns a single `Suspense` boundary with `PageSkeleton`, so navigation keeps the sidebar and header mounted while the next page streams in. Nova Live has its own full-screen fallback.
-- Charts, dialogs and the mock dataset are split into their own chunks. The production build emits page chunks of 5–26 kB; the entry bundle stays around 272 kB (≈77 kB gzip) with no Vite 500 kB warning.
+- Charts, dialogs and the mock dataset are split into their own chunks. The production build emits page chunks of 5–26 kB; the entry bundle stays around 343 kB (≈100 kB gzip) with no Vite 500 kB warning.
 
 ---
 
@@ -415,6 +427,7 @@ If you rotate keys, update Vercel environment variables and redeploy. Never comm
 - Fixed header with breadcrumb, centered search, notifications and avatar menu
 - Notification bell with preference-filtered list, unread badge, safe deep links and a footer that opens the matching settings tab
 - Mobile drawer navigation, accessible labels and keyboard support
+- Language switcher in Settings with native language names, `aria-pressed` state and a persisted choice
 - Dark surfaces, Manrope/Inter typography, restrained blue accent — no gradients or glow effects
 - Modules: Overview, Projects, Tasks, Meetings, Nova Live, Decisions, Knowledge, Workflows, Intelligence, Analytics, Team, Settings
 - Nova Live opens a pre-join check (devices, display name, consent), a full-screen room with captions, chat, copilot and people panels, then an ended-meeting summary with the report and the optional recording archive

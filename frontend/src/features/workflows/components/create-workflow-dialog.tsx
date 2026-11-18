@@ -14,6 +14,7 @@ import { Input, Textarea } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/select-native';
 import { Field } from '@/components/common/field';
 import { useCreateWorkflow } from '@/hooks/use-workspace';
+import { useI18n } from '@/i18n';
 
 interface CreateWorkflowDialogProps {
   open: boolean;
@@ -33,6 +34,7 @@ export function CreateWorkflowDialog({
   onOpenChange,
 }: CreateWorkflowDialogProps) {
   const createWorkflow = useCreateWorkflow();
+  const { t } = useI18n();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [triggerType, setTriggerType] = useState('meeting_completed');
@@ -55,11 +57,11 @@ export function CreateWorkflowDialog({
       .filter(Boolean);
 
     if (!trimmedName) {
-      toast.error('A workflow name is required');
+      toast.error(t('A workflow name is required'));
       return;
     }
     if (actionLabels.length === 0) {
-      toast.error('Add at least one action');
+      toast.error(t('Add at least one action'));
       return;
     }
 
@@ -76,14 +78,12 @@ export function CreateWorkflowDialog({
       },
       {
         onSuccess: (workflow) => {
-          toast.success(`“${workflow.name}” is now active`);
+          toast.success(t('“{{name}}” is now active', { name: workflow.name }));
           onOpenChange(false);
         },
         onError: (error) => {
           toast.error(
-            error instanceof Error
-              ? error.message
-              : 'Could not create workflow'
+            error instanceof Error ? error.message : t('Could not create workflow')
           );
         },
       }
@@ -94,35 +94,37 @@ export function CreateWorkflowDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create a workflow</DialogTitle>
+          <DialogTitle>{t('Create a workflow')}</DialogTitle>
           <DialogDescription>
-            Connect a workspace signal to the actions that should follow it.
+            {t(
+              'Connect a workspace signal to the actions that should follow it.'
+            )}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Field label="Workflow name" htmlFor="workflow-name">
+          <Field label={t('Workflow name')} htmlFor="workflow-name">
             <Input
               id="workflow-name"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="e.g. Decision → project update"
+              placeholder={t('e.g. Decision → project update')}
               autoFocus
               required
             />
           </Field>
 
-          <Field label="Description" htmlFor="workflow-description">
+          <Field label={t('Description')} htmlFor="workflow-description">
             <Textarea
               id="workflow-description"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder="What should this automation keep in sync?"
+              placeholder={t('What should this automation keep in sync?')}
               className="min-h-[72px]"
             />
           </Field>
 
-          <Field label="Trigger" htmlFor="workflow-trigger">
+          <Field label={t('Trigger')} htmlFor="workflow-trigger">
             <NativeSelect
               id="workflow-trigger"
               value={triggerType}
@@ -130,22 +132,22 @@ export function CreateWorkflowDialog({
             >
               {triggers.map((trigger) => (
                 <option key={trigger.value} value={trigger.value}>
-                  {trigger.label}
+                  {t(trigger.label)}
                 </option>
               ))}
             </NativeSelect>
           </Field>
 
           <Field
-            label="Actions"
+            label={t('Actions')}
             htmlFor="workflow-actions"
-            hint="One action per line. They run in the order shown."
+            hint={t('One action per line. They run in the order shown.')}
           >
             <Textarea
               id="workflow-actions"
               value={actions}
               onChange={(event) => setActions(event.target.value)}
-              placeholder={'Summarize transcript\nCreate action item drafts'}
+              placeholder={t('Summarize transcript\nCreate action item drafts')}
               className="min-h-[92px]"
               required
             />
@@ -157,7 +159,7 @@ export function CreateWorkflowDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button type="submit" disabled={createWorkflow.isPending}>
               {createWorkflow.isPending ? (
@@ -165,7 +167,7 @@ export function CreateWorkflowDialog({
               ) : (
                 <Plus className="h-4 w-4" />
               )}
-              Create workflow
+              {t('Create workflow')}
             </Button>
           </DialogFooter>
         </form>

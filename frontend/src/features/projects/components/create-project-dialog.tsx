@@ -14,6 +14,7 @@ import { Input, Textarea } from '@/components/ui/input';
 import { NativeSelect } from '@/components/ui/select-native';
 import { Field } from '@/components/common/field';
 import { useCreateProject } from '@/hooks/use-workspace';
+import { useI18n } from '@/i18n';
 import type { ProjectStatus } from '@/types';
 
 interface CreateProjectDialogProps {
@@ -29,6 +30,7 @@ export function CreateProjectDialog({
   onOpenChange,
 }: CreateProjectDialogProps) {
   const createProject = useCreateProject();
+  const { t } = useI18n();
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [category, setCategory] = useState('Product');
@@ -48,7 +50,7 @@ export function CreateProjectDialog({
     event.preventDefault();
     const trimmedName = name.trim();
     if (!trimmedName) {
-      toast.error('A project name is required');
+      toast.error(t('A project name is required'));
       return;
     }
 
@@ -62,12 +64,12 @@ export function CreateProjectDialog({
       },
       {
         onSuccess: (project) => {
-          toast.success(`“${project.name}” created`);
+          toast.success(t('“{{name}}” created', { name: project.name }));
           onOpenChange(false);
         },
         onError: (error) => {
           toast.error(
-            error instanceof Error ? error.message : 'Could not create project'
+            error instanceof Error ? error.message : t('Could not create project')
           );
         },
       }
@@ -78,50 +80,50 @@ export function CreateProjectDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Create a project</DialogTitle>
+          <DialogTitle>{t('Create a project')}</DialogTitle>
           <DialogDescription>
-            Start a focused space for the work that follows your next meeting.
+            {t('Start a focused space for the work that follows your next meeting.')}
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <Field label="Project name" htmlFor="project-name">
+          <Field label={t('Project name')} htmlFor="project-name">
             <Input
               id="project-name"
               value={name}
               onChange={(event) => setName(event.target.value)}
-              placeholder="e.g. Customer insight hub"
+              placeholder={t('e.g. Customer insight hub')}
               autoFocus
               required
             />
           </Field>
 
-          <Field label="Description" htmlFor="project-description">
+          <Field label={t('Description')} htmlFor="project-description">
             <Textarea
               id="project-description"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
-              placeholder="What outcome should this project create?"
+              placeholder={t('What outcome should this project create?')}
               className="min-h-[72px]"
             />
           </Field>
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <Field label="Category" htmlFor="project-category">
+            <Field label={t('Category')} htmlFor="project-category">
               <NativeSelect
                 id="project-category"
                 value={category}
                 onChange={(event) => setCategory(event.target.value)}
               >
-                <option value="Product">Product</option>
-                <option value="Research">Research</option>
-                <option value="Marketing">Marketing</option>
-                <option value="Operations">Operations</option>
-                <option value="Engineering">Engineering</option>
+                <option value="Product">{t('Product')}</option>
+                <option value="Research">{t('Research')}</option>
+                <option value="Marketing">{t('Marketing')}</option>
+                <option value="Operations">{t('Operations')}</option>
+                <option value="Engineering">{t('Engineering')}</option>
               </NativeSelect>
             </Field>
 
-            <Field label="Status" htmlFor="project-status">
+            <Field label={t('Status')} htmlFor="project-status">
               <NativeSelect
                 id="project-status"
                 value={status}
@@ -129,14 +131,14 @@ export function CreateProjectDialog({
                   setStatus(event.target.value as ProjectStatus)
                 }
               >
-                <option value="planning">Planning</option>
-                <option value="on_track">On track</option>
-                <option value="at_risk">At risk</option>
+                <option value="planning">{t('Planning')}</option>
+                <option value="on_track">{t('On track')}</option>
+                <option value="at_risk">{t('At risk')}</option>
               </NativeSelect>
             </Field>
           </div>
 
-          <Field label="Target date" htmlFor="project-due-date">
+          <Field label={t('Target date')} htmlFor="project-due-date">
             <Input
               id="project-due-date"
               type="date"
@@ -151,7 +153,7 @@ export function CreateProjectDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button type="submit" disabled={createProject.isPending}>
               {createProject.isPending ? (
@@ -159,7 +161,7 @@ export function CreateProjectDialog({
               ) : (
                 <Plus className="h-4 w-4" />
               )}
-              Create project
+              {t('Create project')}
             </Button>
           </DialogFooter>
         </form>

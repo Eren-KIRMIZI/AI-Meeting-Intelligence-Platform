@@ -46,9 +46,11 @@ import {
 import { CreateTaskDialog } from '@/features/tasks/components/create-task-dialog';
 import { TaskCheckbox } from '@/features/tasks/components/task-checkbox';
 import { TaskDetailDialog } from '@/features/tasks/components/task-detail-dialog';
+import { useI18n } from '@/i18n';
 import type { Task } from '@/types';
 
 export function ProjectDetailPage() {
+  const { t } = useI18n();
   const { projectId } = useParams();
   const projects = useProjects();
   const tasks = useTasks();
@@ -97,7 +99,7 @@ export function ProjectDetailPage() {
         description={
           projects.error instanceof Error
             ? projects.error.message
-            : 'Projects could not be loaded.'
+            : t('Projects could not be loaded.')
         }
         onRetry={() => void projects.refetch()}
       />
@@ -110,12 +112,14 @@ export function ProjectDetailPage() {
         <Button asChild variant="ghost" size="sm" className="h-7 text-[11px]">
           <Link to="/projects">
             <ArrowLeft className="h-3.5 w-3.5" />
-            Back to projects
+            {t('Back to projects')}
           </Link>
         </Button>
         <ErrorState
-          title="Project not found"
-          description="This project may have been removed, or the link is out of date."
+          title={t('Project not found')}
+          description={t(
+            'This project may have been removed, or the link is out of date.'
+          )}
         />
       </div>
     );
@@ -131,21 +135,21 @@ export function ProjectDetailPage() {
   ).length;
 
   const stats = [
-    { label: 'Open tasks', value: openTasks, icon: ListTodo, tone: 'text-blue-400' },
+    { label: t('Open tasks'), value: openTasks, icon: ListTodo, tone: 'text-blue-400' },
     {
-      label: 'Completed',
+      label: t('Completed'),
       value: completedTasks,
       icon: CircleCheck,
       tone: 'text-emerald-400',
     },
     {
-      label: 'Meetings',
+      label: t('Meetings'),
       value: projectMeetings.length,
       icon: CalendarDays,
       tone: 'text-violet-400',
     },
     {
-      label: 'Decisions',
+      label: t('Decisions'),
       value: projectDecisions.length,
       icon: GitBranch,
       tone: 'text-amber-400',
@@ -158,7 +162,7 @@ export function ProjectDetailPage() {
         <Button asChild variant="ghost" size="sm" className="h-7 px-2 text-[11px]">
           <Link to="/projects">
             <ArrowLeft className="h-3.5 w-3.5" />
-            Projects
+            {t('Projects')}
           </Link>
         </Button>
         <span className="text-border">/</span>
@@ -199,10 +203,16 @@ export function ProjectDetailPage() {
                   </span>
                   <span className="inline-flex items-center gap-1.5">
                     <AvatarStack users={project.members} max={4} size="xs" />
-                    {project.members.length} members
+                    {t('{{count}} members', { count: project.members.length })}
                   </span>
-                  <span>Due {formatDueDate(project.dueDate)}</span>
-                  <span>Updated {formatRelativeTime(project.updatedAt)}</span>
+                  <span>
+                    {t('Due {{date}}', { date: formatDueDate(project.dueDate) })}
+                  </span>
+                  <span>
+                    {t('Updated {{time}}', {
+                      time: formatRelativeTime(project.updatedAt),
+                    })}
+                  </span>
                 </div>
               </div>
             </div>
@@ -211,24 +221,24 @@ export function ProjectDetailPage() {
               <Button asChild variant="outline" size="sm">
                 <Link to={`/tasks?project=${project.id}`}>
                   <Target className="h-3.5 w-3.5" />
-                  All tasks
+                  {t('All tasks')}
                 </Link>
               </Button>
               <Button size="sm" onClick={() => setCreateOpen(true)}>
                 <Plus className="h-3.5 w-3.5" />
-                New task
+                {t('New task')}
               </Button>
             </div>
           </div>
 
           <div className="mt-5 rounded-lg border border-border/60 bg-secondary/20 px-3 py-2.5">
             <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-              <span>Delivery progress</span>
+              <span>{t('Delivery progress')}</span>
               <span className="tabular text-foreground">{project.progress}%</span>
             </div>
             <Progress
               value={project.progress}
-              aria-label="Delivery progress"
+              aria-label={t('Delivery progress')}
               className="mt-2"
               indicatorClassName={accent.solidBg}
             />
@@ -262,36 +272,38 @@ export function ProjectDetailPage() {
       <Tabs defaultValue="tasks" className="space-y-4">
         <TabsList className="w-full justify-start overflow-x-auto sm:w-auto">
           <TabsTrigger value="tasks">
-            Tasks
+            {t('Tasks')}
             <span className="text-[10px] text-muted-foreground">
               {projectTasks.length}
             </span>
           </TabsTrigger>
           <TabsTrigger value="meetings">
-            Meetings
+            {t('Meetings')}
             <span className="text-[10px] text-muted-foreground">
               {projectMeetings.length}
             </span>
           </TabsTrigger>
           <TabsTrigger value="decisions">
-            Decisions
+            {t('Decisions')}
             <span className="text-[10px] text-muted-foreground">
               {projectDecisions.length}
             </span>
           </TabsTrigger>
-          <TabsTrigger value="activity">Activity</TabsTrigger>
+          <TabsTrigger value="activity">{t('Activity')}</TabsTrigger>
         </TabsList>
 
         <TabsContent value="tasks" className="mt-0">
           {projectTasks.length === 0 ? (
             <EmptyState
               icon={ListTodo}
-              title="No tasks in this project"
-              description="Create the first task or turn a meeting action item into owned work."
+              title={t('No tasks in this project')}
+              description={t(
+                'Create the first task or turn a meeting action item into owned work.'
+              )}
               action={
                 <Button size="sm" onClick={() => setCreateOpen(true)}>
                   <Plus className="h-3.5 w-3.5" />
-                  New task
+                  {t('New task')}
                 </Button>
               }
             />
@@ -320,7 +332,7 @@ export function ProjectDetailPage() {
                             {task.title}
                           </button>
                           <p className="mt-0.5 line-clamp-1 text-[10px] text-muted-foreground">
-                            {task.description ?? 'No description'}
+                            {task.description ?? t('No description')}
                           </p>
                         </div>
                       </div>
@@ -329,7 +341,7 @@ export function ProjectDetailPage() {
                         <TaskStatusBadge status={task.status} />
                         <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
                           <UserAvatar user={task.assignee} size="xs" />
-                          {task.assignee?.fullName ?? 'Unassigned'}
+                          {task.assignee?.fullName ?? t('Unassigned')}
                         </span>
                         <span className="text-[10px] text-muted-foreground">
                           {formatDueDate(task.dueDate)}
@@ -347,8 +359,10 @@ export function ProjectDetailPage() {
           {projectMeetings.length === 0 ? (
             <EmptyState
               icon={CalendarDays}
-              title="No meetings linked to this project"
-              description="Meetings scheduled with this project will appear here with their briefs and extracted follow-ups."
+              title={t('No meetings linked to this project')}
+              description={t(
+                'Meetings scheduled with this project will appear here with their briefs and extracted follow-ups.'
+              )}
             />
           ) : (
             <Card>
@@ -371,19 +385,22 @@ export function ProjectDetailPage() {
                             </Link>
                             <MeetingStatusBadge status={meeting.status} />
                             {meeting.analysis ? (
-                              <Badge variant="success">Analyzed</Badge>
+                              <Badge variant="success">{t('Analyzed')}</Badge>
                             ) : null}
                           </div>
                           <p className="mt-1 line-clamp-1 text-[11px] text-muted-foreground">
-                            {meeting.summary ?? 'No brief yet.'}
+                            {meeting.summary ?? t('No brief yet.')}
                           </p>
                           <p className="mt-1 text-[10px] text-muted-foreground">
                             {formatDate(meeting.startsAt, {
                               month: 'short',
                               day: 'numeric',
                             })}{' '}
-                            · {meeting.durationMinutes} min ·{' '}
-                            {meeting.participants.length} participants
+                            · {t('{{count}} min', { count: meeting.durationMinutes })}{' '}
+                            ·{' '}
+                            {t('{{count}} participants', {
+                              count: meeting.participants.length,
+                            })}
                           </p>
                         </div>
                       </div>
@@ -394,7 +411,7 @@ export function ProjectDetailPage() {
                         className="h-7 shrink-0 text-[11px]"
                       >
                         <Link to={`/meetings/${meeting.id}`}>
-                          Open workspace
+                          {t('Open workspace')}
                           <ArrowRight className="h-3 w-3" />
                         </Link>
                       </Button>
@@ -410,8 +427,10 @@ export function ProjectDetailPage() {
           {projectDecisions.length === 0 ? (
             <EmptyState
               icon={GitBranch}
-              title="No decisions recorded yet"
-              description="Confirm a decision from a meeting workspace and it will join this project's decision log."
+              title={t('No decisions recorded yet')}
+              description={t(
+                "Confirm a decision from a meeting workspace and it will join this project's decision log."
+              )}
             />
           ) : (
             <Card>
@@ -433,7 +452,12 @@ export function ProjectDetailPage() {
                                 : 'neutral'
                           }
                         >
-                          {decision.impact} impact
+                          {t('{{impact}} impact', {
+                            impact: t(
+                              decision.impact.charAt(0).toUpperCase() +
+                                decision.impact.slice(1)
+                            ),
+                          })}
                         </Badge>
                       </div>
                       <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
@@ -461,8 +485,10 @@ export function ProjectDetailPage() {
       </Tabs>
 
       <p className="text-[10px] text-muted-foreground">
-        {analyzedMeetings} of {projectMeetings.length} meetings have an
-        intelligence brief.
+        {t('{{analyzed}} of {{total}} meetings have an intelligence brief.', {
+          analyzed: analyzedMeetings,
+          total: projectMeetings.length,
+        })}
       </p>
 
       <CreateTaskDialog

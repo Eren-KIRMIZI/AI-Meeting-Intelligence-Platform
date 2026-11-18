@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn, copyToClipboard, formatDate, formatRelativeTime } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import type { KnowledgeDocument } from '@/types';
 import {
   countMatches,
@@ -106,6 +107,7 @@ export function KnowledgeReader({
   query,
   onSelect,
 }: KnowledgeReaderProps) {
+  const { t } = useI18n();
   const [copied, setCopied] = useState(false);
   const meta = kindMeta[document.kind];
   const Icon = meta.icon;
@@ -129,12 +131,12 @@ export function KnowledgeReader({
     );
 
     if (!copiedOk) {
-      toast.error('Could not copy this document');
+      toast.error(t('Could not copy this document'));
       return;
     }
 
     setCopied(true);
-    toast.success('Document copied to clipboard');
+    toast.success(t('Document copied to clipboard'));
   };
 
   return (
@@ -144,7 +146,7 @@ export function KnowledgeReader({
           <span className={cn('icon-tile h-8 w-8 border', meta.tone)}>
             <Icon className="h-4 w-4" />
           </span>
-          <Badge variant="outline">{meta.label}</Badge>
+          <Badge variant="outline">{t(meta.label)}</Badge>
           {document.sourceMeeting ? (
             <Badge variant="info">{document.sourceMeeting}</Badge>
           ) : null}
@@ -160,14 +162,17 @@ export function KnowledgeReader({
             {document.author.fullName}
           </span>
           <span>
-            Updated{' '}
-            {formatDate(document.updatedAt, {
-              month: 'short',
-              day: 'numeric',
-              year: 'numeric',
+            {t('Updated {{date}}', {
+              date: formatDate(document.updatedAt, {
+                month: 'short',
+                day: 'numeric',
+                year: 'numeric',
+              }),
             })}
           </span>
-          <span>{document.readMinutes} min read</span>
+          <span>
+            {t('{{count}} min read', { count: document.readMinutes })}
+          </span>
         </div>
       </header>
 
@@ -176,14 +181,25 @@ export function KnowledgeReader({
           <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <Search className="h-3 w-3" />
             {matches === 0
-              ? `No matches for “${query.trim()}” in this document`
-              : `${matches} match${matches === 1 ? '' : 'es'} for “${query.trim()}”`}
+              ? t('No matches for “{{query}}” in this document', {
+                  query: query.trim(),
+                })
+              : matches === 1
+                ? t('{{count}} match for “{{query}}”', {
+                    count: matches,
+                    query: query.trim(),
+                  })
+                : t('{{count}} matches for “{{query}}”', {
+                    count: matches,
+                    query: query.trim(),
+                  })}
           </span>
         ) : (
           <span className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <FileSearch className="h-3 w-3" />
-            Full document · {document.content.split(/\s+/).filter(Boolean).length}{' '}
-            words
+            {t('Full document · {{count}} words', {
+              count: document.content.split(/\s+/).filter(Boolean).length,
+            })}
           </span>
         )}
 
@@ -191,7 +207,7 @@ export function KnowledgeReader({
           {document.sourceMeetingId ? (
             <Button asChild variant="ghost" size="sm" className="h-7 text-[11px]">
               <Link to={`/meetings/${document.sourceMeetingId}`}>
-                Open meeting
+                {t('Open meeting')}
                 <ArrowUpRight className="h-3 w-3" />
               </Link>
             </Button>
@@ -207,7 +223,7 @@ export function KnowledgeReader({
             ) : (
               <Copy className="h-3 w-3" />
             )}
-            {copied ? 'Copied' : 'Copy'}
+            {copied ? t('Copied') : t('Copy')}
           </Button>
         </div>
       </div>
@@ -216,7 +232,7 @@ export function KnowledgeReader({
         <div className="space-y-3 px-5 py-4">
           {blocks.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              This document has no content yet.
+              {t('This document has no content yet.')}
             </p>
           ) : (
             blocks.map((block, index) => (
@@ -231,7 +247,7 @@ export function KnowledgeReader({
           {document.tags.length > 0 ? (
             <div className="flex flex-wrap items-center gap-1.5 border-t border-border/60 pt-4">
               <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                Filed under
+                {t('Filed under')}
               </span>
               {document.tags.map((tag) => (
                 <Badge key={tag} variant="outline">
@@ -244,7 +260,7 @@ export function KnowledgeReader({
           {related.length > 0 ? (
             <div className="border-t border-border/60 pt-4">
               <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                Related documents
+                {t('Related documents')}
               </p>
               <div className="mt-2 space-y-1.5">
                 {related.map((item) => {
@@ -257,7 +273,9 @@ export function KnowledgeReader({
                       type="button"
                       onClick={() => onSelect(item)}
                       className="flex w-full items-center gap-2.5 rounded-lg border border-border/60 bg-secondary/20 px-3 py-2 text-left transition-colors hover:border-border hover:bg-secondary/40 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                      aria-label={`Open related document ${item.title}`}
+                      aria-label={t('Open related document {{title}}', {
+                        title: item.title,
+                      })}
                     >
                       <span
                         className={cn(
@@ -272,8 +290,10 @@ export function KnowledgeReader({
                           {item.title}
                         </span>
                         <span className="mt-0.5 block text-[10px] text-muted-foreground">
-                          {relatedMeta.label} · updated{' '}
-                          {formatRelativeTime(item.updatedAt)}
+                          {t('{{kind}} · updated {{time}}', {
+                            kind: t(relatedMeta.label),
+                            time: formatRelativeTime(item.updatedAt),
+                          })}
                         </span>
                       </span>
                       <ArrowUpRight className="h-3 w-3 shrink-0 text-muted-foreground" />

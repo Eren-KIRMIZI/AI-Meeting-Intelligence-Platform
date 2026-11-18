@@ -45,6 +45,7 @@ import { useCommitMeetingAnalysis, useSaveLiveMeeting, useSaveMeetingRecording }
 import { formatDuration, roomLink } from '@/lib/live/room';
 import { formatBytes, formatRecordingLength } from '@/lib/recordings';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import type {
   CommitMeetingResult,
   LiveMeetingInput,
@@ -75,6 +76,7 @@ function mediaMessage(error: unknown) {
 }
 
 export function LiveRoomPage() {
+  const { t, plural } = useI18n();
   const { roomId = '' } = useParams();
   const [params] = useSearchParams();
   const navigate = useNavigate();
@@ -85,7 +87,7 @@ export function LiveRoomPage() {
   const projectName = params.get('projectName') ?? undefined;
 
   const [roomTitle, setRoomTitle] = useState(
-    params.get('title')?.trim() || 'Nova Live meeting'
+    params.get('title')?.trim() || t('Nova Live meeting')
   );
   useDocumentTitle(roomTitle);
   const [displayName, setDisplayName] = useState(user?.fullName ?? '');
@@ -133,7 +135,9 @@ export function LiveRoomPage() {
     const start = async () => {
       if (!navigator.mediaDevices?.getUserMedia) {
         setPreviewError(
-          'This browser cannot access camera or microphone. You can still join in listen-only mode.'
+          t(
+            'This browser cannot access camera or microphone. You can still join in listen-only mode.'
+          )
         );
         return;
       }
@@ -152,7 +156,7 @@ export function LiveRoomPage() {
         setPreview(next);
         setPreviewError(null);
       } catch (error) {
-        if (!cancelled) setPreviewError(mediaMessage(error));
+        if (!cancelled) setPreviewError(t(mediaMessage(error)));
       }
     };
 
@@ -167,7 +171,7 @@ export function LiveRoomPage() {
       previewRef.current = null;
       setPreview(null);
     };
-  }, [controller.phase, mode]);
+  }, [controller.phase, mode, t]);
 
   useEffect(() => {
     const element = previewVideoRef.current;
@@ -201,11 +205,13 @@ export function LiveRoomPage() {
     saveLive.mutate(input, {
       onSuccess: (meeting) => {
         setSavedMeeting(meeting);
-        toast.success('Meeting report saved to the workspace');
+        toast.success(t('Meeting report saved to the workspace'));
       },
       onError: (error) => {
         const message =
-          error instanceof Error ? error.message : 'The report could not be saved.';
+          error instanceof Error
+            ? error.message
+            : t('The report could not be saved.');
         setSaveError(message);
         toast.error(message);
       },
@@ -214,11 +220,13 @@ export function LiveRoomPage() {
 
   const handleJoin = () => {
     if (!displayName.trim()) {
-      toast.error('Add the name you want the room to show');
+      toast.error(t('Add the name you want the room to show'));
       return;
     }
     if (!consent) {
-      toast.error('Confirm the transcription and recording notice before joining');
+      toast.error(
+        t('Confirm the transcription and recording notice before joining')
+      );
       return;
     }
 
@@ -241,7 +249,7 @@ export function LiveRoomPage() {
     if (input) {
       persist(input);
     } else {
-      toast.error('The meeting could not be finalised.');
+      toast.error(t('The meeting could not be finalised.'));
     }
   };
 
@@ -264,13 +272,13 @@ export function LiveRoomPage() {
       {
         onSuccess: (saved) => {
           setArchived(saved);
-          toast.success('Recording archived on the meeting');
+          toast.success(t('Recording archived on the meeting'));
         },
         onError: (error) => {
           toast.error(
             error instanceof Error
               ? error.message
-              : 'The recording could not be archived.'
+              : t('The recording could not be archived.')
           );
         },
       }
@@ -286,9 +294,9 @@ export function LiveRoomPage() {
     const link = roomLink(roomId);
     try {
       await navigator.clipboard.writeText(link);
-      toast.success('Invite link copied');
+      toast.success(t('Invite link copied'));
     } catch {
-      toast.message('Room link', { description: link });
+      toast.message(t('Room link'), { description: link });
     }
   };
 
@@ -307,18 +315,25 @@ export function LiveRoomPage() {
         onSuccess: (result) => {
           setCommitted(result);
           toast.success(
-            `Created ${result.tasks.length} task${
-              result.tasks.length === 1 ? '' : 's'
-            } and ${result.decisions.length} decision${
-              result.decisions.length === 1 ? '' : 's'
-            }`
+            t('Created {{tasks}} and {{decisions}}', {
+              tasks: plural(
+                result.tasks.length,
+                '{{count}} task',
+                '{{count}} tasks'
+              ),
+              decisions: plural(
+                result.decisions.length,
+                '{{count}} decision',
+                '{{count}} decisions'
+              ),
+            })
           );
         },
         onError: (error) => {
           toast.error(
             error instanceof Error
               ? error.message
-              : 'Follow-ups could not be created.'
+              : t('Follow-ups could not be created.')
           );
         },
       }
@@ -353,12 +368,12 @@ export function LiveRoomPage() {
             className="inline-flex items-center gap-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
-            Nova Live
+            {t('Nova Live')}
           </Link>
           <div className="flex items-center gap-2">
             <Badge variant="outline">
               <Lock className="h-3 w-3" />
-              {isDemo ? 'Demo room' : 'Live room'}
+              {isDemo ? t('Demo room') : t('Live room')}
             </Badge>
             <Badge variant="outline" className="font-mono text-[10px]">
               {roomId}
@@ -382,7 +397,7 @@ export function LiveRoomPage() {
                   <div className="absolute inset-0 grid place-items-center bg-[radial-gradient(circle_at_50%_35%,rgba(91,141,239,0.18),transparent_65%)]">
                     <div className="flex flex-col items-center gap-3 text-center">
                       <span className="grid h-20 w-20 place-items-center rounded-full border border-primary/30 bg-primary/10 text-xl font-semibold text-primary">
-                        {(displayName.trim() || 'You')
+                        {(displayName.trim() || t('You'))
                           .split(/\s+/)
                           .filter(Boolean)
                           .slice(0, 2)
@@ -391,12 +406,12 @@ export function LiveRoomPage() {
                       </span>
                       <div>
                         <p className="text-sm font-medium">
-                          {mode === 'audio' ? 'Audio room' : 'Camera is off'}
+                          {mode === 'audio' ? t('Audio room') : t('Camera is off')}
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground">
                           {previewError
-                            ? 'Join in listen-only mode'
-                            : 'Your preview appears here before you join.'}
+                            ? t('Join in listen-only mode')
+                            : t('Your preview appears here before you join.')}
                         </p>
                       </div>
                     </div>
@@ -405,7 +420,7 @@ export function LiveRoomPage() {
 
                 <div className="absolute inset-x-0 bottom-0 flex items-center justify-between gap-2 bg-gradient-to-t from-black/80 to-transparent px-3 pb-3 pt-10">
                   <span className="text-xs font-medium text-white/85">
-                    {displayName.trim() || 'You'}
+                    {displayName.trim() || t('You')}
                   </span>
                   <div className="flex items-center gap-1.5">
                     <button
@@ -418,7 +433,11 @@ export function LiveRoomPage() {
                           ? 'border-white/15 bg-black/50 text-white/85 hover:bg-black/70'
                           : 'border-rose-500/40 bg-rose-500/20 text-rose-300'
                       )}
-                      title={deviceMic ? 'Mute microphone' : 'Unmute microphone'}
+                      title={
+                        deviceMic
+                          ? t('Mute microphone')
+                          : t('Unmute microphone')
+                      }
                     >
                       {deviceMic ? <Mic className="h-4 w-4" /> : <MicOff className="h-4 w-4" />}
                     </button>
@@ -434,7 +453,7 @@ export function LiveRoomPage() {
                           : 'border-rose-500/40 bg-rose-500/20 text-rose-300',
                         mode === 'audio' && 'cursor-not-allowed opacity-40'
                       )}
-                      title={deviceCam ? 'Turn camera off' : 'Turn camera on'}
+                      title={deviceCam ? t('Turn camera off') : t('Turn camera on')}
                     >
                       {deviceCam ? <Video className="h-4 w-4" /> : <VideoOff className="h-4 w-4" />}
                     </button>
@@ -475,9 +494,11 @@ export function LiveRoomPage() {
                     className="rounded-lg border border-white/8 bg-white/[0.02] p-3"
                   >
                     <Icon className="h-4 w-4 text-primary" />
-                    <p className="mt-2 text-[11px] font-medium">{feature.title}</p>
+                    <p className="mt-2 text-[11px] font-medium">
+                      {t(feature.title)}
+                    </p>
                     <p className="mt-0.5 text-[10px] leading-relaxed text-muted-foreground">
-                      {feature.text}
+                      {t(feature.text)}
                     </p>
                   </div>
                 );
@@ -489,7 +510,7 @@ export function LiveRoomPage() {
             <div className="flex items-center justify-between gap-2">
               <div>
                 <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                  Ready to join
+                  {t('Ready to join')}
                 </p>
                 <h1 className="mt-1 font-display text-lg font-semibold leading-tight">
                   {roomTitle}
@@ -497,12 +518,12 @@ export function LiveRoomPage() {
               </div>
               <Badge variant="outline">
                 {mode === 'video' ? <Video className="h-3 w-3" /> : <Mic className="h-3 w-3" />}
-                {mode === 'video' ? 'Video' : 'Audio'}
+                {mode === 'video' ? t('Video') : t('Audio')}
               </Badge>
             </div>
 
             <div className="mt-4 space-y-3">
-              <Field label="Room title" htmlFor="live-title">
+              <Field label={t('Room title')} htmlFor="live-title">
                 <Input
                   id="live-title"
                   value={roomTitle}
@@ -512,9 +533,11 @@ export function LiveRoomPage() {
               </Field>
 
               <Field
-                label="Display name"
+                label={t('Display name')}
                 htmlFor="live-name"
-                hint="Each tab can join with a different name, which makes testing the room easy."
+                hint={t(
+                  'Each tab can join with a different name, which makes testing the room easy.'
+                )}
               >
                 <Input
                   id="live-name"
@@ -528,20 +551,19 @@ export function LiveRoomPage() {
               {projectName ? (
                 <div className="flex items-center gap-2 rounded-lg border border-border/70 bg-secondary/30 px-3 py-2 text-[11px] text-muted-foreground">
                   <Info className="h-3.5 w-3.5" />
-                  Linked to {projectName}
+                  {t('Linked to {{project}}', { project: projectName })}
                 </div>
               ) : null}
 
               <div className="rounded-lg border border-border/70 bg-secondary/25 p-3">
                 <div className="flex items-center gap-2 text-[11px] font-medium">
                   <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-                  Transcription & recording notice
+                  {t('Transcription & recording notice')}
                 </div>
                 <p className="mt-1.5 text-[10px] leading-relaxed text-muted-foreground">
-                  Nova can transcribe speech with the browser speech service and
-                  generate an AI brief. Pressing Record stores a local file in this
-                  browser only. Tell every participant before joining — this is
-                  required for KVKK/GDPR consent.
+                  {t(
+                    'Nova can transcribe speech with the browser speech service and generate an AI brief. Pressing Record stores a local file in this browser only. Tell every participant before joining — this is required for KVKK/GDPR consent.'
+                  )}
                 </p>
                 <label className="mt-2.5 flex cursor-pointer items-start gap-2 text-[10px] leading-relaxed text-foreground/80">
                   <input
@@ -550,8 +572,9 @@ export function LiveRoomPage() {
                     onChange={(event) => setConsent(event.target.checked)}
                     className="mt-0.5 h-3.5 w-3.5 rounded border-border bg-background accent-primary"
                   />
-                  I have informed everyone in the room and they agree to
-                  transcription and optional recording.
+                  {t(
+                    'I have informed everyone in the room and they agree to transcription and optional recording.'
+                  )}
                 </label>
               </div>
 
@@ -566,13 +589,13 @@ export function LiveRoomPage() {
                 ) : (
                   <Video className="h-4 w-4" />
                 )}
-                Join Nova Live
+                {t('Join Nova Live')}
               </Button>
 
               <div className="flex items-center justify-between gap-2 text-[10px] text-muted-foreground">
                 <span className="inline-flex items-center gap-1">
                   {isDemo ? <WifiOff className="h-3 w-3" /> : <Wifi className="h-3 w-3" />}
-                  {isDemo ? 'WebRTC mesh · this browser' : 'LiveKit media server'}
+                  {isDemo ? t('WebRTC mesh · this browser') : t('LiveKit media server')}
                 </span>
                 <button
                   type="button"
@@ -580,7 +603,7 @@ export function LiveRoomPage() {
                   className="inline-flex items-center gap-1 text-primary transition-colors hover:text-primary/80"
                 >
                   <Copy className="h-3 w-3" />
-                  Copy invite link
+                  {t('Copy invite link')}
                 </button>
               </div>
             </div>
@@ -610,7 +633,7 @@ export function LiveRoomPage() {
             className="inline-flex items-center gap-2 text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
             <ArrowLeft className="h-4 w-4" />
-            Nova Live
+            {t('Nova Live')}
           </Link>
           <Badge variant="outline" className="font-mono text-[10px]">
             {roomId}
@@ -623,12 +646,16 @@ export function LiveRoomPage() {
           </span>
 
           <h1 className="mt-4 font-display text-2xl font-semibold tracking-[-0.02em]">
-            {anotherHostEnded ? 'The room has ended' : 'Meeting captured'}
+            {anotherHostEnded ? t('The room has ended') : t('Meeting captured')}
           </h1>
           <p className="mt-1.5 max-w-lg text-sm leading-relaxed text-muted-foreground">
             {anotherHostEnded
-              ? 'Another participant ended the room. Save your copy of the transcript and report, or leave without saving.'
-              : 'Nova saved the meeting, the transcript and a Knowledge note. Review the owners and deadlines before creating follow-ups.'}
+              ? t(
+                  'Another participant ended the room. Save your copy of the transcript and report, or leave without saving.'
+                )
+              : t(
+                  'Nova saved the meeting, the transcript and a Knowledge note. Review the owners and deadlines before creating follow-ups.'
+                )}
           </p>
 
           {!anotherHostEnded ? (
@@ -636,14 +663,14 @@ export function LiveRoomPage() {
               <div className="mt-6 grid w-full gap-2 sm:grid-cols-4">
                 {[
                   {
-                    label: 'Duration',
+                    label: t('Duration'),
                     value: formatDuration(
                       report?.durationSeconds ?? controller.elapsed
                     ),
                   },
-                  { label: 'Segments', value: String(segmentCount) },
-                  { label: 'Actions', value: String(insights.actions.length) },
-                  { label: 'Decisions', value: String(insights.decisions.length) },
+                  { label: t('Segments'), value: String(segmentCount) },
+                  { label: t('Actions'), value: String(insights.actions.length) },
+                  { label: t('Decisions'), value: String(insights.decisions.length) },
                 ].map((stat) => (
                   <div
                     key={stat.label}
@@ -666,15 +693,19 @@ export function LiveRoomPage() {
                 <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
                   {participantNames.length > 0
                     ? participantNames.join(', ')
-                    : 'Only you were in the room'}
+                    : t('Only you were in the room')}
                   {chatCount > 0
-                    ? ` · ${chatCount} chat message${chatCount === 1 ? '' : 's'} saved`
+                    ? ` · ${plural(
+                        chatCount,
+                        '{{count}} chat message saved',
+                        '{{count}} chat messages saved'
+                      )}`
                     : ''}
                 </p>
                 {saveLive.isPending ? (
                   <p className="mt-2 inline-flex items-center gap-1.5 text-[11px] text-primary">
                     <Loader2 className="h-3 w-3 animate-spin" />
-                    Writing the brief and Knowledge note…
+                    {t('Writing the brief and Knowledge note…')}
                   </p>
                 ) : saveError ? (
                   <p className="mt-2 flex items-start gap-1.5 text-[11px] text-amber-300">
@@ -684,7 +715,7 @@ export function LiveRoomPage() {
                 ) : savedMeeting ? (
                   <p className="mt-2 inline-flex items-center gap-1.5 text-[11px] text-emerald-300">
                     <CheckCircle2 className="h-3 w-3" />
-                    Saved to Meetings and Knowledge
+                    {t('Saved to Meetings and Knowledge')}
                   </p>
                 ) : null}
               </div>
@@ -699,10 +730,10 @@ export function LiveRoomPage() {
                   disabled={!report && !savedMeeting}
                 >
                   <Sparkles className="h-4 w-4" />
-                  Open meeting report
+                  {t('Open meeting report')}
                 </Button>
                 <Button asChild variant="outline">
-                  <Link to="/live">Back to lobby</Link>
+                  <Link to="/live">{t('Back to lobby')}</Link>
                 </Button>
               </div>
 
@@ -714,18 +745,18 @@ export function LiveRoomPage() {
                   onClick={() => persist(report)}
                   disabled={saveLive.isPending}
                 >
-                  Try saving again
+                  {t('Try saving again')}
                 </Button>
               ) : null}
             </>
           ) : (
             <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
               <Button variant="outline" asChild>
-                <Link to="/live">Back to lobby</Link>
+                <Link to="/live">{t('Back to lobby')}</Link>
               </Button>
               <Button onClick={handleHostEndedSave}>
                 <Sparkles className="h-4 w-4" />
-                Save my report
+                {t('Save my report')}
               </Button>
             </div>
           )}
@@ -738,7 +769,7 @@ export function LiveRoomPage() {
                 <div className="min-w-0">
                   <p className="inline-flex items-center gap-2 text-xs font-medium">
                     <Film className="h-3.5 w-3.5 text-rose-400" />
-                    Recording ready
+                    {t('Recording ready')}
                   </p>
                   <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
                     {formatBytes(recording.clip.sizeBytes)} ·{' '}
@@ -747,17 +778,21 @@ export function LiveRoomPage() {
                   </p>
                   <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground">
                     {archived
-                      ? 'Archived on the meeting. Everyone with workspace access can play it there.'
+                      ? t(
+                          'Archived on the meeting. Everyone with workspace access can play it there.'
+                        )
                       : savedMeeting
-                        ? 'The file is still only in this browser. Archiving uploads it to private workspace storage.'
-                        : 'Save the meeting first, then archive the recording on it.'}
+                        ? t(
+                            'The file is still only in this browser. Archiving uploads it to private workspace storage.'
+                          )
+                        : t('Save the meeting first, then archive the recording on it.')}
                   </p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   <Button asChild variant="outline" size="sm">
                     <a href={recording.clip.url} download={recording.clip.filename}>
                       <Download className="h-3.5 w-3.5" />
-                      Download
+                      {t('Download')}
                     </a>
                   </Button>
                   <Button
@@ -777,10 +812,10 @@ export function LiveRoomPage() {
                       <Upload className="h-3.5 w-3.5" />
                     )}
                     {archiveRecording.isPending
-                      ? 'Archiving…'
+                      ? t('Archiving…')
                       : archived
-                        ? 'Archived'
-                        : 'Save to meeting'}
+                        ? t('Archived')
+                        : t('Save to meeting')}
                   </Button>
                 </div>
               </div>
@@ -826,7 +861,8 @@ export function LiveRoomPage() {
         <div className="min-w-0">
           <p className="truncate text-xs font-medium">{controller.title}</p>
           <p className="truncate text-[10px] text-muted-foreground">
-            {roomId} · {controller.mode === 'video' ? 'Video' : 'Audio'} room
+            {roomId} ·{' '}
+            {controller.mode === 'video' ? t('Video room') : t('Audio room')}
           </p>
         </div>
 
@@ -834,7 +870,7 @@ export function LiveRoomPage() {
           {recording.recording ? (
             <Badge variant="danger" className="gap-1">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
-              REC {formatDuration(recording.seconds)}
+              {t('REC {{time}}', { time: formatDuration(recording.seconds) })}
             </Badge>
           ) : null}
 
@@ -854,16 +890,16 @@ export function LiveRoomPage() {
             {controller.connection === 'connected'
               ? controller.transport === 'livekit'
                 ? 'LiveKit'
-                : 'Mesh'
-              : 'Connecting'}
+                : t('Mesh')
+              : t('Connecting')}
           </Badge>
 
           <Button
             variant="outline"
             size="icon-sm"
             onClick={() => void invite()}
-            title="Copy invite link"
-            aria-label="Copy invite link"
+            title={t('Copy invite link')}
+            aria-label={t('Copy invite link')}
           >
             <Copy className="h-3.5 w-3.5" />
           </Button>
@@ -876,11 +912,15 @@ export function LiveRoomPage() {
             {ordered.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center gap-3 text-center">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
-                <p className="text-sm font-medium">Connecting to the room…</p>
+                <p className="text-sm font-medium">
+                  {t('Connecting to the room…')}
+                </p>
                 <p className="max-w-sm text-xs text-muted-foreground">
                   {isDemo
-                    ? 'Demo rooms use a peer-to-peer mesh. Open the invite link in a second tab to see another participant.'
-                    : 'Waiting for the media server to publish your tracks.'}
+                    ? t(
+                        'Demo rooms use a peer-to-peer mesh. Open the invite link in a second tab to see another participant.'
+                      )
+                    : t('Waiting for the media server to publish your tracks.')}
                 </p>
               </div>
             ) : (
@@ -921,8 +961,8 @@ export function LiveRoomPage() {
               <div className="pointer-events-none absolute inset-x-3 bottom-3 mx-auto max-w-3xl rounded-lg border border-white/10 bg-black/70 px-3 py-2 backdrop-blur">
                 <div className="flex items-center gap-1.5 text-[9px] uppercase tracking-wide text-primary/80">
                   <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-rose-400" />
-                  Live captions
-                  {controller.demoPlaying ? ' · demo' : ''}
+                  {t('Live captions')}
+                  {controller.demoPlaying ? ` · ${t('demo')}` : ''}
                 </div>
                 <div className="mt-1 space-y-0.5">
                   {lastSegments.map((segment) => (
@@ -944,23 +984,23 @@ export function LiveRoomPage() {
           {recording.clip ? (
             <div className="flex flex-wrap items-center gap-2 border-t border-white/8 bg-white/[0.03] px-3 py-2 text-[11px]">
               <Check className="h-3.5 w-3.5 text-emerald-400" />
-              Local recording saved
+              {t('Local recording saved')}
               <Button asChild variant="outline" size="sm" className="h-7 text-[10px]">
                 <a href={recording.clip.url} download={recording.clip.filename}>
                   <Download className="h-3 w-3" />
-                  Download .webm
+                  {t('Download .webm')}
                 </a>
               </Button>
               <Button
                 variant="ghost"
                 size="icon-sm"
                 onClick={recording.clearClip}
-                aria-label="Dismiss recording"
+                aria-label={t('Dismiss recording')}
               >
                 <X className="h-3.5 w-3.5" />
               </Button>
               <span className="ml-auto text-[10px] text-muted-foreground">
-                Stays in this browser
+                {t('Stays in this browser')}
               </span>
             </div>
           ) : null}
@@ -992,13 +1032,13 @@ export function LiveRoomPage() {
           <aside className="fixed inset-x-0 bottom-[68px] top-[56px] z-40 flex min-h-0 flex-col border-l border-border/70 bg-card/95 backdrop-blur lg:static lg:inset-auto lg:z-auto lg:w-[380px] lg:bg-card/70">
             <div className="flex items-center justify-between border-b border-border/70 px-3 py-1.5 lg:hidden">
               <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                Meeting panel
+                {t('Meeting panel')}
               </span>
               <Button
                 variant="ghost"
                 size="icon-sm"
                 onClick={() => setPanel(null)}
-                aria-label="Close panel"
+                aria-label={t('Close panel')}
               >
                 <X className="h-3.5 w-3.5" />
               </Button>
@@ -1020,33 +1060,40 @@ export function LiveRoomPage() {
       <Dialog open={confirmEnd} onOpenChange={setConfirmEnd}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>End the meeting?</DialogTitle>
+            <DialogTitle>{t('End the meeting?')}</DialogTitle>
             <DialogDescription>
-              Nova will stop the media, save the transcript and generate the
-              meeting report. Follow-ups are created after you review the report.
+              {t(
+                'Nova will stop the media, save the transcript and generate the meeting report. Follow-ups are created after you review the report.'
+              )}
             </DialogDescription>
           </DialogHeader>
           <div className="rounded-lg border border-border/70 bg-secondary/30 p-3 text-[11px] text-muted-foreground">
             <div className="flex items-center gap-2">
               <Info className="h-3.5 w-3.5" />
-              {controller.segments.length} transcript segments ·{' '}
-              {controller.chat.length} chat messages ·{' '}
-              {formatDuration(controller.elapsed)}
+              {t(
+                '{{segments}} transcript segments · {{messages}} chat messages · {{duration}}',
+                {
+                  segments: controller.segments.length,
+                  messages: controller.chat.length,
+                  duration: formatDuration(controller.elapsed),
+                }
+              )}
             </div>
             {controller.segments.length === 0 ? (
               <p className="mt-1.5 text-amber-300/90">
-                No speech has been captured yet. The meeting will still be saved
-                with an empty transcript.
+                {t(
+                  'No speech has been captured yet. The meeting will still be saved with an empty transcript.'
+                )}
               </p>
             ) : null}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmEnd(false)}>
-              Keep talking
+              {t('Keep talking')}
             </Button>
             <Button variant="destructive" onClick={handleEnd}>
               <PhoneOff className="h-4 w-4" />
-              End & save report
+              {t('End & save report')}
             </Button>
           </DialogFooter>
         </DialogContent>

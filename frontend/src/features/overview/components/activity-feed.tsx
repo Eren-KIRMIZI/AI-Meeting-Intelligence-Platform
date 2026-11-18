@@ -18,6 +18,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { UserAvatar } from '@/components/common/user-avatar';
 import { formatRelativeTime } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import type { Activity, ActivityType } from '@/types';
 
 const activityIcons: Record<ActivityType, LucideIcon> = {
@@ -41,24 +42,25 @@ const activityTones: Record<ActivityType, string> = {
 };
 
 export function ActivityFeed({ activities }: { activities: Activity[] }) {
+  const { t } = useI18n();
   return (
     <Card>
       <CardHeader className="flex-row items-start justify-between gap-3 space-y-0 pb-3">
         <div>
-          <CardTitle>Recent activity</CardTitle>
+          <CardTitle>{t('Recent activity')}</CardTitle>
           <CardDescription className="mt-1">
-            What changed across the workspace
+            {t('What changed across the workspace')}
           </CardDescription>
         </div>
         <Badge variant="outline" className="shrink-0">
-          Live
+          {t('Live')}
         </Badge>
       </CardHeader>
 
       <CardContent className="pt-0">
         {activities.length === 0 ? (
           <p className="rounded-lg border border-dashed border-border px-3 py-8 text-center text-xs text-muted-foreground">
-            No activity yet. New work will appear here.
+            {t('No activity yet. New work will appear here.')}
           </p>
         ) : (
           <div className="space-y-1">

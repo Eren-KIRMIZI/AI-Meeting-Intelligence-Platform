@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Loader2, MicOff, MonitorUp } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import type { LiveParticipant } from '@/types';
 
 interface LiveVideoTileProps {
@@ -16,6 +17,7 @@ export function LiveVideoTile({
   muted = false,
   featured = false,
 }: LiveVideoTileProps) {
+  const { t } = useI18n();
   const videoRef = useRef<HTMLVideoElement>(null);
   const hasVideo = Boolean(
     stream &&
@@ -72,7 +74,7 @@ export function LiveVideoTile({
               {participant.initials}
             </span>
             <span className="text-xs font-medium text-muted-foreground">
-              {participant.cameraOn ? 'Camera starting…' : 'Camera off'}
+              {participant.cameraOn ? t('Camera starting…') : t('Camera off')}
             </span>
           </div>
         </div>
@@ -82,7 +84,7 @@ export function LiveVideoTile({
         <div className="flex min-w-0 items-center gap-2">
           <span className="truncate text-xs font-medium text-white/90">
             {participant.fullName}
-            {participant.isSelf ? ' (you)' : ''}
+            {participant.isSelf ? ` (${t('you')})` : ''}
           </span>
           {participant.connection === 'connecting' ? (
             <Loader2 className="h-3 w-3 animate-spin text-amber-300" />
@@ -93,7 +95,7 @@ export function LiveVideoTile({
           {participant.sharing ? (
             <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/15 px-2 py-0.5 text-[10px] font-medium text-primary">
               <MonitorUp className="h-3 w-3" />
-              Sharing
+              {t('Sharing')}
             </span>
           ) : null}
           {!participant.micOn ? (

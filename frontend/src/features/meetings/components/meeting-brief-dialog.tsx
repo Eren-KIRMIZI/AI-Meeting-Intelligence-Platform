@@ -18,6 +18,7 @@ import { AvatarStack } from '@/components/common/user-avatar';
 import { MeetingStatusBadge } from '@/components/common/status-badges';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { formatDate, formatTime } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import type { Meeting } from '@/types';
 
 const platformLabels: Record<Meeting['platform'], string> = {
@@ -37,6 +38,8 @@ export function MeetingBriefDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const { t } = useI18n();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl">
@@ -48,10 +51,10 @@ export function MeetingBriefDialog({
                 {meeting.transcriptReady ? (
                   <Badge variant="success">
                     <FileText className="h-3 w-3" />
-                    Transcript ready
+                    {t('Transcript ready')}
                   </Badge>
                 ) : (
-                  <Badge variant="outline">Transcript pending</Badge>
+                  <Badge variant="outline">{t('Transcript pending')}</Badge>
                 )}
               </div>
               <DialogTitle className="mt-1 text-xl">{meeting.title}</DialogTitle>
@@ -67,9 +70,11 @@ export function MeetingBriefDialog({
                 </span>
                 <span className="inline-flex items-center gap-1">
                   <Video className="h-3 w-3" />
-                  {platformLabels[meeting.platform]}
+                  {t(platformLabels[meeting.platform])}
                 </span>
-                <span>{meeting.durationMinutes} minutes</span>
+                <span>
+                  {t('{{count}} minutes', { count: meeting.durationMinutes })}
+                </span>
               </DialogDescription>
             </DialogHeader>
 
@@ -78,12 +83,12 @@ export function MeetingBriefDialog({
                 <div className="flex items-center justify-between gap-3 rounded-lg border border-border/70 bg-secondary/25 px-3 py-2.5">
                   <div className="min-w-0">
                     <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                      Participants
+                      {t('Participants')}
                     </p>
                     <p className="mt-0.5 truncate text-xs text-foreground">
                       {meeting.participants
                         .map((participant) => participant.fullName)
-                        .join(', ') || 'No participants yet'}
+                        .join(', ') || t('No participants yet')}
                     </p>
                   </div>
                   <AvatarStack users={meeting.participants} max={4} />
@@ -92,18 +97,18 @@ export function MeetingBriefDialog({
                 {meeting.projectName ? (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span className="h-1.5 w-1.5 rounded-full bg-blue-400" />
-                    Linked to {meeting.projectName}
+                    {t('Linked to {{project}}', { project: meeting.projectName })}
                   </div>
                 ) : null}
 
                 <section>
                   <h4 className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
                     <ListTodo className="h-3.5 w-3.5 text-blue-400" />
-                    Agenda
+                    {t('Agenda')}
                   </h4>
                   {meeting.agenda.length === 0 ? (
                     <p className="mt-1.5 text-xs text-muted-foreground">
-                      No agenda was added for this meeting.
+                      {t('No agenda was added for this meeting.')}
                     </p>
                   ) : (
                     <ul className="mt-2 space-y-1.5">
@@ -123,7 +128,7 @@ export function MeetingBriefDialog({
                 <section>
                   <h4 className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
                     <FileText className="h-3.5 w-3.5 text-emerald-400" />
-                    Summary
+                    {t('Summary')}
                   </h4>
                   {meeting.summary ? (
                     <p className="mt-1.5 rounded-lg border border-border/70 bg-secondary/20 px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
@@ -131,7 +136,7 @@ export function MeetingBriefDialog({
                     </p>
                   ) : (
                     <p className="mt-1.5 rounded-lg border border-dashed border-border px-3 py-4 text-center text-xs text-muted-foreground">
-                      The brief appears after the meeting is processed.
+                      {t('The brief appears after the meeting is processed.')}
                     </p>
                   )}
                 </section>
@@ -140,7 +145,7 @@ export function MeetingBriefDialog({
                   <section>
                     <h4 className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
                       <GitBranch className="h-3.5 w-3.5 text-violet-400" />
-                      Decisions captured
+                      {t('Decisions captured')}
                     </h4>
                     <ul className="mt-2 space-y-1.5">
                       {meeting.decisions.map((decision) => (
@@ -159,7 +164,7 @@ export function MeetingBriefDialog({
                   <section>
                     <h4 className="flex items-center gap-1.5 text-xs font-semibold text-foreground">
                       <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
-                      Action items
+                      {t('Action items')}
                     </h4>
                     <ul className="mt-2 space-y-1.5">
                       {meeting.actionItems.map((item) => (

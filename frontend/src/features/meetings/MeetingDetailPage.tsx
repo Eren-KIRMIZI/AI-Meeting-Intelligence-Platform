@@ -37,6 +37,7 @@ import {
   useTeam,
 } from '@/hooks/use-workspace';
 import { cn, formatDate, formatRelativeTime, formatTime } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import { AnalyzeMeetingDialog } from './components/analyze-meeting-dialog';
 import { MeetingRecordingCard } from './components/meeting-recording-card';
 import type { Meeting, UserProfile } from '@/types';
@@ -94,6 +95,7 @@ function StepIcon({ status }: { status: 'pending' | 'running' | 'done' | 'failed
 }
 
 export function MeetingDetailPage() {
+  const { t } = useI18n();
   const { meetingId } = useParams();
   const meetingQuery = useMeeting(meetingId);
   const teamQuery = useTeam();
@@ -139,12 +141,14 @@ export function MeetingDetailPage() {
         <Button asChild variant="ghost" size="sm" className="h-7 text-[11px]">
           <Link to="/meetings">
             <ArrowLeft className="h-3.5 w-3.5" />
-            Back to meetings
+            {t('Back to meetings')}
           </Link>
         </Button>
         <ErrorState
-          title="Meeting not found"
-          description="This meeting may have been removed, or the link is out of date."
+          title={t('Meeting not found')}
+          description={t(
+            'This meeting may have been removed, or the link is out of date.'
+          )}
           onRetry={() => void meetingQuery.refetch()}
         />
       </div>
@@ -174,7 +178,7 @@ export function MeetingDetailPage() {
     );
 
     if (actionIds.length === 0 && decisionIds.length === 0) {
-      toast.error('Select at least one action item or decision.');
+      toast.error(t('Select at least one action item or decision.'));
       return;
     }
 
@@ -184,19 +188,19 @@ export function MeetingDetailPage() {
         onSuccess: (result) => {
           const parts = [
             result.tasks.length > 0
-              ? `${result.tasks.length} task${result.tasks.length === 1 ? '' : 's'}`
+              ? t('{{count}} task', { count: result.tasks.length })
               : null,
             result.decisions.length > 0
-              ? `${result.decisions.length} decision${
-                  result.decisions.length === 1 ? '' : 's'
-                }`
+              ? t('{{count}} decision', { count: result.decisions.length })
               : null,
           ].filter(Boolean);
 
           toast.success(
             parts.length > 0
-              ? `Created ${parts.join(' and ')} from this meeting.`
-              : 'Follow-ups were already created.'
+              ? t('Created {{items}} from this meeting.', {
+                  items: parts.join(t(' and ')),
+                })
+              : t('Follow-ups were already created.')
           );
           setSelectedActionIds([]);
           setSelectedDecisionIds([]);
@@ -205,7 +209,7 @@ export function MeetingDetailPage() {
           toast.error(
             error instanceof Error
               ? error.message
-              : 'Could not create the follow-ups.'
+              : t('Could not create the follow-ups.')
           );
         },
       }
@@ -227,7 +231,7 @@ export function MeetingDetailPage() {
         <Button asChild variant="ghost" size="sm" className="h-7 px-2 text-[11px]">
           <Link to="/meetings">
             <ArrowLeft className="h-3.5 w-3.5" />
-            Meetings
+            {t('Meetings')}
           </Link>
         </Button>
         <span className="text-border">/</span>
@@ -258,7 +262,7 @@ export function MeetingDetailPage() {
                 {analysis ? (
                   <Badge variant="success">
                     <Sparkles className="h-3 w-3" />
-                    Analyzed
+                    {t('Analyzed')}
                   </Badge>
                 ) : null}
               </div>
@@ -275,15 +279,17 @@ export function MeetingDetailPage() {
                 </span>
                 <span className="inline-flex items-center gap-1">
                   <Clock3 className="h-3 w-3" />
-                  {meeting.durationMinutes} min
+                  {t('{{count}} min', { count: meeting.durationMinutes })}
                 </span>
                 <span className="inline-flex items-center gap-1">
                   <Video className="h-3 w-3" />
-                  {platformLabels[meeting.platform]}
+                  {t(platformLabels[meeting.platform])}
                 </span>
                 <span className="inline-flex items-center gap-1">
                   <Users className="h-3 w-3" />
-                  {meeting.participants.length} participants
+                  {t('{{count}} participants', {
+                    count: meeting.participants.length,
+                  })}
                 </span>
               </div>
 
@@ -300,20 +306,20 @@ export function MeetingDetailPage() {
                 <Button asChild variant="outline" size="sm">
                   <Link to={`/projects/${meeting.projectId}`}>
                     <Target className="h-3.5 w-3.5" />
-                    Open project
+                    {t('Open project')}
                   </Link>
                 </Button>
               ) : null}
               {!analysis ? (
                 <Button size="sm" onClick={() => setAnalyzeOpen(true)}>
                   <BrainCircuit className="h-3.5 w-3.5" />
-                  Analyze transcript
+                  {t('Analyze transcript')}
                 </Button>
               ) : (
                 <Button asChild variant="outline" size="sm">
                   <Link to={`/tasks?project=${meeting.projectId ?? ''}`}>
                     <ListChecks className="h-3.5 w-3.5" />
-                    Project tasks
+                    {t('Project tasks')}
                   </Link>
                 </Button>
               )}
@@ -333,7 +339,7 @@ export function MeetingDetailPage() {
               <CardHeader className="flex-row items-center justify-between gap-3 space-y-0 pb-3">
                 <CardTitle className="flex items-center gap-2">
                   <Sparkles className="h-3.5 w-3.5 text-blue-400" />
-                  Summary
+                  {t('Summary')}
                 </CardTitle>
                 <span className="text-[10px] text-muted-foreground">
                   {formatRelativeTime(analysis.analyzedAt)} · {analysis.model}
@@ -347,7 +353,7 @@ export function MeetingDetailPage() {
                 {analysis.keyPoints.length > 0 ? (
                   <div>
                     <p className="text-[10px] uppercase tracking-wider text-muted-foreground">
-                      Key points
+                      {t('Key points')}
                     </p>
                     <ul className="mt-2 space-y-1.5">
                       {analysis.keyPoints.map((point) => (
@@ -379,16 +385,16 @@ export function MeetingDetailPage() {
               <CardHeader className="flex-row items-center justify-between gap-3 space-y-0 pb-3">
                 <CardTitle className="flex items-center gap-2">
                   <ListChecks className="h-3.5 w-3.5 text-blue-400" />
-                  Action items
+                  {t('Action items')}
                 </CardTitle>
                 <Badge variant="outline" className="bg-secondary/30">
-                  {analysis.actions.length} extracted
+                  {t('{{count}} extracted', { count: analysis.actions.length })}
                 </Badge>
               </CardHeader>
               <CardContent className="space-y-2">
                 {analysis.actions.length === 0 ? (
                   <p className="rounded-lg border border-dashed border-border px-3 py-6 text-center text-[11px] text-muted-foreground">
-                    No action items were detected in this transcript.
+                    {t('No action items were detected in this transcript.')}
                   </p>
                 ) : (
                   analysis.actions.map((action) => {
@@ -418,7 +424,9 @@ export function MeetingDetailPage() {
                           onCheckedChange={(checked) =>
                             toggleAction(action.id, checked === true)
                           }
-                          aria-label={`Select action: ${action.text}`}
+                          aria-label={t('Select action: {{text}}', {
+                            text: action.text,
+                          })}
                         />
                         <div className="min-w-0 flex-1">
                           <p
@@ -439,17 +447,19 @@ export function MeetingDetailPage() {
                             <span>·</span>
                             <span>
                               {action.dueDate
-                                ? `Due ${formatDate(action.dueDate, {
-                                    month: 'short',
-                                    day: 'numeric',
-                                  })}`
-                                : 'No due date'}
+                                ? t('Due {{date}}', {
+                                    date: formatDate(action.dueDate, {
+                                      month: 'short',
+                                      day: 'numeric',
+                                    }),
+                                  })
+                                : t('No due date')}
                             </span>
                             <Badge variant={confidenceVariant(action.confidence)}>
                               {Math.round(action.confidence * 100)}%
                             </Badge>
                             {committed ? (
-                              <Badge variant="success">Task created</Badge>
+                              <Badge variant="success">{t('Task created')}</Badge>
                             ) : null}
                           </div>
                         </div>
@@ -464,17 +474,18 @@ export function MeetingDetailPage() {
               <CardHeader className="flex-row items-center justify-between gap-3 space-y-0 pb-3">
                 <CardTitle className="flex items-center gap-2">
                   <GitBranch className="h-3.5 w-3.5 text-violet-400" />
-                  Decisions
+                  {t('Decisions')}
                 </CardTitle>
                 <Badge variant="outline" className="bg-secondary/30">
-                  {analysis.decisions.length} detected
+                  {t('{{count}} detected', { count: analysis.decisions.length })}
                 </Badge>
               </CardHeader>
               <CardContent className="space-y-2">
                 {analysis.decisions.length === 0 ? (
                   <p className="rounded-lg border border-dashed border-border px-3 py-6 text-center text-[11px] text-muted-foreground">
-                    No explicit decisions were detected. Add one from the
-                    transcript when the team confirms it.
+                    {t(
+                      'No explicit decisions were detected. Add one from the transcript when the team confirms it.'
+                    )}
                   </p>
                 ) : (
                   analysis.decisions.map((decision) => {
@@ -498,7 +509,9 @@ export function MeetingDetailPage() {
                           onCheckedChange={(checked) =>
                             toggleDecision(decision.id, checked === true)
                           }
-                          aria-label={`Select decision: ${decision.title}`}
+                          aria-label={t('Select decision: {{title}}', {
+                            title: decision.title,
+                          })}
                         />
                         <div className="min-w-0 flex-1">
                           <p className="text-xs font-medium leading-relaxed text-foreground">
@@ -513,7 +526,7 @@ export function MeetingDetailPage() {
                               {Math.round(decision.confidence * 100)}%
                             </Badge>
                             {committed ? (
-                              <Badge variant="success">In decision log</Badge>
+                              <Badge variant="success">{t('In decision log')}</Badge>
                             ) : null}
                           </div>
                         </div>
@@ -529,7 +542,7 @@ export function MeetingDetailPage() {
                 <CardHeader className="pb-3">
                   <CardTitle className="flex items-center gap-2">
                     <TriangleAlert className="h-3.5 w-3.5 text-amber-400" />
-                    Risks to watch
+                    {t('Risks to watch')}
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
@@ -550,10 +563,10 @@ export function MeetingDetailPage() {
               <CardHeader className="flex-row items-center justify-between gap-3 space-y-0 pb-3">
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquareText className="h-3.5 w-3.5 text-cyan-400" />
-                  Transcript
+                  {t('Transcript')}
                 </CardTitle>
                 <Badge variant="outline" className="bg-secondary/30">
-                  {analysis.transcript.length} lines
+                  {t('{{count}} lines', { count: analysis.transcript.length })}
                 </Badge>
               </CardHeader>
               <CardContent className="p-0">
@@ -586,13 +599,13 @@ export function MeetingDetailPage() {
           <div className="space-y-4">
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle>Follow-through</CardTitle>
+                <CardTitle>{t('Follow-through')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
                   <div className="flex items-end justify-between gap-2">
                     <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                      Extraction confidence
+                      {t('Extraction confidence')}
                     </span>
                     <span className="font-display text-xl font-semibold leading-none tabular">
                       {confidence}%
@@ -600,16 +613,16 @@ export function MeetingDetailPage() {
                   </div>
                   <Progress
                     value={confidence}
-                    aria-label="Extraction confidence"
+                    aria-label={t('Extraction confidence')}
                     className="mt-2"
                   />
                 </div>
 
                 <div className="grid grid-cols-3 gap-2">
                   {[
-                    { label: 'Actions', value: analysis.actions.length },
-                    { label: 'Decisions', value: analysis.decisions.length },
-                    { label: 'Risks', value: analysis.risks.length },
+                    { label: t('Actions'), value: analysis.actions.length },
+                    { label: t('Decisions'), value: analysis.decisions.length },
+                    { label: t('Risks'), value: analysis.risks.length },
                   ].map((item) => (
                     <div
                       key={item.label}
@@ -629,17 +642,17 @@ export function MeetingDetailPage() {
 
                 <div className="space-y-2">
                   <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                    Pipeline
+                    {t('Pipeline')}
                   </p>
                   {analysis.steps.map((step) => (
                     <div key={step.key} className="flex items-start gap-2">
                       <StepIcon status={step.status} />
                       <div className="min-w-0">
                         <p className="text-[11px] font-medium text-foreground">
-                          {step.label}
+                          {t(step.label)}
                         </p>
                         <p className="text-[10px] leading-snug text-muted-foreground">
-                          {step.detail}
+                          {step.detail ? t(step.detail) : null}
                         </p>
                       </div>
                     </div>
@@ -650,12 +663,16 @@ export function MeetingDetailPage() {
 
                 <div className="space-y-2">
                   <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                    Selected follow-ups
+                    {t('Selected follow-ups')}
                   </p>
                   <p className="text-[11px] leading-relaxed text-muted-foreground">
                     {selectedCount === 0
-                      ? 'Select actions or decisions to write them into the workspace.'
-                      : `${selectedCount} item${selectedCount === 1 ? '' : 's'} ready to create.`}
+                      ? t(
+                          'Select actions or decisions to write them into the workspace.'
+                        )
+                      : t('{{count}} item ready to create.', {
+                          count: selectedCount,
+                        })}
                   </p>
                   <Button
                     className="w-full"
@@ -672,11 +689,12 @@ export function MeetingDetailPage() {
                     ) : (
                       <Sparkles className="h-3.5 w-3.5" />
                     )}
-                    {commit.isPending ? 'Creating…' : 'Create follow-ups'}
+                    {commit.isPending ? t('Creating…') : t('Create follow-ups')}
                   </Button>
                   <p className="text-[10px] leading-relaxed text-muted-foreground">
-                    Tasks land in the project. Decisions go to the decision log.
-                    Nothing is written until you confirm.
+                    {t(
+                      'Tasks land in the project. Decisions go to the decision log. Nothing is written until you confirm.'
+                    )}
                   </p>
                 </div>
               </CardContent>
@@ -684,16 +702,16 @@ export function MeetingDetailPage() {
 
             <Card>
               <CardHeader className="pb-3">
-                <CardTitle>Meeting context</CardTitle>
+                <CardTitle>{t('Meeting context')}</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
                   <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                    Agenda
+                    {t('Agenda')}
                   </p>
                   {meeting.agenda.length === 0 ? (
                     <p className="mt-1 text-[11px] text-muted-foreground">
-                      No agenda was added.
+                      {t('No agenda was added.')}
                     </p>
                   ) : (
                     <ul className="mt-1.5 space-y-1">
@@ -714,7 +732,7 @@ export function MeetingDetailPage() {
 
                 <div>
                   <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                    Participants
+                    {t('Participants')}
                   </p>
                   <div className="mt-2 space-y-2">
                     {meeting.participants.map((participant: UserProfile) => (
@@ -748,34 +766,38 @@ export function MeetingDetailPage() {
               </span>
               <h2 className="mt-3 font-display text-base font-semibold text-foreground">
                 {meeting.status === 'processing'
-                  ? 'Transcript is ready for analysis'
-                  : 'No analysis yet'}
+                  ? t('Transcript is ready for analysis')
+                  : t('No analysis yet')}
               </h2>
               <p className="mt-1 max-w-md text-xs leading-relaxed text-muted-foreground">
                 {meeting.status === 'processing'
-                  ? 'This meeting finished recording. Run the extractor to turn the transcript into a summary, decisions and owned action items.'
-                  : 'Paste a transcript to preview the full intelligence flow. Nothing is written to the workspace until you confirm the extracted follow-ups.'}
+                  ? t(
+                      'This meeting finished recording. Run the extractor to turn the transcript into a summary, decisions and owned action items.'
+                    )
+                  : t(
+                      'Paste a transcript to preview the full intelligence flow. Nothing is written to the workspace until you confirm the extracted follow-ups.'
+                    )}
               </p>
               <Button className="mt-4" size="sm" onClick={() => setAnalyzeOpen(true)}>
                 <BrainCircuit className="h-3.5 w-3.5" />
-                Analyze transcript
+                {t('Analyze transcript')}
               </Button>
               <div className="mt-6 grid w-full max-w-lg grid-cols-1 gap-2 text-left sm:grid-cols-3">
                 {[
                   {
                     icon: ScanText,
-                    title: 'Normalize',
-                    detail: 'Speakers and timestamps',
+                    title: t('Normalize'),
+                    detail: t('Speakers and timestamps'),
                   },
                   {
                     icon: Sparkles,
-                    title: 'Extract',
-                    detail: 'Summary, risks, decisions',
+                    title: t('Extract'),
+                    detail: t('Summary, risks, decisions'),
                   },
                   {
                     icon: CheckCircle2,
-                    title: 'Commit',
-                    detail: 'Tasks and decision log',
+                    title: t('Commit'),
+                    detail: t('Tasks and decision log'),
                   },
                 ].map((item) => {
                   const Icon = item.icon;
@@ -800,16 +822,16 @@ export function MeetingDetailPage() {
 
           <Card>
             <CardHeader className="pb-3">
-              <CardTitle>Meeting context</CardTitle>
+              <CardTitle>{t('Meeting context')}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
               <div>
                 <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                  Agenda
+                  {t('Agenda')}
                 </p>
                 {meeting.agenda.length === 0 ? (
                   <p className="mt-1 text-[11px] text-muted-foreground">
-                    No agenda was added.
+                    {t('No agenda was added.')}
                   </p>
                 ) : (
                   <ul className="mt-1.5 space-y-1">
@@ -828,7 +850,7 @@ export function MeetingDetailPage() {
               <Separator />
               <div>
                 <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                  Participants
+                  {t('Participants')}
                 </p>
                 <div className="mt-2 space-y-2">
                   {meeting.participants.map((participant: UserProfile) => (

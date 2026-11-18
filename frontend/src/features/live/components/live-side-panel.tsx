@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { formatDuration } from '@/lib/live/room';
 import { cn } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import type { LiveRoomController } from '@/hooks/use-live-room';
 
 export type LivePanelTab = 'transcript' | 'chat' | 'assistant' | 'people';
@@ -49,6 +50,7 @@ export function LiveSidePanel({
   remoteMuted,
   onToggleRemoteMute,
 }: LiveSidePanelProps) {
+  const { t, formatTime } = useI18n();
   const transcriptEndRef = useRef<HTMLDivElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const [message, setMessage] = useState('');
@@ -90,18 +92,18 @@ export function LiveSidePanel({
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="transcript" className="gap-1 text-[11px]">
             <Captions className="h-3.5 w-3.5" />
-            Live
+            {t('Live')}
           </TabsTrigger>
           <TabsTrigger value="chat" className="gap-1 text-[11px]">
             <MessageSquare className="h-3.5 w-3.5" />
-            Chat
+            {t('Chat')}
             {chat.length > 0 ? (
               <span className="text-[10px] text-muted-foreground">{chat.length}</span>
             ) : null}
           </TabsTrigger>
           <TabsTrigger value="assistant" className="gap-1 text-[11px]">
             <Bot className="h-3.5 w-3.5" />
-            AI
+            {t('AI')}
           </TabsTrigger>
           <TabsTrigger value="people" className="gap-1 text-[11px]">
             <Users className="h-3.5 w-3.5" />
@@ -125,15 +127,15 @@ export function LiveSidePanel({
               )}
             />
             {controller.demoPlaying
-              ? 'Demo dialogue'
+              ? t('Demo dialogue')
               : controller.captionsActive
                 ? controller.captionsListening
-                  ? 'Listening'
-                  : 'Captions on'
-                : 'Captions off'}
+                  ? t('Listening')
+                  : t('Captions on')
+                : t('Captions off')}
           </div>
           <span className="text-[10px] text-muted-foreground">
-            {segments.length} segments
+            {t('{{count}} segments', { count: segments.length })}
           </span>
         </div>
 
@@ -144,10 +146,11 @@ export function LiveSidePanel({
                 <Captions className="h-5 w-5" />
               </span>
               <div>
-                <p className="text-sm font-medium">No speech captured yet</p>
+                <p className="text-sm font-medium">{t('No speech captured yet')}</p>
                 <p className="mt-1 max-w-[240px] text-xs text-muted-foreground">
-                  Turn on live captions to transcribe your microphone, or play the
-                  scripted demo dialogue to see the AI pipeline without a mic.
+                  {t(
+                    'Turn on live captions to transcribe your microphone, or play the scripted demo dialogue to see the AI pipeline without a mic.'
+                  )}
                 </p>
               </div>
               <div className="flex flex-wrap justify-center gap-2">
@@ -158,7 +161,7 @@ export function LiveSidePanel({
                   onClick={controller.toggleCaptions}
                 >
                   <Captions className="h-3.5 w-3.5" />
-                  Start captions
+                  {t('Start captions')}
                 </Button>
                 {controller.demoAvailable ? (
                   <Button
@@ -167,13 +170,15 @@ export function LiveSidePanel({
                     onClick={controller.toggleDemo}
                   >
                     <Sparkles className="h-3.5 w-3.5" />
-                    Demo dialogue
+                    {t('Demo dialogue')}
                   </Button>
                 ) : null}
               </div>
               {!controller.captionsSupported ? (
                 <p className="text-[10px] text-amber-300/80">
-                  Live captions need Chrome or Edge. The demo dialogue works everywhere.
+                  {t(
+                    'Live captions need Chrome or Edge. The demo dialogue works everywhere.'
+                  )}
                 </p>
               ) : null}
             </div>
@@ -206,7 +211,7 @@ export function LiveSidePanel({
                       </span>
                       {segment.source === 'demo' ? (
                         <span className="rounded border border-violet-500/30 bg-violet-500/10 px-1 text-[9px] uppercase tracking-wide text-violet-300">
-                          Demo
+                          {t('Demo')}
                         </span>
                       ) : null}
                     </div>
@@ -247,9 +252,11 @@ export function LiveSidePanel({
               <span className="icon-tile h-10 w-10 text-primary">
                 <MessageSquare className="h-5 w-5" />
               </span>
-              <p className="text-sm font-medium">Room chat</p>
+              <p className="text-sm font-medium">{t('Room chat')}</p>
               <p className="max-w-[230px] text-xs text-muted-foreground">
-                Messages stay with the room and are saved with the meeting report.
+                {t(
+                  'Messages stay with the room and are saved with the meeting report.'
+                )}
               </p>
             </div>
           ) : (
@@ -262,13 +269,10 @@ export function LiveSidePanel({
                 >
                   <div className="flex items-center gap-2 text-[10px] text-muted-foreground">
                     <span className="font-medium text-foreground/80">
-                      {mine ? 'You' : entry.author}
+                      {mine ? t('You') : entry.author}
                     </span>
                     <span className="tabular">
-                      {new Date(entry.createdAt).toLocaleTimeString(undefined, {
-                        hour: '2-digit',
-                        minute: '2-digit',
-                      })}
+                      {formatTime(entry.createdAt)}
                     </span>
                   </div>
                   <p
@@ -295,15 +299,15 @@ export function LiveSidePanel({
           <Input
             value={message}
             onChange={(event) => setMessage(event.target.value)}
-            placeholder="Message everyone…"
+            placeholder={t('Message everyone…')}
             className="h-8 text-xs"
-            aria-label="Room chat message"
+            aria-label={t('Room chat message')}
           />
           <Button
             type="submit"
             size="icon-sm"
             disabled={!message.trim()}
-            aria-label="Send message"
+            aria-label={t('Send message')}
           >
             <Send className="h-3.5 w-3.5" />
           </Button>
@@ -318,14 +322,15 @@ export function LiveSidePanel({
           <div className="rounded-lg border border-primary/20 bg-primary/5 p-3">
             <div className="flex items-center gap-2">
               <Bot className="h-4 w-4 text-primary" />
-              <p className="text-xs font-medium">Nova copilot</p>
+              <p className="text-xs font-medium">{t('Nova copilot')}</p>
               <span className="ml-auto text-[9px] uppercase tracking-wide text-primary/70">
-                {controller.demoAvailable ? 'Demo' : 'Live'}
+                {controller.demoAvailable ? t('Demo') : t('Live')}
               </span>
             </div>
             <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
-              Grounded in this transcript only. Ask about decisions, owners,
-              deadlines or what is still open.
+              {t(
+                'Grounded in this transcript only. Ask about decisions, owners, deadlines or what is still open.'
+              )}
             </p>
           </div>
 
@@ -339,7 +344,7 @@ export function LiveSidePanel({
                   className="flex w-full items-center gap-2 rounded-md border border-border/70 bg-secondary/30 px-2.5 py-2 text-left text-[11px] text-foreground/85 transition-colors hover:border-primary/30 hover:bg-secondary"
                 >
                   <Sparkles className="h-3 w-3 text-primary" />
-                  {suggestion}
+                  {t(suggestion)}
                 </button>
               ))}
             </div>
@@ -374,20 +379,20 @@ export function LiveSidePanel({
 
           <div className="rounded-lg border border-border/60 p-2.5">
             <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-              Signals so far
+              {t('Signals so far')}
             </p>
             <div className="mt-1.5 grid grid-cols-2 gap-1.5 text-[11px]">
               <span className="rounded border border-border/60 bg-secondary/30 px-2 py-1">
-                {insights.actions.length} actions
+                {t('{{count}} actions', { count: insights.actions.length })}
               </span>
               <span className="rounded border border-border/60 bg-secondary/30 px-2 py-1">
-                {insights.decisions.length} decisions
+                {t('{{count}} decisions', { count: insights.decisions.length })}
               </span>
               <span className="rounded border border-border/60 bg-secondary/30 px-2 py-1">
-                {insights.risks.length} risks
+                {t('{{count}} risks', { count: insights.risks.length })}
               </span>
               <span className="rounded border border-border/60 bg-secondary/30 px-2 py-1">
-                {insights.topics.length} topics
+                {t('{{count}} topics', { count: insights.topics.length })}
               </span>
             </div>
           </div>
@@ -400,15 +405,15 @@ export function LiveSidePanel({
           <Input
             value={question}
             onChange={(event) => setQuestion(event.target.value)}
-            placeholder="Ask about this meeting…"
+            placeholder={t('Ask about this meeting…')}
             className="h-8 text-xs"
-            aria-label="Ask the meeting copilot"
+            aria-label={t('Ask the meeting copilot')}
           />
           <Button
             type="submit"
             size="icon-sm"
             disabled={!question.trim()}
-            aria-label="Ask copilot"
+            aria-label={t('Ask copilot')}
           >
             <Send className="h-3.5 w-3.5" />
           </Button>
@@ -438,13 +443,13 @@ export function LiveSidePanel({
               <div className="min-w-0 flex-1">
                 <p className="truncate text-xs font-medium">
                   {participant.fullName}
-                  {participant.isSelf ? ' (you)' : ''}
+                  {participant.isSelf ? ` (${t('you')})` : ''}
                 </p>
                 <div className="mt-0.5 flex items-center gap-2 text-[10px] text-muted-foreground">
                   {participant.connection === 'connecting' ? (
                     <>
                       <Loader2 className="h-3 w-3 animate-spin" />
-                      Connecting
+                      {t('Connecting')}
                     </>
                   ) : (
                     <>
@@ -473,13 +478,15 @@ export function LiveSidePanel({
                   onClick={() => onToggleRemoteMute(participant.peerId)}
                   title={
                     remoteMuted.has(participant.peerId)
-                      ? `Unmute ${participant.fullName} for me`
-                      : `Mute ${participant.fullName} for me`
+                      ? t('Unmute {{name}} for me', {
+                          name: participant.fullName,
+                        })
+                      : t('Mute {{name}} for me', { name: participant.fullName })
                   }
                   aria-label={
                     remoteMuted.has(participant.peerId)
-                      ? 'Unmute participant for me'
-                      : 'Mute participant for me'
+                      ? t('Unmute participant for me')
+                      : t('Mute participant for me')
                   }
                 >
                   {remoteMuted.has(participant.peerId) ? (
@@ -496,11 +503,12 @@ export function LiveSidePanel({
         <div className="space-y-2 border-t border-border/70 p-3">
           <Button variant="secondary" size="sm" className="w-full" onClick={onInvite}>
             <Copy className="h-3.5 w-3.5" />
-            Copy invite link
+            {t('Copy invite link')}
           </Button>
           <p className="text-center text-[10px] leading-relaxed text-muted-foreground">
-            Demo rooms connect tabs in this browser. Add LiveKit credentials for
-            real devices.
+            {t(
+              'Demo rooms connect tabs in this browser. Add LiveKit credentials for real devices.'
+            )}
           </p>
         </div>
       </TabsContent>

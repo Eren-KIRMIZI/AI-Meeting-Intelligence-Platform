@@ -17,17 +17,19 @@ import {
 } from '@/components/ui/sheet';
 import { NovaMark } from '@/components/common/nova-mark';
 import { UserAvatar } from '@/components/common/user-avatar';
+import { useI18n } from '@/i18n';
 import { LogOut } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
 function SidebarLink({ item }: { item: NavItem }) {
+  const { t } = useI18n();
   const Icon = item.icon;
   return (
     <Tooltip delayDuration={80}>
       <TooltipTrigger asChild>
         <NavLink
           to={item.path}
-          aria-label={item.label}
+          aria-label={t(item.label)}
           className={({ isActive }) =>
             cn(
               'group relative grid h-10 w-10 place-items-center rounded-lg outline-none transition-colors focus-visible:ring-1 focus-visible:ring-ring',
@@ -40,7 +42,7 @@ function SidebarLink({ item }: { item: NavItem }) {
           <Icon className="h-[19px] w-[19px]" strokeWidth={1.8} />
         </NavLink>
       </TooltipTrigger>
-      <TooltipContent side="right">{item.label}</TooltipContent>
+      <TooltipContent side="right">{t(item.label)}</TooltipContent>
     </Tooltip>
   );
 }
@@ -79,6 +81,7 @@ function MobileNavLink({
   onNavigate: () => void;
 }) {
   const Icon = item.icon;
+  const { t } = useI18n();
   return (
     <NavLink
       to={item.path}
@@ -93,12 +96,13 @@ function MobileNavLink({
       }
     >
       <Icon className="h-[18px] w-[18px]" strokeWidth={1.8} />
-      <span>{item.label}</span>
+      <span>{t(item.label)}</span>
     </NavLink>
   );
 }
 
 export function Sidebar() {
+  const { t } = useI18n();
   const navigate = useNavigate();
   const { user, orgName, signOut } = useAuth();
   const mobileNavOpen = useUiStore((state) => state.mobileNavOpen);
@@ -118,20 +122,20 @@ export function Sidebar() {
             <TooltipTrigger asChild>
               <NavLink
                 to="/overview"
-                aria-label="Nova home"
+                aria-label={t('Nova home')}
                 className="grid h-10 w-10 place-items-center rounded-lg bg-primary text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.16)] outline-none transition-colors hover:bg-primary/90 focus-visible:ring-1 focus-visible:ring-ring"
               >
                 <NovaMark className="h-5 w-5" />
               </NavLink>
             </TooltipTrigger>
             <TooltipContent side="right">
-              Nova · {orgName ?? 'Workspace'}
+              Nova · {orgName ?? t('Workspace')}
             </TooltipContent>
           </Tooltip>
         </div>
 
         <nav
-          aria-label="Primary navigation"
+          aria-label={t('Primary navigation')}
           className="no-scrollbar flex w-full flex-1 flex-col items-center gap-1 overflow-y-auto py-3"
         >
           {primaryNav.map((item) => (
@@ -144,7 +148,7 @@ export function Sidebar() {
             <SidebarLink key={item.path} item={item} />
           ))}
           <SidebarIconButton
-            label={logoutNav.label}
+            label={t(logoutNav.label)}
             icon={logoutNav.icon}
             onClick={() => void handleLogout()}
           />
@@ -159,9 +163,9 @@ export function Sidebar() {
           side="left"
           className="flex w-[286px] flex-col border-r-border bg-sidebar p-0 sm:max-w-[286px]"
         >
-          <SheetTitle className="sr-only">Workspace navigation</SheetTitle>
+          <SheetTitle className="sr-only">{t('Workspace navigation')}</SheetTitle>
           <SheetDescription className="sr-only">
-            Navigate between Nova workspace modules.
+            {t('Navigate between Nova workspace modules.')}
           </SheetDescription>
 
           <div className="flex h-[60px] items-center gap-3 border-b border-border/70 px-4 pr-12">
@@ -173,13 +177,13 @@ export function Sidebar() {
                 Nova
               </p>
               <p className="truncate text-[11px] text-muted-foreground">
-                {orgName ?? 'Workspace'}
+                {orgName ?? t('Workspace')}
               </p>
             </div>
           </div>
 
           <nav
-            aria-label="Mobile navigation"
+            aria-label={t('Mobile navigation')}
             className="no-scrollbar flex flex-1 flex-col gap-1 overflow-y-auto p-3"
           >
             {primaryNav.map((item) => (
@@ -205,17 +209,17 @@ export function Sidebar() {
               className="flex h-10 w-full items-center gap-3 rounded-lg px-3 text-sm font-medium text-muted-foreground outline-none transition-colors hover:bg-secondary hover:text-foreground focus-visible:ring-1 focus-visible:ring-ring"
             >
               <LogOut className="h-[18px] w-[18px]" strokeWidth={1.8} />
-              <span>Log out</span>
+              <span>{t('Log out')}</span>
             </button>
 
             <div className="mt-2 flex items-center gap-2.5 rounded-lg border border-border/60 bg-secondary/30 px-2.5 py-2">
               <UserAvatar user={user} size="md" />
               <div className="min-w-0">
                 <p className="truncate text-xs font-medium text-foreground">
-                  {user?.fullName ?? 'Workspace member'}
+                  {user?.fullName ?? t('Workspace member')}
                 </p>
                 <p className="truncate text-[10px] text-muted-foreground">
-                  {user?.jobTitle ?? user?.email ?? 'Nova workspace'}
+                  {user?.jobTitle ?? user?.email ?? t('Nova workspace')}
                 </p>
               </div>
             </div>

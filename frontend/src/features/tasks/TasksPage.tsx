@@ -41,6 +41,7 @@ import {
   formatDueDate,
   isOverdue,
 } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import { CreateTaskDialog } from './components/create-task-dialog';
 import { TaskCheckbox } from './components/task-checkbox';
 import { TaskDetailDialog } from './components/task-detail-dialog';
@@ -110,6 +111,7 @@ function BoardTaskCard({
 }
 
 export function TasksPage() {
+  const { t } = useI18n();
   const tasks = useTasks();
   const projects = useProjects();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -161,7 +163,7 @@ export function TasksPage() {
     return (
       <ErrorState
         description={
-          error instanceof Error ? error.message : 'Tasks could not be loaded.'
+          error instanceof Error ? error.message : t('Tasks could not be loaded.')
         }
         onRetry={() => {
           void tasks.refetch();
@@ -203,7 +205,7 @@ export function TasksPage() {
 
   const exportTasks = () => {
     if (filtered.length === 0) {
-      toast.error('There are no tasks to export');
+      toast.error(t('There are no tasks to export'));
       return;
     }
     downloadCsv(
@@ -218,15 +220,15 @@ export function TasksPage() {
         Tags: task.tags.join(' | '),
       }))
     );
-    toast.success('Tasks exported');
+    toast.success(t('Tasks exported'));
   };
 
   const summary = [
-    { label: 'Open tasks', value: openTasks, icon: ListTodo, tone: 'text-blue-400' },
-    { label: 'Completed', value: doneTasks, icon: CircleCheck, tone: 'text-emerald-400' },
-    { label: 'Overdue', value: overdueTasks, icon: TriangleAlert, tone: 'text-rose-400' },
+    { label: t('Open tasks'), value: openTasks, icon: ListTodo, tone: 'text-blue-400' },
+    { label: t('Completed'), value: doneTasks, icon: CircleCheck, tone: 'text-emerald-400' },
+    { label: t('Overdue'), value: overdueTasks, icon: TriangleAlert, tone: 'text-rose-400' },
     {
-      label: 'Due soon',
+      label: t('Due soon'),
       value: list.filter((task) => {
         if (task.status === 'done' || !task.dueDate) return false;
         const diff = new Date(task.dueDate).getTime() - Date.now();
@@ -240,22 +242,24 @@ export function TasksPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="My Tasks"
-        description="Every commitment in one place — filter by project, priority or status and keep work moving."
+        title={t('My Tasks')}
+        description={t(
+          'Every commitment in one place — filter by project, priority or status and keep work moving.'
+        )}
         badge={
           <Badge variant="outline" className="bg-secondary/30">
-            {openTasks} open
+            {t('{{count}} open', { count: openTasks })}
           </Badge>
         }
         actions={
           <>
             <Button variant="outline" size="sm" onClick={exportTasks}>
               <Download className="h-3.5 w-3.5" />
-              Export
+              {t('Export')}
             </Button>
             <Button size="sm" onClick={() => setDialogOpen(true)}>
               <Plus className="h-3.5 w-3.5" />
-              New task
+              {t('New task')}
             </Button>
           </>
         }
@@ -292,9 +296,9 @@ export function TasksPage() {
               <Input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search tasks, projects, people or tags..."
+                placeholder={t('Search tasks, projects, people or tags...')}
                 className="h-8 pl-8 text-xs"
-                aria-label="Search tasks"
+                aria-label={t('Search tasks')}
               />
             </div>
 
@@ -303,9 +307,9 @@ export function TasksPage() {
                 value={projectFilter}
                 onChange={(event) => handleProjectChange(event.target.value)}
                 className="h-8 text-xs lg:w-[160px]"
-                aria-label="Filter by project"
+                aria-label={t('Filter by project')}
               >
-                <option value="all">All projects</option>
+                <option value="all">{t('All projects')}</option>
                 {projectList.map((project) => (
                   <option key={project.id} value={project.id}>
                     {project.name}
@@ -319,14 +323,14 @@ export function TasksPage() {
                   setStatusFilter(event.target.value as 'all' | TaskStatus)
                 }
                 className="h-8 text-xs lg:w-[140px]"
-                aria-label="Filter by status"
+                aria-label={t('Filter by status')}
               >
-                <option value="all">All statuses</option>
-                <option value="backlog">Backlog</option>
-                <option value="todo">To do</option>
-                <option value="in_progress">In progress</option>
-                <option value="in_review">In review</option>
-                <option value="done">Done</option>
+                <option value="all">{t('All statuses')}</option>
+                <option value="backlog">{t('Backlog')}</option>
+                <option value="todo">{t('To do')}</option>
+                <option value="in_progress">{t('In progress')}</option>
+                <option value="in_review">{t('In review')}</option>
+                <option value="done">{t('Done')}</option>
               </NativeSelect>
 
               <NativeSelect
@@ -335,13 +339,13 @@ export function TasksPage() {
                   setPriorityFilter(event.target.value as 'all' | TaskPriority)
                 }
                 className="h-8 text-xs lg:w-[140px]"
-                aria-label="Filter by priority"
+                aria-label={t('Filter by priority')}
               >
-                <option value="all">All priorities</option>
-                <option value="urgent">Urgent</option>
-                <option value="high">High</option>
-                <option value="medium">Medium</option>
-                <option value="low">Low</option>
+                <option value="all">{t('All priorities')}</option>
+                <option value="urgent">{t('Urgent')}</option>
+                <option value="high">{t('High')}</option>
+                <option value="medium">{t('Medium')}</option>
+                <option value="low">{t('Low')}</option>
               </NativeSelect>
 
               <div className="col-span-2 flex items-center gap-1 rounded-lg border border-border/70 bg-secondary/30 p-0.5 sm:col-span-1">
@@ -351,7 +355,7 @@ export function TasksPage() {
                   className="h-7 flex-1 px-2.5 text-[11px]"
                   onClick={() => setView('board')}
                 >
-                  Board
+                  {t('Board')}
                 </Button>
                 <Button
                   variant={view === 'list' ? 'secondary' : 'ghost'}
@@ -359,7 +363,7 @@ export function TasksPage() {
                   className="h-7 flex-1 px-2.5 text-[11px]"
                   onClick={() => setView('list')}
                 >
-                  List
+                  {t('List')}
                 </Button>
               </div>
             </div>
@@ -368,7 +372,10 @@ export function TasksPage() {
           <div className="flex flex-wrap items-center justify-between gap-2 text-[10px] text-muted-foreground">
             <span className="inline-flex items-center gap-1.5">
               <SlidersHorizontal className="h-3 w-3" />
-              Showing {filtered.length} of {list.length} tasks
+              {t('Showing {{shown}} of {{total}} tasks', {
+                shown: filtered.length,
+                total: list.length,
+              })}
             </span>
             {hasFilters ? (
               <Button
@@ -378,7 +385,7 @@ export function TasksPage() {
                 onClick={clearFilters}
               >
                 <X className="h-3 w-3" />
-                Clear filters
+                {t('Clear filters')}
               </Button>
             ) : null}
           </div>
@@ -388,17 +395,19 @@ export function TasksPage() {
       {filtered.length === 0 ? (
         <EmptyState
           icon={ListTodo}
-          title="No tasks match these filters"
-          description="Clear the filters to see the whole board, or add a new task to get started."
+          title={t('No tasks match these filters')}
+          description={t(
+            'Clear the filters to see the whole board, or add a new task to get started.'
+          )}
           action={
             hasFilters ? (
               <Button variant="outline" size="sm" onClick={clearFilters}>
-                Clear filters
+                {t('Clear filters')}
               </Button>
             ) : (
               <Button size="sm" onClick={() => setDialogOpen(true)}>
                 <Plus className="h-3.5 w-3.5" />
-                New task
+                {t('New task')}
               </Button>
             )
           }
@@ -418,7 +427,7 @@ export function TasksPage() {
                   <div className="flex items-center gap-1.5">
                     <span className={cn('h-1.5 w-1.5 rounded-full', column.dot)} />
                     <span className="text-[11px] font-medium text-foreground">
-                      {column.label}
+                      {t(column.label)}
                     </span>
                   </div>
                   <span className="text-[10px] tabular text-muted-foreground">
@@ -428,7 +437,7 @@ export function TasksPage() {
                 <div className="space-y-2">
                   {columnTasks.length === 0 ? (
                     <div className="rounded-md border border-dashed border-border/70 px-2 py-6 text-center text-[10px] text-muted-foreground">
-                      No tasks
+                      {t('No tasks')}
                     </div>
                   ) : (
                     columnTasks.map((task) => (
@@ -451,11 +460,11 @@ export function TasksPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-10" />
-                  <TableHead>Task</TableHead>
-                  <TableHead className="hidden md:table-cell">Assignee</TableHead>
-                  <TableHead className="hidden sm:table-cell">Priority</TableHead>
-                  <TableHead className="hidden lg:table-cell">Status</TableHead>
-                  <TableHead className="text-right">Due</TableHead>
+                  <TableHead>{t('Task')}</TableHead>
+                  <TableHead className="hidden md:table-cell">{t('Assignee')}</TableHead>
+                  <TableHead className="hidden sm:table-cell">{t('Priority')}</TableHead>
+                  <TableHead className="hidden lg:table-cell">{t('Status')}</TableHead>
+                  <TableHead className="text-right">{t('Due')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -485,7 +494,7 @@ export function TasksPage() {
                       <div className="flex items-center gap-1.5">
                         <UserAvatar user={task.assignee} size="xs" />
                         <span className="text-[11px] text-muted-foreground">
-                          {task.assignee?.fullName ?? 'Unassigned'}
+                          {task.assignee?.fullName ?? t('Unassigned')}
                         </span>
                       </div>
                     </TableCell>

@@ -41,6 +41,7 @@ import {
 } from '@/hooks/use-workspace';
 import { executionSeries } from '@/mocks/data';
 import { cn, downloadCsv } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import type { DecisionStatus } from '@/types';
 import {
   ANALYTICS_RANGES,
@@ -71,6 +72,7 @@ const decisionLabels: Record<DecisionStatus, string> = {
 type Range = AnalyticsRange;
 
 export function AnalyticsPage() {
+  const { t } = useI18n();
   const projects = useProjects();
   const tasks = useTasks();
   const team = useTeam();
@@ -118,14 +120,14 @@ export function AnalyticsPage() {
       (Object.keys(decisionColors) as DecisionStatus[])
         .map((status) => ({
           status,
-          name: decisionLabels[status],
+          name: t(decisionLabels[status]),
           value: scopedDecisions.filter(
             (decision) => decision.status === status
           ).length,
           color: decisionColors[status],
         }))
         .filter((item) => item.value > 0),
-    [scopedDecisions]
+    [scopedDecisions, t]
   );
 
   const isLoading =
@@ -144,7 +146,7 @@ export function AnalyticsPage() {
     return (
       <ErrorState
         description={
-          error instanceof Error ? error.message : 'Analytics did not load.'
+          error instanceof Error ? error.message : t('Analytics did not load.')
         }
         onRetry={() => {
           void projects.refetch();
@@ -183,17 +185,19 @@ export function AnalyticsPage() {
         Net: point.completed - point.created,
       }))
     );
-    toast.success('Execution analytics exported');
+    toast.success(t('Execution analytics exported'));
   };
 
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Analytics"
-        description="Execution velocity, meeting output and the capacity behind every commitment."
+        title={t('Analytics')}
+        description={t(
+          'Execution velocity, meeting output and the capacity behind every commitment.'
+        )}
         badge={
           <Badge variant="outline" className="bg-secondary/30">
-            Last {rangeDays} days
+            {t('Last {{count}} days', { count: rangeDays })}
           </Badge>
         }
         actions={
@@ -207,13 +211,13 @@ export function AnalyticsPage() {
                   className="h-7 px-2.5 text-[11px]"
                   onClick={() => setRange(item.value)}
                 >
-                  {item.label}
+                  {t(item.label)}
                 </Button>
               ))}
             </div>
             <Button variant="outline" size="sm" onClick={exportAnalytics}>
               <Download className="h-3.5 w-3.5" />
-              Export
+              {t('Export')}
             </Button>
           </>
         }
@@ -229,15 +233,18 @@ export function AnalyticsPage() {
         <Card>
           <CardHeader className="flex-row items-start justify-between gap-3 space-y-0 pb-2">
             <div>
-              <CardTitle>Execution velocity</CardTitle>
+              <CardTitle>{t('Execution velocity')}</CardTitle>
               <p className="mt-1 text-xs text-muted-foreground">
-                Tasks completed against tasks created each day.
+                {t('Tasks completed against tasks created each day.')}
               </p>
             </div>
             <Badge variant={completedTotal >= createdTotal ? 'success' : 'warning'}>
               <TrendingUp className="h-3 w-3" />
-              Net {completedTotal - createdTotal >= 0 ? '+' : ''}
-              {completedTotal - createdTotal}
+              {t('Net {{value}}', {
+                value: `${completedTotal - createdTotal >= 0 ? '+' : ''}${
+                  completedTotal - createdTotal
+                }`,
+              })}
             </Badge>
           </CardHeader>
           <CardContent>
@@ -277,7 +284,7 @@ export function AnalyticsPage() {
                   <Area
                     type="monotone"
                     dataKey="created"
-                    name="Created"
+                    name={t('Created')}
                     stroke="#8B7CF6"
                     strokeWidth={1.5}
                     fill="url(#created-fill)"
@@ -286,7 +293,7 @@ export function AnalyticsPage() {
                   <Area
                     type="monotone"
                     dataKey="completed"
-                    name="Completed"
+                    name={t('Completed')}
                     stroke="#5B8DEF"
                     strokeWidth={2}
                     fill="url(#completed-fill)"
@@ -298,11 +305,11 @@ export function AnalyticsPage() {
             <div className="mt-2 flex items-center gap-4 text-[10px] text-muted-foreground">
               <span className="inline-flex items-center gap-1.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-blue-400" />
-                Completed {completedTotal}
+                {t('Completed {{count}}', { count: completedTotal })}
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <span className="h-1.5 w-1.5 rounded-full bg-violet-400" />
-                Created {createdTotal}
+                {t('Created {{count}}', { count: createdTotal })}
               </span>
             </div>
           </CardContent>
@@ -310,9 +317,12 @@ export function AnalyticsPage() {
 
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle>Decision mix</CardTitle>
+            <CardTitle>{t('Decision mix')}</CardTitle>
             <p className="text-xs text-muted-foreground">
-              {accepted} of {totalDecisions} decisions accepted.
+              {t('{{accepted}} of {{total}} decisions accepted.', {
+                accepted,
+                total: totalDecisions,
+              })}
             </p>
           </CardHeader>
           <CardContent>
@@ -320,7 +330,7 @@ export function AnalyticsPage() {
               <div className="flex h-[220px] flex-col items-center justify-center gap-2 text-center">
                 <PieChartIcon className="h-5 w-5 text-muted-foreground" />
                 <p className="text-xs text-muted-foreground">
-                  Decisions will appear once the log has entries.
+                  {t('Decisions will appear once the log has entries.')}
                 </p>
               </div>
             ) : (
@@ -349,7 +359,7 @@ export function AnalyticsPage() {
                       {totalDecisions}
                     </span>
                     <span className="mt-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                      Decisions
+                      {t('Decisions')}
                     </span>
                   </div>
                 </div>
@@ -382,15 +392,16 @@ export function AnalyticsPage() {
         <Card>
           <CardHeader className="flex-row items-start justify-between gap-3 space-y-0 pb-3">
             <div>
-              <CardTitle>Team workload</CardTitle>
+              <CardTitle>{t('Team workload')}</CardTitle>
               <p className="mt-1 text-xs text-muted-foreground">
-                Open assignments created in the selected window, against an
-                8-task planning capacity.
+                {t(
+                  'Open assignments created in the selected window, against an 8-task planning capacity.'
+                )}
               </p>
             </div>
             <Badge variant={averageUtilization > 85 ? 'warning' : 'neutral'}>
               <Users className="h-3 w-3" />
-              {averageUtilization}% avg
+              {t('{{count}}% avg', { count: averageUtilization })}
             </Badge>
           </CardHeader>
           <CardContent className="space-y-3">
@@ -415,7 +426,9 @@ export function AnalyticsPage() {
                   </div>
                   <Progress
                     value={item.utilization}
-                    aria-label={`${item.member.fullName} workload`}
+                    aria-label={t('{{name}} workload', {
+                      name: item.member.fullName,
+                    })}
                     className="mt-1.5 h-1"
                     indicatorClassName={cn(
                       item.utilization > 85
@@ -434,14 +447,16 @@ export function AnalyticsPage() {
         <Card>
           <CardHeader className="flex-row items-start justify-between gap-3 space-y-0 pb-3">
             <div>
-              <CardTitle>Project health</CardTitle>
+              <CardTitle>{t('Project health')}</CardTitle>
               <p className="mt-1 text-xs text-muted-foreground">
-                Delivery progress for work due inside the selected window.
+                {t(
+                  'Delivery progress for work due inside the selected window.'
+                )}
               </p>
             </div>
             <Button asChild variant="ghost" size="sm" className="h-7 text-[11px]">
               <Link to="/projects">
-                All projects
+                {t('All projects')}
                 <ArrowRight className="h-3 w-3" />
               </Link>
             </Button>
@@ -449,7 +464,7 @@ export function AnalyticsPage() {
           <CardContent className="space-y-3">
             {projectHealth.length === 0 ? (
               <p className="py-8 text-center text-xs text-muted-foreground">
-                No project work is due in this window.
+                {t('No project work is due in this window.')}
               </p>
             ) : (
               projectHealth.map((item) => (
@@ -466,7 +481,9 @@ export function AnalyticsPage() {
                   <div className="mt-2 flex items-center gap-2">
                     <Progress
                       value={item.progress}
-                      aria-label={`${item.project.name} progress`}
+                      aria-label={t('{{name}} progress', {
+                        name: item.project.name,
+                      })}
                       className="h-1"
                     />
                     <span className="w-9 shrink-0 text-right text-[10px] tabular text-muted-foreground">
@@ -474,7 +491,10 @@ export function AnalyticsPage() {
                     </span>
                   </div>
                   <p className="mt-1.5 text-[10px] text-muted-foreground">
-                    {item.completed} of {item.total} due tasks complete
+                    {t('{{completed}} of {{total}} due tasks complete', {
+                      completed: item.completed,
+                      total: item.total,
+                    })}
                   </p>
                 </div>
               ))
@@ -486,11 +506,16 @@ export function AnalyticsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 bg-secondary/20 px-3 py-2.5 text-[10px] text-muted-foreground">
         <span className="inline-flex items-center gap-1.5">
           <Gauge className="h-3 w-3" />
-          Metrics are derived from workspace records for {rangeLabel}.
+          {t('Metrics are derived from workspace records for {{range}}.', {
+            range: rangeLabel,
+          })}
         </span>
         <span className="tabular">
-          {taskList.length} tasks · {projectList.length} projects ·{' '}
-          {teamList.length} members
+          {t('{{tasks}} tasks · {{projects}} projects · {{members}} members', {
+            tasks: taskList.length,
+            projects: projectList.length,
+            members: teamList.length,
+          })}
         </span>
       </div>
     </div>

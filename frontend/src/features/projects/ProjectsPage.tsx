@@ -24,6 +24,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { useProjects } from '@/hooks/use-workspace';
 import { accentConfig } from '@/lib/status';
 import { cn, downloadCsv, formatDueDate, formatRelativeTime } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import { CreateProjectDialog } from './components/create-project-dialog';
 import type { ProjectStatus } from '@/types';
 
@@ -36,6 +37,7 @@ const filters: Array<{ value: 'all' | ProjectStatus; label: string }> = [
 ];
 
 export function ProjectsPage() {
+  const { t } = useI18n();
   const projects = useProjects();
   const [filter, setFilter] = useState<'all' | ProjectStatus>('all');
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -54,7 +56,7 @@ export function ProjectsPage() {
         description={
           projects.error instanceof Error
             ? projects.error.message
-            : 'Projects could not be loaded.'
+            : t('Projects could not be loaded.')
         }
         onRetry={() => void projects.refetch()}
       />
@@ -67,15 +69,15 @@ export function ProjectsPage() {
   const completed = list.filter((project) => project.status === 'completed').length;
 
   const summary = [
-    { label: 'Active', value: active, icon: FolderKanban, tone: 'text-blue-400' },
-    { label: 'On track', value: onTrack, icon: Target, tone: 'text-emerald-400' },
-    { label: 'At risk', value: atRisk, icon: TriangleAlert, tone: 'text-amber-400' },
-    { label: 'Completed', value: completed, icon: FolderKanban, tone: 'text-slate-400' },
+    { label: t('Active'), value: active, icon: FolderKanban, tone: 'text-blue-400' },
+    { label: t('On track'), value: onTrack, icon: Target, tone: 'text-emerald-400' },
+    { label: t('At risk'), value: atRisk, icon: TriangleAlert, tone: 'text-amber-400' },
+    { label: t('Completed'), value: completed, icon: FolderKanban, tone: 'text-slate-400' },
   ];
 
   const exportProjects = () => {
     if (filtered.length === 0) {
-      toast.error('There are no projects to export');
+      toast.error(t('There are no projects to export'));
       return;
     }
     downloadCsv(
@@ -90,28 +92,30 @@ export function ProjectsPage() {
         Due: project.dueDate,
       }))
     );
-    toast.success('Projects exported');
+    toast.success(t('Projects exported'));
   };
 
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Projects"
-        description="Portfolio health, ownership and delivery across every active initiative."
+        title={t('Projects')}
+        description={t(
+          'Portfolio health, ownership and delivery across every active initiative.'
+        )}
         badge={
           <Badge variant="outline" className="bg-secondary/30">
-            {list.length} total
+            {t('{{count}} total', { count: list.length })}
           </Badge>
         }
         actions={
           <>
             <Button variant="outline" size="sm" onClick={exportProjects}>
               <Download className="h-3.5 w-3.5" />
-              Export
+              {t('Export')}
             </Button>
             <Button size="sm" onClick={() => setDialogOpen(true)}>
               <Plus className="h-3.5 w-3.5" />
-              New project
+              {t('New project')}
             </Button>
           </>
         }
@@ -149,7 +153,7 @@ export function ProjectsPage() {
             className="h-7 text-[11px]"
             onClick={() => setFilter(item.value)}
           >
-            {item.label}
+            {t(item.label)}
           </Button>
         ))}
       </div>
@@ -157,12 +161,14 @@ export function ProjectsPage() {
       {filtered.length === 0 ? (
         <EmptyState
           icon={FolderKanban}
-          title="No projects match this filter"
-          description="Try another status or create the next project your team needs."
+          title={t('No projects match this filter')}
+          description={t(
+            'Try another status or create the next project your team needs.'
+          )}
           action={
             <Button size="sm" onClick={() => setDialogOpen(true)}>
               <Plus className="h-3.5 w-3.5" />
-              New project
+              {t('New project')}
             </Button>
           }
         />
@@ -201,12 +207,12 @@ export function ProjectsPage() {
                   </div>
 
                   <p className="mt-3 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
-                    {project.description || 'No description yet.'}
+                    {project.description || t('No description yet.')}
                   </p>
 
                   <div className="mt-4">
                     <div className="flex items-center justify-between text-[10px] text-muted-foreground">
-                      <span>Progress</span>
+                      <span>{t('Progress')}</span>
                       <span className="tabular text-foreground">{project.progress}%</span>
                     </div>
                     <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-secondary">
@@ -218,9 +224,11 @@ export function ProjectsPage() {
                   </div>
 
                   <div className="mt-4 flex flex-wrap items-center gap-1.5">
-                    <MetaBadge>{project.taskCount} tasks</MetaBadge>
-                    <MetaBadge>{project.completedTasks} done</MetaBadge>
-                    <MetaBadge>Due {formatDueDate(project.dueDate)}</MetaBadge>
+                    <MetaBadge>{t('{{count}} tasks', { count: project.taskCount })}</MetaBadge>
+                    <MetaBadge>{t('{{count}} done', { count: project.completedTasks })}</MetaBadge>
+                    <MetaBadge>
+                      {t('Due {{date}}', { date: formatDueDate(project.dueDate) })}
+                    </MetaBadge>
                   </div>
 
                   <div className="mt-auto flex items-center justify-between gap-3 pt-4">
@@ -232,7 +240,7 @@ export function ProjectsPage() {
                     </div>
                     <Button asChild variant="outline" size="sm" className="h-7 text-[11px]">
                       <Link to={`/projects/${project.id}`}>
-                        Open project
+                        {t('Open project')}
                         <ArrowRight className="h-3 w-3" />
                       </Link>
                     </Button>

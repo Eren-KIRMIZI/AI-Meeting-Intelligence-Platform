@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { formatDuration } from '@/lib/live/room';
+import { useI18n } from '@/i18n';
 import type { LiveRoomController } from '@/hooks/use-live-room';
 import type { LivePanelTab } from './live-side-panel';
 
@@ -82,12 +83,13 @@ export function LiveControls({
   onToggleRecording,
   onEnd,
 }: LiveControlsProps) {
+  const { t } = useI18n();
   const audioRoom = controller.mode === 'audio';
 
   return (
     <div className="flex flex-wrap items-center justify-center gap-1.5 border-t border-white/10 bg-[#070b12]/90 px-2 py-2.5 backdrop-blur sm:gap-2">
       <ControlButton
-        label={controller.micOn ? 'Mute' : 'Unmute'}
+        label={controller.micOn ? t('Mute') : t('Unmute')}
         active={!controller.micOn}
         danger={!controller.micOn}
         onClick={controller.toggleMic}
@@ -100,7 +102,7 @@ export function LiveControls({
       </ControlButton>
 
       <ControlButton
-        label={controller.cameraOn ? 'Camera off' : 'Camera on'}
+        label={controller.cameraOn ? t('Camera off') : t('Camera on')}
         active={!controller.cameraOn && !audioRoom}
         danger={!controller.cameraOn && !audioRoom}
         disabled={audioRoom}
@@ -114,7 +116,7 @@ export function LiveControls({
       </ControlButton>
 
       <ControlButton
-        label={controller.screenSharing ? 'Stop share' : 'Share'}
+        label={controller.screenSharing ? t('Stop share') : t('Share')}
         active={controller.screenSharing}
         disabled={audioRoom}
         onClick={controller.toggleScreenShare}
@@ -127,7 +129,7 @@ export function LiveControls({
       </ControlButton>
 
       <ControlButton
-        label="Captions"
+        label={t('Captions')}
         active={controller.captionsActive}
         disabled={!controller.captionsSupported}
         onClick={controller.toggleCaptions}
@@ -136,7 +138,7 @@ export function LiveControls({
       </ControlButton>
 
       <ControlButton
-        label={recording ? formatDuration(recordingSeconds) : 'Record'}
+        label={recording ? formatDuration(recordingSeconds) : t('Record')}
         danger={recording}
         disabled={!recordingSupported || !controller.localStream}
         onClick={onToggleRecording}
@@ -149,7 +151,7 @@ export function LiveControls({
       <span className="mx-0.5 hidden h-6 w-px bg-white/10 sm:block" />
 
       <ControlButton
-        label="Chat"
+        label={t('Chat')}
         active={panel === 'chat'}
         onClick={() => onTogglePanel('chat')}
       >
@@ -157,7 +159,7 @@ export function LiveControls({
       </ControlButton>
 
       <ControlButton
-        label="Copilot"
+        label={t('Copilot')}
         active={panel === 'assistant'}
         onClick={() => onTogglePanel('assistant')}
       >
@@ -165,7 +167,7 @@ export function LiveControls({
       </ControlButton>
 
       <ControlButton
-        label="People"
+        label={t('People')}
         active={panel === 'people'}
         onClick={() => onTogglePanel('people')}
       >
@@ -178,8 +180,8 @@ export function LiveControls({
         className="ml-1 flex h-11 items-center gap-2 rounded-lg border border-rose-500/40 bg-rose-500/15 px-3 text-xs font-medium text-rose-200 transition-colors hover:border-rose-500/60 hover:bg-rose-500/25 sm:px-4"
       >
         <PhoneOff className="h-4 w-4" />
-        <span className="hidden sm:inline">End meeting</span>
-        <span className="sm:hidden">End</span>
+        <span className="hidden sm:inline">{t('End meeting')}</span>
+        <span className="sm:hidden">{t('End')}</span>
       </button>
     </div>
   );

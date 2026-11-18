@@ -26,6 +26,7 @@ import {
   useNotifications,
 } from '@/hooks/use-workspace';
 import { usePreferencesStore } from '@/stores/preferences-store';
+import { useI18n } from '@/i18n';
 import { toast } from 'sonner';
 import type { AppNotification } from '@/types';
 
@@ -96,6 +97,7 @@ function NotificationRow({
 
 export function NotificationsMenu() {
   const navigate = useNavigate();
+  const { t, plural } = useI18n();
   const [open, setOpen] = useState(false);
   const { data, isLoading } = useNotifications();
   const preferences = usePreferencesStore((state) => state.notifications);
@@ -125,7 +127,11 @@ export function NotificationsMenu() {
           variant="ghost"
           size="icon-sm"
           className="relative text-muted-foreground hover:text-foreground"
-          aria-label={`Notifications${unread > 0 ? `, ${unread} unread` : ''}`}
+          aria-label={
+            unread > 0
+              ? t('Notifications, {{count}} unread', { count: unread })
+              : t('Notifications')
+          }
         >
           <Bell className="h-4 w-4" aria-hidden="true" />
           {unread > 0 ? (
@@ -140,15 +146,15 @@ export function NotificationsMenu() {
         align="end"
         sideOffset={8}
         role="dialog"
-        aria-label="Notifications"
+        aria-label={t('Notifications')}
         className="w-[340px] p-0"
       >
         <div className="flex items-center justify-between border-b border-border px-3 py-2.5">
           <div className="flex items-center gap-2">
-            <p className="text-sm font-semibold">Notifications</p>
+            <p className="text-sm font-semibold">{t('Notifications')}</p>
             {unread > 0 ? (
               <span className="rounded-full bg-primary/15 px-1.5 py-0.5 text-[10px] font-medium text-blue-300">
-                {unread} new
+                {t('{{count}} new', { count: unread })}
               </span>
             ) : null}
           </div>
@@ -159,12 +165,13 @@ export function NotificationsMenu() {
             disabled={unread === 0 || markAllRead.isPending}
             onClick={() =>
               markAllRead.mutate(undefined, {
-                onSuccess: () => toast.success('All notifications marked as read'),
+                onSuccess: () =>
+                  toast.success(t('All notifications marked as read')),
               })
             }
           >
             <CheckCheck className="h-3 w-3" aria-hidden="true" />
-            Mark all read
+            {t('Mark all read')}
           </Button>
         </div>
 
@@ -185,8 +192,8 @@ export function NotificationsMenu() {
             <div className="px-4 py-8 text-center">
               <p className="text-xs text-muted-foreground">
                 {all.length === 0
-                  ? 'You are all caught up.'
-                  : 'No notifications match your preferences.'}
+                  ? t('You are all caught up.')
+                  : t('No notifications match your preferences.')}
               </p>
               {hidden > 0 ? (
                 <Button
@@ -196,7 +203,7 @@ export function NotificationsMenu() {
                   onClick={goToSettings}
                 >
                   <Settings2 className="h-3 w-3" aria-hidden="true" />
-                  Review notification settings
+                  {t('Review notification settings')}
                 </Button>
               ) : null}
             </div>
@@ -220,8 +227,11 @@ export function NotificationsMenu() {
             className="flex w-full items-center gap-1.5 border-t border-border/70 px-3 py-2 text-left text-[10px] text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-inset focus-visible:ring-ring"
           >
             <Settings2 className="h-3 w-3" aria-hidden="true" />
-            {hidden} notification{hidden === 1 ? '' : 's'} hidden by your
-            preferences
+            {plural(
+              hidden,
+              '{{count}} notification hidden by your preferences',
+              '{{count}} notifications hidden by your preferences'
+            )}
           </button>
         ) : null}
 
@@ -233,7 +243,7 @@ export function NotificationsMenu() {
             className="flex h-7 items-center gap-1 text-[10px] font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           >
             <Settings2 className="h-3 w-3" aria-hidden="true" />
-            Notification settings
+            {t('Notification settings')}
           </button>
           <button
             type="button"
@@ -243,7 +253,7 @@ export function NotificationsMenu() {
             }}
             className="flex h-7 items-center gap-1 text-[10px] font-medium text-blue-400 transition-colors hover:text-blue-300 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
           >
-            View workspace activity
+            {t('View workspace activity')}
           </button>
         </div>
       </PopoverContent>

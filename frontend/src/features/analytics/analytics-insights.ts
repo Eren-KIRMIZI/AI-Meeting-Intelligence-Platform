@@ -167,8 +167,8 @@ function pointDelta(
 
   const delta = current - previous;
   return {
-    change:
-      delta === 0 ? 'No change' : `${delta > 0 ? '+' : ''}${delta} pts`,
+    change: delta === 0 ? 'No change' : '{{delta}} pts',
+    changeVars: { delta: `${delta > 0 ? '+' : ''}${delta}` },
     direction:
       delta > 0 ? ('up' as const) : delta < 0 ? ('down' as const) : ('flat' as const),
     tone:

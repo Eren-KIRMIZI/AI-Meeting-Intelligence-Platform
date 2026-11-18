@@ -22,6 +22,8 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatDuration } from '@/lib/live/room';
+import { formatDate } from '@/i18n/format';
+import { useI18n } from '@/i18n';
 import type {
   CommitMeetingResult,
   LiveMeetingInput,
@@ -90,13 +92,6 @@ function Bullets({ items, empty }: { items: string[]; empty: string }) {
   );
 }
 
-function dueLabel(value?: string | null) {
-  if (!value) return 'No date';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'No date';
-  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-}
-
 export function LiveReportDialog({
   open,
   onOpenChange,
@@ -110,6 +105,7 @@ export function LiveReportDialog({
   committed,
   onOpenMeeting,
 }: LiveReportDialogProps) {
+  const { t } = useI18n();
   const insights = meeting?.analysis ?? report?.insights ?? null;
   const segments = report?.segments ?? [];
   const actions = insights?.actions ?? [];
@@ -120,12 +116,21 @@ export function LiveReportDialog({
   );
   const unresolved = [
     ...risks,
-    ...unassigned.map((action) => `${action.text} — no owner yet`),
+    ...unassigned.map((action) =>
+      t('{{text}} — no owner yet', { text: action.text })
+    ),
   ];
   const hasFollowUps = actions.length > 0 || decisions.length > 0;
   const committedCount = committed
     ? committed.tasks.length + committed.decisions.length
     : 0;
+
+  const dueLabel = (value?: string | null) => {
+    if (!value) return t('No date');
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return t('No date');
+    return formatDate(date, { month: 'short', day: 'numeric' });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -134,37 +139,43 @@ export function LiveReportDialog({
           <div className="flex items-center gap-2">
             <Badge variant="success">
               <Sparkles className="h-3 w-3" />
-              Nova Live report
+              {t('Nova Live report')}
             </Badge>
             {report ? (
               <Badge variant="outline">{formatDuration(report.durationSeconds)}</Badge>
             ) : null}
           </div>
           <DialogTitle className="mt-1 pr-8">
-            {meeting?.title ?? report?.title ?? 'Meeting report'}
+            {meeting?.title ?? report?.title ?? t('Meeting report')}
           </DialogTitle>
           <DialogDescription>
-            Transcript, decisions and follow-ups captured by Nova. Review the
-            owners and deadlines before creating work.
+            {t(
+              'Transcript, decisions and follow-ups captured by Nova. Review the owners and deadlines before creating work.'
+            )}
           </DialogDescription>
         </DialogHeader>
 
         {saving ? (
           <div className="flex flex-col items-center justify-center gap-3 px-5 py-14 text-center">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <p className="text-sm font-medium">Nova is writing the brief…</p>
+            <p className="text-sm font-medium">
+              {t('Nova is writing the brief…')}
+            </p>
             <p className="max-w-sm text-xs text-muted-foreground">
-              Saving the meeting, transcript, chat and a Knowledge note. This
-              takes a moment in demo mode too.
+              {t(
+                'Saving the meeting, transcript, chat and a Knowledge note. This takes a moment in demo mode too.'
+              )}
             </p>
           </div>
         ) : saveError ? (
           <div className="flex flex-col items-center justify-center gap-3 px-5 py-14 text-center">
             <AlertTriangle className="h-6 w-6 text-amber-400" />
-            <p className="text-sm font-medium">The report could not be saved</p>
+            <p className="text-sm font-medium">
+              {t('The report could not be saved')}
+            </p>
             <p className="max-w-md text-xs text-muted-foreground">{saveError}</p>
             <Button size="sm" variant="secondary" onClick={onRetry}>
-              Try again
+              {t('Try again')}
             </Button>
           </div>
         ) : (
@@ -174,42 +185,48 @@ export function LiveReportDialog({
                 <Users className="h-3.5 w-3.5" />
                 {report.participants.map((participant) => participant.fullName).join(', ')}
                 <span className="text-muted-foreground/50">·</span>
-                {segments.length} transcript segments
+                {t('{{count}} transcript segments', {
+                  count: segments.length,
+                })}
                 <span className="text-muted-foreground/50">·</span>
-                {report.chat.length} chat messages
+                {t('{{count}} chat messages', { count: report.chat.length })}
               </div>
             ) : null}
 
-            <Section icon={Sparkles} title="Summary">
-              <p>{insights?.summary ?? 'No summary was generated.'}</p>
+            <Section icon={Sparkles} title={t('Summary')}>
+              <p>{insights?.summary ?? t('No summary was generated.')}</p>
             </Section>
 
             <div className="grid gap-3 sm:grid-cols-2">
               <Section
                 icon={ListChecks}
-                title="Key points"
+                title={t('Key points')}
                 count={insights?.keyPoints.length}
               >
                 <Bullets
                   items={insights?.keyPoints ?? []}
-                  empty="No key points were captured."
+                  empty={t('No key points were captured.')}
                 />
               </Section>
 
               <Section
                 icon={GitBranch}
-                title="Decisions"
+                title={t('Decisions')}
                 count={decisions.length}
               >
                 {decisions.length === 0 ? (
-                  <p className="text-muted-foreground">No decisions were recorded.</p>
+                  <p className="text-muted-foreground">
+                    {t('No decisions were recorded.')}
+                  </p>
                 ) : (
                   <ul className="space-y-2">
                     {decisions.map((decision) => (
                       <li key={decision.id}>
                         <p className="font-medium text-foreground">{decision.title}</p>
                         <p className="mt-0.5 text-[11px] text-muted-foreground">
-                          Owner: {decision.owner || 'Unassigned'}
+                          {t('Owner: {{owner}}', {
+                            owner: decision.owner || t('Unassigned'),
+                          })}
                         </p>
                       </li>
                     ))}
@@ -220,11 +237,13 @@ export function LiveReportDialog({
 
             <Section
               icon={CheckCircle2}
-              title="Action items, owners and deadlines"
+              title={t('Action items, owners and deadlines')}
               count={actions.length}
             >
               {actions.length === 0 ? (
-                <p className="text-muted-foreground">No action items were detected.</p>
+                <p className="text-muted-foreground">
+                  {t('No action items were detected.')}
+                </p>
               ) : (
                 <ul className="space-y-2">
                   {actions.map((action) => (
@@ -235,7 +254,7 @@ export function LiveReportDialog({
                       <span className="text-foreground/90">{action.text}</span>
                       <span className="flex shrink-0 items-center gap-2 text-[10px] text-muted-foreground">
                         <span className="rounded border border-border/60 bg-secondary/50 px-1.5 py-0.5">
-                          {action.owner || 'Unassigned'}
+                          {action.owner || t('Unassigned')}
                         </span>
                         <span className="inline-flex items-center gap-1">
                           <Clock className="h-3 w-3" />
@@ -249,38 +268,53 @@ export function LiveReportDialog({
             </Section>
 
             <div className="grid gap-3 sm:grid-cols-2">
-              <Section icon={AlertTriangle} title="Risks" count={risks.length}>
-                <Bullets items={risks} empty="No risks were flagged." />
+              <Section
+                icon={AlertTriangle}
+                title={t('Risks')}
+                count={risks.length}
+              >
+                <Bullets items={risks} empty={t('No risks were flagged.')} />
               </Section>
 
               <Section
                 icon={AlertTriangle}
-                title="Unresolved topics"
+                title={t('Unresolved topics')}
                 count={unresolved.length}
               >
                 <Bullets
                   items={unresolved}
-                  empty="Nothing is left open in this transcript."
+                  empty={t('Nothing is left open in this transcript.')}
                 />
               </Section>
             </div>
 
             <Section
               icon={ArrowRight}
-              title="Follow-ups"
+              title={t('Follow-ups')}
               count={actions.length + decisions.length}
             >
               {hasFollowUps ? (
                 <p>
-                  {actions.length} task{actions.length === 1 ? '' : 's'} and{' '}
-                  {decisions.length} decision{decisions.length === 1 ? '' : 's'}{' '}
-                  are ready to become workspace records. Nova also writes a
-                  Knowledge note with the transcript.
+                  {t('{{tasks}} and {{decisions}} are ready to become workspace records. Nova also writes a Knowledge note with the transcript.', {
+                    tasks: t(
+                      actions.length === 1
+                        ? '{{count}} task'
+                        : '{{count}} tasks',
+                      { count: actions.length }
+                    ),
+                    decisions: t(
+                      decisions.length === 1
+                        ? '{{count}} decision'
+                        : '{{count}} decisions',
+                      { count: decisions.length }
+                    ),
+                  })}
                 </p>
               ) : (
                 <p className="text-muted-foreground">
-                  No follow-ups were detected. You can still keep the meeting and
-                  its transcript in the workspace.
+                  {t(
+                    'No follow-ups were detected. You can still keep the meeting and its transcript in the workspace.'
+                  )}
                 </p>
               )}
             </Section>
@@ -289,14 +323,29 @@ export function LiveReportDialog({
               <div className="rounded-lg border border-emerald-500/25 bg-emerald-500/5 p-3 text-xs">
                 <div className="flex items-center gap-2 font-medium text-emerald-300">
                   <CheckCircle2 className="h-4 w-4" />
-                  Follow-ups created
+                  {t('Follow-ups created')}
                 </div>
                 <p className="mt-1 text-muted-foreground">
-                  {committed.tasks.length} task
-                  {committed.tasks.length === 1 ? '' : 's'}, {committed.decisions.length}{' '}
-                  decision{committed.decisions.length === 1 ? '' : 's'}
-                  {committed.knowledge ? ' and a Knowledge note' : ''} are linked to
-                  this meeting.
+                  {t(
+                    '{{tasks}}, {{decisions}}{{knowledge}} are linked to this meeting.',
+                    {
+                      tasks: t(
+                        committed.tasks.length === 1
+                          ? '{{count}} task'
+                          : '{{count}} tasks',
+                        { count: committed.tasks.length }
+                      ),
+                      decisions: t(
+                        committed.decisions.length === 1
+                          ? '{{count}} decision'
+                          : '{{count}} decisions',
+                        { count: committed.decisions.length }
+                      ),
+                      knowledge: committed.knowledge
+                        ? t(' and a Knowledge note')
+                        : '',
+                    }
+                  )}
                 </p>
               </div>
             ) : null}
@@ -305,9 +354,9 @@ export function LiveReportDialog({
               <details className="rounded-lg border border-border/70 bg-secondary/20 p-3.5">
                 <summary className="flex cursor-pointer items-center gap-2 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                   <FileText className="h-3.5 w-3.5 text-primary" />
-                  Full transcript
+                  {t('Full transcript')}
                   <span className="ml-auto text-[10px] normal-case tracking-normal">
-                    {segments.length} segments
+                    {t('{{count}} segments', { count: segments.length })}
                   </span>
                 </summary>
                 <div className="mt-3 max-h-64 space-y-2 overflow-y-auto pr-1">
@@ -333,7 +382,7 @@ export function LiveReportDialog({
         {!saving && !saveError ? (
           <DialogFooter className="border-t border-border/70 px-5 py-3">
             <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
-              Close
+              {t('Close')}
             </Button>
             {hasFollowUps && !committed ? (
               <Button
@@ -347,11 +396,11 @@ export function LiveReportDialog({
                 ) : (
                   <BookOpen className="h-3.5 w-3.5" />
                 )}
-                Create tasks, decisions & knowledge
+                {t('Create tasks, decisions & knowledge')}
               </Button>
             ) : null}
             <Button size="sm" onClick={onOpenMeeting} disabled={!meeting}>
-              Open meeting workspace
+              {t('Open meeting workspace')}
               <ArrowRight className="h-3.5 w-3.5" />
             </Button>
           </DialogFooter>
@@ -359,7 +408,9 @@ export function LiveReportDialog({
 
         {committedCount > 0 ? (
           <span className="sr-only">
-            {committedCount} workspace records created.
+            {t('{{count}} workspace records created.', {
+              count: committedCount,
+            })}
           </span>
         ) : null}
       </DialogContent>

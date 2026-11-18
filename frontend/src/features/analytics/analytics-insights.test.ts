@@ -211,7 +211,8 @@ describe('analytics KPI derivation', () => {
     expect(decisionsKpi).toMatchObject({ value: 2, change: '+1' });
     expect(onTimeKpi).toMatchObject({
       value: 50,
-      change: '-50 pts',
+      change: '{{delta}} pts',
+      changeVars: { delta: '-50' },
       direction: 'down',
       tone: 'negative',
     });
@@ -227,7 +228,8 @@ describe('analytics KPI derivation', () => {
     expect(decisionsKpi).toMatchObject({ value: 3, change: '+2' });
     expect(onTimeKpi).toMatchObject({
       value: 67,
-      change: '-33 pts',
+      change: '{{delta}} pts',
+      changeVars: { delta: '-33' },
       direction: 'down',
     });
   });

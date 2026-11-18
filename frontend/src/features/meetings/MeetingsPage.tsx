@@ -24,6 +24,7 @@ import { SegmentedControl } from '@/components/ui/segmented-control';
 import { useMeetings } from '@/hooks/use-workspace';
 import { buildMeetingStats, countUpcomingMeetings } from '@/lib/metrics';
 import { cn, formatDate, formatTime } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import { CreateMeetingDialog } from './components/create-meeting-dialog';
 import type { Meeting } from '@/types';
 
@@ -38,6 +39,7 @@ const platformLabels: Record<Meeting['platform'], string> = {
 type MeetingTab = 'upcoming' | 'past';
 
 export function MeetingsPage() {
+  const { t } = useI18n();
   const meetings = useMeetings();
   const [tab, setTab] = useState<MeetingTab>('upcoming');
   const [query, setQuery] = useState('');
@@ -80,7 +82,7 @@ export function MeetingsPage() {
         description={
           meetings.error instanceof Error
             ? meetings.error.message
-            : 'Meetings could not be loaded.'
+            : t('Meetings could not be loaded.')
         }
         onRetry={() => void meetings.refetch()}
       />
@@ -89,25 +91,25 @@ export function MeetingsPage() {
 
   const summary = [
     {
-      label: 'Upcoming',
+      label: t('Upcoming'),
       value: upcomingCount,
       icon: CalendarDays,
       tone: 'text-blue-400',
     },
     {
-      label: 'Analyzed',
+      label: t('Analyzed'),
       value: stats.analyzed,
       icon: FileText,
       tone: 'text-emerald-400',
     },
     {
-      label: 'Action items',
+      label: t('Action items'),
       value: stats.actionItems,
       icon: CheckCircle2,
       tone: 'text-amber-400',
     },
     {
-      label: 'Decisions',
+      label: t('Decisions'),
       value: stats.decisions,
       icon: GitBranch,
       tone: 'text-violet-400',
@@ -117,17 +119,19 @@ export function MeetingsPage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Meetings"
-        description="Schedule the conversation, capture the signal and leave with an owned brief."
+        title={t('Meetings')}
+        description={t(
+          'Schedule the conversation, capture the signal and leave with an owned brief.'
+        )}
         badge={
           <Badge variant="outline" className="bg-secondary/30">
-            {list.length} total
+            {t('{{count}} total', { count: list.length })}
           </Badge>
         }
         actions={
           <Button size="sm" onClick={() => setCreateOpen(true)}>
             <CalendarPlus className="h-3.5 w-3.5" />
-            Schedule meeting
+            {t('Schedule meeting')}
           </Button>
         }
       />
@@ -159,10 +163,10 @@ export function MeetingsPage() {
         <SegmentedControl
           value={tab}
           onValueChange={setTab}
-          label="Meeting timeline"
+          label={t('Meeting timeline')}
           options={[
-            { value: 'upcoming', label: 'Upcoming', count: upcomingCount },
-            { value: 'past', label: 'Past briefs', count: pastCount },
+            { value: 'upcoming', label: t('Upcoming'), count: upcomingCount },
+            { value: 'past', label: t('Past briefs'), count: pastCount },
           ]}
         />
 
@@ -171,9 +175,9 @@ export function MeetingsPage() {
           <Input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search meetings or agenda..."
+            placeholder={t('Search meetings or agenda...')}
             className="h-8 pl-8 text-xs"
-            aria-label="Search meetings"
+            aria-label={t('Search meetings')}
           />
         </div>
       </div>
@@ -181,19 +185,21 @@ export function MeetingsPage() {
       {filtered.length === 0 ? (
         <EmptyState
           icon={CalendarDays}
-          title={query ? 'No meetings match this search' : 'No meetings here yet'}
+          title={
+            query ? t('No meetings match this search') : t('No meetings here yet')
+          }
           description={
             query
-              ? 'Try another title, project or agenda item.'
+              ? t('Try another title, project or agenda item.')
               : tab === 'upcoming'
-                ? 'Schedule the next conversation to start building the brief.'
-                : 'Completed meetings and their briefs will appear here.'
+                ? t('Schedule the next conversation to start building the brief.')
+                : t('Completed meetings and their briefs will appear here.')
           }
           action={
             tab === 'upcoming' && !query ? (
               <Button size="sm" onClick={() => setCreateOpen(true)}>
                 <CalendarPlus className="h-3.5 w-3.5" />
-                Schedule meeting
+                {t('Schedule meeting')}
               </Button>
             ) : null
           }
@@ -218,7 +224,7 @@ export function MeetingsPage() {
                         {meeting.transcriptReady ? (
                           <Badge variant="outline">
                             <FileText className="h-3 w-3" />
-                            Transcript
+                            {t('Transcript')}
                           </Badge>
                         ) : null}
                       </div>
@@ -233,14 +239,18 @@ export function MeetingsPage() {
                         </span>
                         <span className="inline-flex items-center gap-1">
                           <Video className="h-3 w-3" />
-                          {platformLabels[meeting.platform]}
+                          {t(platformLabels[meeting.platform])}
                         </span>
-                        <span>{meeting.durationMinutes} min</span>
+                        <span>
+                          {t('{{count}} min', { count: meeting.durationMinutes })}
+                        </span>
                         {meeting.projectName ? <span>{meeting.projectName}</span> : null}
                       </p>
                       {meeting.agenda.length > 0 ? (
                         <p className="mt-1.5 line-clamp-1 text-[10px] text-muted-foreground">
-                          Agenda: {meeting.agenda.join(' · ')}
+                          {t('Agenda: {{items}}', {
+                            items: meeting.agenda.join(' · '),
+                          })}
                         </p>
                       ) : null}
                     </div>
@@ -251,7 +261,7 @@ export function MeetingsPage() {
                     <Button asChild variant="outline" size="sm" className="h-7 text-[11px]">
                       <Link to={`/meetings/${meeting.id}`}>
                         <FileText className="h-3 w-3" />
-                        {meeting.analysis ? 'Open workspace' : 'View details'}
+                        {meeting.analysis ? t('Open workspace') : t('View details')}
                       </Link>
                     </Button>
                   </div>

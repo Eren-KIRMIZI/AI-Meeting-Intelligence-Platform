@@ -8,6 +8,7 @@ import {
   isVideoRecording,
 } from '@/lib/recordings';
 import { formatDateTime } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import type { MeetingRecording } from '@/types';
 
 interface MeetingRecordingCardProps {
@@ -19,6 +20,7 @@ interface MeetingRecordingCardProps {
  * stay in the browser session, so the storage badge is explicit about it.
  */
 export function MeetingRecordingCard({ recordings }: MeetingRecordingCardProps) {
+  const { t } = useI18n();
   if (recordings.length === 0) return null;
 
   return (
@@ -26,10 +28,10 @@ export function MeetingRecordingCard({ recordings }: MeetingRecordingCardProps) 
       <CardHeader className="flex-row items-center justify-between gap-3 space-y-0 pb-3">
         <CardTitle className="flex items-center gap-2">
           <Film className="h-3.5 w-3.5 text-rose-400" />
-          Recording
+          {t('Recording')}
         </CardTitle>
         <Badge variant="outline" className="bg-secondary/30">
-          {recordings.length} file{recordings.length === 1 ? '' : 's'}
+          {t('{{count}} files', { count: recordings.length })}
         </Badge>
       </CardHeader>
       <CardContent className="space-y-3">
@@ -56,8 +58,8 @@ export function MeetingRecordingCard({ recordings }: MeetingRecordingCardProps) 
                     variant={recording.storage === 'workspace' ? 'success' : 'neutral'}
                   >
                     {recording.storage === 'workspace'
-                      ? 'Workspace storage'
-                      : 'This browser only'}
+                      ? t('Workspace storage')
+                      : t('This browser only')}
                   </Badge>
                 </div>
               </div>
@@ -66,7 +68,7 @@ export function MeetingRecordingCard({ recordings }: MeetingRecordingCardProps) 
                 <Button asChild variant="outline" size="sm" className="h-7 text-[10px]">
                   <a href={recording.url} download={recording.filename}>
                     <Download className="h-3 w-3" />
-                    Download
+                    {t('Download')}
                   </a>
                 </Button>
               ) : null}
@@ -78,7 +80,9 @@ export function MeetingRecordingCard({ recordings }: MeetingRecordingCardProps) 
                   controls
                   preload="metadata"
                   src={recording.url}
-                  aria-label={`Recording ${recording.filename}`}
+                  aria-label={t('Recording {{filename}}', {
+                    filename: recording.filename,
+                  })}
                   className="mt-3 aspect-video w-full rounded-lg border border-border/60 bg-black"
                 />
               ) : (
@@ -86,14 +90,17 @@ export function MeetingRecordingCard({ recordings }: MeetingRecordingCardProps) 
                   controls
                   preload="metadata"
                   src={recording.url}
-                  aria-label={`Recording ${recording.filename}`}
+                  aria-label={t('Recording {{filename}}', {
+                    filename: recording.filename,
+                  })}
                   className="mt-3 w-full"
                 />
               )
             ) : (
               <p className="mt-3 rounded-lg border border-dashed border-border px-3 py-2 text-[10px] text-muted-foreground">
-                The playback link has expired. Reload the page to request a fresh
-                signed link.
+                {t(
+                  'The playback link has expired. Reload the page to request a fresh signed link.'
+                )}
               </p>
             )}
           </div>

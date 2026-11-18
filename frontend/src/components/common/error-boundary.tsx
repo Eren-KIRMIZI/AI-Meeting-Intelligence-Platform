@@ -2,6 +2,7 @@ import { Component, type ErrorInfo, type ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, RefreshCw, RotateCcw, TriangleAlert } from 'lucide-react';
 import { NovaMark } from '@/components/common/nova-mark';
+import { useI18n } from '@/i18n';
 import { Button } from '@/components/ui/button';
 import { isChunkLoadError } from '@/lib/errors';
 
@@ -55,6 +56,7 @@ interface RouteErrorFallbackProps {
 }
 
 export function RouteErrorFallback({ error, reset }: RouteErrorFallbackProps) {
+  const { t } = useI18n();
   const chunkFailed = isChunkLoadError(error);
 
   return (
@@ -67,30 +69,34 @@ export function RouteErrorFallback({ error, reset }: RouteErrorFallbackProps) {
       </span>
       <h2 className="mt-3 text-sm font-semibold text-foreground">
         {chunkFailed
-          ? 'This page could not be downloaded'
-          : 'This page hit a snag'}
+          ? t('This page could not be downloaded')
+          : t('This page hit a snag')}
       </h2>
       <p className="mt-1 max-w-sm text-xs leading-relaxed text-muted-foreground">
         {chunkFailed
-          ? 'A part of the workspace did not arrive. Your data is safe — reload to fetch the latest version of this page.'
-          : 'Something unexpected interrupted this view. The rest of the workspace is still available, so you can retry or head back to the overview.'}
+          ? t(
+              'A part of the workspace did not arrive. Your data is safe — reload to fetch the latest version of this page.'
+            )
+          : t(
+              'Something unexpected interrupted this view. The rest of the workspace is still available, so you can retry or head back to the overview.'
+            )}
       </p>
       <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
         {chunkFailed ? (
           <Button size="sm" onClick={() => window.location.reload()}>
             <RotateCcw className="h-3.5 w-3.5" />
-            Reload page
+            {t('Reload page')}
           </Button>
         ) : (
           <Button size="sm" onClick={reset}>
             <RefreshCw className="h-3.5 w-3.5" />
-            Try again
+            {t('Try again')}
           </Button>
         )}
         <Button asChild variant="outline" size="sm">
           <Link to="/overview">
             <ArrowLeft className="h-3.5 w-3.5" />
-            Back to overview
+            {t('Back to overview')}
           </Link>
         </Button>
       </div>
@@ -99,21 +105,23 @@ export function RouteErrorFallback({ error, reset }: RouteErrorFallbackProps) {
 }
 
 export function AppErrorFallback() {
+  const { t } = useI18n();
   return (
     <div className="flex min-h-screen flex-col items-center justify-center gap-3 bg-background px-5 text-center">
       <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.16)]">
         <NovaMark className="h-5 w-5" />
       </div>
       <h1 className="mt-2 font-display text-2xl font-semibold tracking-[-0.03em] text-foreground">
-        Nova needs a moment
+        {t('Nova needs a moment')}
       </h1>
       <p className="max-w-sm text-sm leading-relaxed text-muted-foreground">
-        The workspace could not render this view. Your meetings, tasks and
-        decisions are safe — reload to reconnect.
+        {t(
+          'The workspace could not render this view. Your meetings, tasks and decisions are safe — reload to reconnect.'
+        )}
       </p>
       <Button className="mt-2" onClick={() => window.location.reload()}>
         <RotateCcw className="h-4 w-4" />
-        Reload Nova
+        {t('Reload Nova')}
       </Button>
     </div>
   );

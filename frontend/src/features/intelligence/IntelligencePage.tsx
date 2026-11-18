@@ -34,6 +34,7 @@ import {
 } from '@/lib/insights';
 import { aiBrief } from '@/mocks/data';
 import { cn, formatRelativeTime } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import type { Insight, InsightKind, InsightStatus } from '@/types';
 import { InsightDetailDialog } from './components/insight-detail-dialog';
 import { insightKindMeta } from './insight-meta';
@@ -82,6 +83,7 @@ function InsightCard({
   insight: Insight;
   onOpen: () => void;
 }) {
+  const { t } = useI18n();
   const meta = insightKindMeta[insight.kind];
   const Icon = meta.icon;
   const status = insightStatusMeta[insight.status];
@@ -94,9 +96,9 @@ function InsightCard({
         <div className="flex flex-wrap items-center gap-1.5">
           <Badge variant={meta.badge}>
             <Icon className="h-3 w-3" />
-            {meta.label}
+            {t(meta.label)}
           </Badge>
-          <Badge variant={status.tone}>{status.label}</Badge>
+          <Badge variant={status.tone}>{t(status.label)}</Badge>
           <span className="ml-auto text-[10px] text-muted-foreground">
             {formatRelativeTime(insight.createdAt)}
           </span>
@@ -135,7 +137,7 @@ function InsightCard({
           </div>
           <Progress
             value={confidence}
-            aria-label={`${insight.title} confidence`}
+            aria-label={t('{{title}} confidence', { title: insight.title })}
             className="mt-1.5"
           />
 
@@ -147,7 +149,7 @@ function InsightCard({
                 className="relative z-10 inline-flex min-h-6 shrink-0 items-center gap-1 py-0.5 text-primary hover:underline"
                 onClick={(event) => event.stopPropagation()}
               >
-                {conversion.label}
+                {t(conversion.label)}
                 <ArrowUpRight className="h-3 w-3" />
               </Link>
             ) : null}
@@ -157,7 +159,7 @@ function InsightCard({
       <button
         type="button"
         onClick={onOpen}
-        aria-label={`Review insight: ${insight.title}`}
+        aria-label={t('Review insight: {{title}}', { title: insight.title })}
         className="absolute inset-0 rounded-xl focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
       />
     </Card>
@@ -165,6 +167,7 @@ function InsightCard({
 }
 
 export function IntelligencePage() {
+  const { t } = useI18n();
   const meetings = useMeetings();
   const insights = useInsights();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -237,25 +240,25 @@ export function IntelligencePage() {
     icon: LucideIcon;
   }> = [
     {
-      label: 'Open queue',
+      label: t('Open queue'),
       value: openCount,
       tone: 'text-amber-400',
       icon: Sparkles,
     },
     {
-      label: 'Accepted',
+      label: t('Accepted'),
       value: acceptedCount,
       tone: 'text-emerald-400',
       icon: CheckCircle2,
     },
     {
-      label: 'Converted',
+      label: t('Converted'),
       value: convertedCount,
       tone: 'text-blue-400',
       icon: ArrowUpRight,
     },
     {
-      label: 'Avg confidence',
+      label: t('Avg confidence'),
       value: `${averageConfidence}%`,
       tone: 'text-violet-400',
       icon: BrainCircuit,
@@ -288,7 +291,7 @@ export function IntelligencePage() {
         description={
           error instanceof Error
             ? error.message
-            : 'Intelligence could not be loaded.'
+            : t('Intelligence could not be loaded.')
         }
         onRetry={() => {
           void meetings.refetch();
@@ -304,15 +307,17 @@ export function IntelligencePage() {
   return (
     <div className="space-y-5">
       <PageHeader
-        title="AI Intelligence"
-        description="The signal your meetings leave behind — summaries, decisions, risks and the actions that follow."
+        title={t('AI Intelligence')}
+        description={t(
+          'The signal your meetings leave behind — summaries, decisions, risks and the actions that follow.'
+        )}
         badge={<DataSourceBadge />}
         actions={
           briefMeeting ? (
             <Button asChild size="sm">
               <Link to={`/meetings/${briefMeeting.id}`}>
                 <FileText className="h-3.5 w-3.5" />
-                Open latest brief
+                {t('Open latest brief')}
               </Link>
             </Button>
           ) : null
@@ -356,14 +361,16 @@ export function IntelligencePage() {
                   <Sparkles className="h-3.5 w-3.5" />
                 </span>
                 <span className="text-xs font-medium text-foreground">
-                  Latest brief
+                  {t('Latest brief')}
                 </span>
                 <Badge variant={briefAnalysis ? 'success' : 'info'}>
-                  {briefAnalysis ? 'Analysis ready' : 'Sample brief'}
+                  {briefAnalysis ? t('Analysis ready') : t('Sample brief')}
                 </Badge>
               </div>
               <span className="text-[10px] text-muted-foreground">
-                Updated {formatRelativeTime(briefUpdatedAt)}
+                {t('Updated {{time}}', {
+                  time: formatRelativeTime(briefUpdatedAt),
+                })}
               </span>
             </div>
 
@@ -392,7 +399,7 @@ export function IntelligencePage() {
                       <Badge
                         variant={item.tag === 'Blocker' ? 'danger' : 'neutral'}
                       >
-                        {item.tag}
+                        {t(item.tag)}
                       </Badge>
                     </div>
                   </div>
@@ -401,8 +408,9 @@ export function IntelligencePage() {
 
               <div className="mt-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border/60 bg-secondary/20 px-3 py-2.5">
                 <p className="text-[10px] leading-relaxed text-muted-foreground">
-                  Extraction is a draft until an owner confirms it. Nothing is
-                  written to the project automatically.
+                  {t(
+                    'Extraction is a draft until an owner confirms it. Nothing is written to the project automatically.'
+                  )}
                 </p>
                 {briefMeeting ? (
                   <Button
@@ -412,7 +420,7 @@ export function IntelligencePage() {
                     className="h-7 text-[11px]"
                   >
                     <Link to={`/meetings/${briefMeeting.id}`}>
-                      Review source
+                      {t('Review source')}
                       <ArrowUpRight className="h-3 w-3" />
                     </Link>
                   </Button>
@@ -424,13 +432,13 @@ export function IntelligencePage() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle>Extraction quality</CardTitle>
+            <CardTitle>{t('Extraction quality')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
               <div className="flex items-end justify-between gap-2">
                 <span className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                  Average confidence
+                  {t('Average confidence')}
                 </span>
                 <span className="font-display text-2xl font-semibold leading-none tabular">
                   {averageConfidence}%
@@ -438,28 +446,28 @@ export function IntelligencePage() {
               </div>
               <Progress
                 value={averageConfidence}
-                aria-label="Average insight confidence"
+                aria-label={t('Average insight confidence')}
                 className="mt-2"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-2">
               {[
-                { label: 'Insights', value: insightList.length },
+                { label: t('Insights'), value: insightList.length },
                 {
-                  label: 'Actions',
+                  label: t('Actions'),
                   value: insightList.filter(
                     (insight) => insight.kind === 'action'
                   ).length,
                 },
                 {
-                  label: 'Decisions',
+                  label: t('Decisions'),
                   value: insightList.filter(
                     (insight) => insight.kind === 'decision'
                   ).length,
                 },
                 {
-                  label: 'Transcripts',
+                  label: t('Transcripts'),
                   value: list.filter((meeting) => meeting.transcriptReady)
                     .length,
                 },
@@ -481,8 +489,9 @@ export function IntelligencePage() {
             <div className="flex items-start gap-2 rounded-lg border border-border/60 bg-secondary/20 px-3 py-2.5">
               <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-emerald-400" />
               <p className="text-[10px] leading-relaxed text-muted-foreground">
-                Source transcripts stay in your workspace. Extraction never
-                crosses organization boundaries.
+                {t(
+                  'Source transcripts stay in your workspace. Extraction never crosses organization boundaries.'
+                )}
               </p>
             </div>
           </CardContent>
@@ -491,11 +500,16 @@ export function IntelligencePage() {
 
       <section className="space-y-3">
         <SectionHeader
-          title="Insight queue"
-          description="Review the signal, accept what matters and turn the rest into owned work."
+          title={t('Insight queue')}
+          description={t(
+            'Review the signal, accept what matters and turn the rest into owned work.'
+          )}
           action={
             <Badge variant="outline" className="bg-secondary/30">
-              {filtered.length} of {insightList.length} signals
+              {t('{{shown}} of {{total}} signals', {
+                shown: filtered.length,
+                total: insightList.length,
+              })}
             </Badge>
           }
         />
@@ -507,8 +521,8 @@ export function IntelligencePage() {
               <Input
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="Search title, owner, meeting or project"
-                aria-label="Search insights"
+                placeholder={t('Search title, owner, meeting or project')}
+                aria-label={t('Search insights')}
                 className="h-8 pl-8 text-xs"
               />
             </div>
@@ -518,12 +532,12 @@ export function IntelligencePage() {
                 onChange={(event) =>
                   setKindFilter(event.target.value as 'all' | InsightKind)
                 }
-                aria-label="Filter by kind"
+                aria-label={t('Filter by kind')}
                 className="h-8 text-xs"
               >
                 {kindFilters.map((option) => (
                   <option key={option.value} value={option.value}>
-                    {option.label}
+                    {t(option.label)}
                   </option>
                 ))}
               </NativeSelect>
@@ -532,12 +546,12 @@ export function IntelligencePage() {
                 onChange={(event) =>
                   setStatusFilter(event.target.value as 'all' | InsightStatus)
                 }
-                aria-label="Filter by status"
+                aria-label={t('Filter by status')}
                 className="h-8 text-xs"
               >
                 {statusFilters.map((option) => (
                   <option key={option.value} value={option.value}>
-                    {option.label}
+                    {t(option.label)}
                   </option>
                 ))}
               </NativeSelect>
@@ -554,7 +568,7 @@ export function IntelligencePage() {
                 }}
               >
                 <X className="h-3.5 w-3.5" />
-                Clear
+                {t('Clear')}
               </Button>
             ) : null}
           </CardContent>
@@ -567,13 +581,17 @@ export function IntelligencePage() {
                 icon={Sparkles}
                 title={
                   insightList.length === 0
-                    ? 'No insights yet'
-                    : 'No insights match these filters'
+                    ? t('No insights yet')
+                    : t('No insights match these filters')
                 }
                 description={
                   insightList.length === 0
-                    ? 'Analyze a meeting and its summary, decisions, actions and risks will land here for review.'
-                    : 'Clear the search or pick another kind or status to see the rest of the queue.'
+                    ? t(
+                        'Analyze a meeting and its summary, decisions, actions and risks will land here for review.'
+                      )
+                    : t(
+                        'Clear the search or pick another kind or status to see the rest of the queue.'
+                      )
                 }
               />
             </CardContent>
@@ -594,9 +612,9 @@ export function IntelligencePage() {
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-[minmax(0,1fr)_380px]">
         <Card>
           <CardHeader className="flex-row items-center justify-between gap-3 space-y-0 pb-3">
-            <CardTitle>Analyzed meetings</CardTitle>
+            <CardTitle>{t('Analyzed meetings')}</CardTitle>
             <Badge variant="outline" className="bg-secondary/30">
-              {analyzed.length} ready
+              {t('{{count}} ready', { count: analyzed.length })}
             </Badge>
           </CardHeader>
           <CardContent className="p-0">
@@ -604,8 +622,10 @@ export function IntelligencePage() {
               <div className="px-5 pb-5">
                 <EmptyState
                   icon={BrainCircuit}
-                  title="No analyzed meetings yet"
-                  description="Once a meeting finishes processing, its brief and extracted signal will appear here."
+                  title={t('No analyzed meetings yet')}
+                  description={t(
+                    'Once a meeting finishes processing, its brief and extracted signal will appear here.'
+                  )}
                 />
               </div>
             ) : (
@@ -622,12 +642,14 @@ export function IntelligencePage() {
                         </p>
                         <MeetingStatusBadge status={meeting.status} />
                         {meeting.transcriptReady ? (
-                          <Badge variant="success">Transcript</Badge>
+                          <Badge variant="success">{t('Transcript')}</Badge>
                         ) : null}
                       </div>
                       <p className="mt-1 line-clamp-1 text-[11px] text-muted-foreground">
                         {meeting.summary ??
-                          'Processing — the brief will appear when extraction finishes.'}
+                          t(
+                            'Processing — the brief will appear when extraction finishes.'
+                          )}
                       </p>
                     </div>
                     <Button
@@ -638,7 +660,9 @@ export function IntelligencePage() {
                     >
                       <Link to={`/meetings/${meeting.id}`}>
                         <FileText className="h-3 w-3" />
-                        {meeting.analysis ? 'Open workspace' : 'Run analysis'}
+                        {meeting.analysis
+                          ? t('Open workspace')
+                          : t('Run analysis')}
                       </Link>
                     </Button>
                   </div>
@@ -650,7 +674,7 @@ export function IntelligencePage() {
 
         <Card>
           <CardHeader className="pb-3">
-            <CardTitle>How intelligence works</CardTitle>
+            <CardTitle>{t('How intelligence works')}</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {pipeline.map((step, index) => {
@@ -667,10 +691,10 @@ export function IntelligencePage() {
                   </div>
                   <div className="min-w-0 pt-0.5">
                     <p className="text-xs font-medium text-foreground">
-                      {step.title}
+                      {t(step.title)}
                     </p>
                     <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
-                      {step.description}
+                      {t(step.description)}
                     </p>
                   </div>
                 </div>
@@ -678,8 +702,9 @@ export function IntelligencePage() {
             })}
             {!isSupabaseConfigured ? (
               <div className="rounded-lg border border-border/60 bg-secondary/20 px-3 py-2.5 text-[10px] leading-relaxed text-muted-foreground">
-                This workspace is running in demo mode. The extraction layer
-                uses prepared sample output until a provider is connected.
+                {t(
+                  'This workspace is running in demo mode. The extraction layer uses prepared sample output until a provider is connected.'
+                )}
               </div>
             ) : null}
           </CardContent>

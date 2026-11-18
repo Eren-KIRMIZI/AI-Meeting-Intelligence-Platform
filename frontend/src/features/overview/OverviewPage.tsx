@@ -15,6 +15,7 @@ import {
 } from '@/hooks/use-workspace';
 import { buildDashboardStats } from '@/lib/metrics';
 import { getGreeting } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import { CreateProjectDialog } from '@/features/projects/components/create-project-dialog';
 import { CreateTaskDialog } from '@/features/tasks/components/create-task-dialog';
 import { CreateMeetingDialog } from '@/features/meetings/components/create-meeting-dialog';
@@ -27,6 +28,7 @@ import { IntegrationsCard } from './components/integrations-card';
 
 export function OverviewPage() {
   const { user, orgName } = useAuth();
+  const { t } = useI18n();
   const projects = useProjects();
   const tasks = useTasks();
   const meetings = useMeetings();
@@ -54,7 +56,7 @@ export function OverviewPage() {
     return (
       <ErrorState
         description={
-          error instanceof Error ? error.message : 'The workspace did not load.'
+          error instanceof Error ? error.message : t('The workspace did not load.')
         }
         onRetry={() => {
           void projects.refetch();
@@ -76,7 +78,10 @@ export function OverviewPage() {
     <div className="space-y-5">
       <PageHeader
         title={`${getGreeting()}, ${firstName}`}
-        description={`Here is what is moving across ${orgName ?? 'your workspace'} today — projects, decisions and the meetings that connect them.`}
+        description={t(
+          'Here is what is moving across {{workspace}} today — projects, decisions and the meetings that connect them.',
+          { workspace: orgName ?? t('your workspace') }
+        )}
         actions={
           <>
             <Button
@@ -85,11 +90,11 @@ export function OverviewPage() {
               onClick={() => setMeetingDialogOpen(true)}
             >
               <CalendarPlus className="h-3.5 w-3.5" />
-              Schedule meeting
+              {t('Schedule meeting')}
             </Button>
             <Button size="sm" onClick={() => setProjectDialogOpen(true)}>
               <Plus className="h-3.5 w-3.5" />
-              New project
+              {t('New project')}
             </Button>
           </>
         }
@@ -107,7 +112,7 @@ export function OverviewPage() {
 
           <div className="flex items-center justify-between gap-2">
             <p className="text-[11px] font-medium text-muted-foreground">
-              Board preview
+              {t('Board preview')}
             </p>
             <div className="flex items-center gap-1 rounded-lg border border-border/70 bg-secondary/30 p-0.5">
               <Button
@@ -116,7 +121,7 @@ export function OverviewPage() {
                 className="h-7 px-2.5 text-[11px]"
                 onClick={() => setBoardView('board')}
               >
-                Board
+                {t('Board')}
               </Button>
               <Button
                 variant={boardView === 'list' ? 'secondary' : 'ghost'}
@@ -124,7 +129,7 @@ export function OverviewPage() {
                 className="h-7 px-2.5 text-[11px]"
                 onClick={() => setBoardView('list')}
               >
-                List
+                {t('List')}
               </Button>
             </div>
           </div>
@@ -138,7 +143,7 @@ export function OverviewPage() {
           <IntegrationsCard integrations={integrations.data ?? []} />
 
           <div className="flex items-center justify-between rounded-lg border border-border/60 bg-secondary/20 px-3 py-2 text-[10px] text-muted-foreground">
-            <span>Workspace data is refreshed automatically.</span>
+            <span>{t('Workspace data is refreshed automatically.')}</span>
             <Button
               variant="ghost"
               size="sm"
@@ -152,7 +157,7 @@ export function OverviewPage() {
               }}
             >
               <RefreshCw className="h-3 w-3" />
-              Refresh
+              {t('Refresh')}
             </Button>
           </div>
         </div>

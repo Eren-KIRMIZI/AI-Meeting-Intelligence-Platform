@@ -12,6 +12,7 @@ import {
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { allNavItems } from '@/lib/navigation';
 import { cn, formatDate } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import { useUiStore } from '@/stores/ui-store';
 import { useAuth } from '@/features/auth/auth-provider';
 import {
@@ -33,6 +34,7 @@ interface CommandResult {
 export function CommandPalette() {
   const navigate = useNavigate();
   const { orgName } = useAuth();
+  const { t } = useI18n();
   const open = useUiStore((state) => state.commandOpen);
   const setOpen = useUiStore((state) => state.setCommandOpen);
 
@@ -48,8 +50,8 @@ export function CommandPalette() {
     const navigation: CommandResult[] = allNavItems.map((item) => ({
       id: `nav-${item.path}`,
       group: 'Navigate',
-      label: item.label,
-      hint: item.description,
+      label: t(item.label),
+      hint: t(item.description),
       icon: item.icon,
       path: item.path,
     }));
@@ -104,7 +106,7 @@ export function CommandPalette() {
       ...meetingResults,
       ...teamResults,
     ];
-  }, [projects.data, tasks.data, meetings.data, team.data]);
+  }, [projects.data, tasks.data, meetings.data, team.data, t]);
 
   const groups = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -179,10 +181,11 @@ export function CommandPalette() {
         hideClose
         className="max-w-xl gap-0 overflow-hidden p-0"
       >
-        <DialogTitle className="sr-only">Command menu</DialogTitle>
+        <DialogTitle className="sr-only">{t('Command menu')}</DialogTitle>
         <DialogDescription className="sr-only">
-          Search for projects, tasks, meetings and team members, or jump to a
-          workspace module.
+          {t(
+            'Search for projects, tasks, meetings and team members, or jump to a workspace module.'
+          )}
         </DialogDescription>
 
         <div className="flex h-12 items-center gap-2.5 border-b border-border px-4">
@@ -195,8 +198,8 @@ export function CommandPalette() {
               setActiveIndex(0);
             }}
             onKeyDown={handleKeyDown}
-            placeholder="Search workspace or jump to..."
-            aria-label="Search workspace"
+            placeholder={t('Search workspace or jump to...')}
+            aria-label={t('Search workspace')}
             role="combobox"
             aria-expanded="true"
             aria-controls="command-results"
@@ -208,21 +211,21 @@ export function CommandPalette() {
         <div
           id="command-results"
           role="listbox"
-          aria-label="Workspace results"
+          aria-label={t('Workspace results')}
           className="max-h-[400px] overflow-y-auto p-2"
         >
           {flat.length === 0 ? (
             <div className="px-4 py-10 text-center">
-              <p className="text-sm font-medium text-foreground">No results</p>
+              <p className="text-sm font-medium text-foreground">{t('No results')}</p>
               <p className="mt-1 text-xs text-muted-foreground">
-                Try a project name, task, meeting or team member.
+                {t('Try a project name, task, meeting or team member.')}
               </p>
             </div>
           ) : (
             groups.map(([group, items]) => (
               <div key={group} className="mb-1 last:mb-0">
                 <p className="px-2.5 pb-1 pt-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  {group}
+                  {t(group)}
                 </p>
                 <div className="space-y-0.5">
                   {items.map((result) => {
@@ -278,11 +281,11 @@ export function CommandPalette() {
           <span className="flex items-center gap-1.5">
             <kbd className="kbd">↑</kbd>
             <kbd className="kbd">↓</kbd>
-            to navigate
+            {t('to navigate')}
             <kbd className="kbd ml-1">↵</kbd>
-            to open
+            {t('to open')}
           </span>
-          <span className="truncate">{orgName ?? 'Workspace'}</span>
+          <span className="truncate">{orgName ?? t('Workspace')}</span>
         </div>
       </DialogContent>
     </Dialog>

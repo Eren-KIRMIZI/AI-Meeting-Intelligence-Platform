@@ -30,11 +30,13 @@ import {
 } from '@/components/ui/table';
 import { useDecisions } from '@/hooks/use-workspace';
 import { cn, downloadCsv, formatDate } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import type { DecisionStatus } from '@/types';
 import { DecisionDetailDialog } from './components/decision-detail-dialog';
 import { decisionFilters, decisionImpactVariant } from './decision-meta';
 
 export function DecisionsPage() {
+  const { t } = useI18n();
   const decisions = useDecisions();
   const [searchParams, setSearchParams] = useSearchParams();
   const [filter, setFilter] = useState<'all' | DecisionStatus>('all');
@@ -76,7 +78,7 @@ export function DecisionsPage() {
         description={
           decisions.error instanceof Error
             ? decisions.error.message
-            : 'Decisions could not be loaded.'
+            : t('Decisions could not be loaded.')
         }
         onRetry={() => void decisions.refetch()}
       />
@@ -88,15 +90,15 @@ export function DecisionsPage() {
   const highImpact = list.filter((decision) => decision.impact === 'high').length;
 
   const summary = [
-    { label: 'Total decisions', value: list.length, icon: GitBranch, tone: 'text-blue-400' },
-    { label: 'Accepted', value: accepted, icon: CheckCircle2, tone: 'text-emerald-400' },
-    { label: 'Awaiting review', value: proposed, icon: Clock3, tone: 'text-amber-400' },
-    { label: 'High impact', value: highImpact, icon: Target, tone: 'text-rose-400' },
+    { label: t('Total decisions'), value: list.length, icon: GitBranch, tone: 'text-blue-400' },
+    { label: t('Accepted'), value: accepted, icon: CheckCircle2, tone: 'text-emerald-400' },
+    { label: t('Awaiting review'), value: proposed, icon: Clock3, tone: 'text-amber-400' },
+    { label: t('High impact'), value: highImpact, icon: Target, tone: 'text-rose-400' },
   ];
 
   const exportDecisions = () => {
     if (filtered.length === 0) {
-      toast.error('There are no decisions to export');
+      toast.error(t('There are no decisions to export'));
       return;
     }
     downloadCsv(
@@ -112,23 +114,25 @@ export function DecisionsPage() {
         Context: decision.context,
       }))
     );
-    toast.success('Decision log exported');
+    toast.success(t('Decision log exported'));
   };
 
   return (
     <div className="space-y-5">
       <PageHeader
-        title="Decisions"
-        description="A durable log of what was decided, who owns it and which conversation it came from. Open a decision to change its status."
+        title={t('Decisions')}
+        description={t(
+          'A durable log of what was decided, who owns it and which conversation it came from. Open a decision to change its status.'
+        )}
         badge={
           <Badge variant="outline" className="bg-secondary/30">
-            {list.length} logged
+            {t('{{count}} logged', { count: list.length })}
           </Badge>
         }
         actions={
           <Button variant="outline" size="sm" onClick={exportDecisions}>
             <Download className="h-3.5 w-3.5" />
-            Export CSV
+            {t('Export CSV')}
           </Button>
         }
       />
@@ -167,7 +171,7 @@ export function DecisionsPage() {
                 className="h-7 text-[11px]"
                 onClick={() => setFilter(item.value)}
               >
-                {item.label}
+                {t(item.label)}
               </Button>
             ))}
           </div>
@@ -176,9 +180,9 @@ export function DecisionsPage() {
             <Input
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search decisions..."
+              placeholder={t('Search decisions...')}
               className="h-8 pl-8 text-xs"
-              aria-label="Search decisions"
+              aria-label={t('Search decisions')}
             />
           </div>
         </CardContent>
@@ -187,8 +191,10 @@ export function DecisionsPage() {
       {filtered.length === 0 ? (
         <EmptyState
           icon={GitBranch}
-          title="No decisions match this view"
-          description="Try another status or search term. Accepted decisions from meetings appear here automatically."
+          title={t('No decisions match this view')}
+          description={t(
+            'Try another status or search term. Accepted decisions from meetings appear here automatically.'
+          )}
         />
       ) : (
         <Card>
@@ -196,12 +202,12 @@ export function DecisionsPage() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Decision</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="hidden sm:table-cell">Impact</TableHead>
-                  <TableHead className="hidden md:table-cell">Owner</TableHead>
-                  <TableHead className="hidden lg:table-cell">Source</TableHead>
-                  <TableHead className="text-right">Decided</TableHead>
+                  <TableHead>{t('Decision')}</TableHead>
+                  <TableHead>{t('Status')}</TableHead>
+                  <TableHead className="hidden sm:table-cell">{t('Impact')}</TableHead>
+                  <TableHead className="hidden md:table-cell">{t('Owner')}</TableHead>
+                  <TableHead className="hidden lg:table-cell">{t('Source')}</TableHead>
+                  <TableHead className="text-right">{t('Decided')}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -234,7 +240,7 @@ export function DecisionsPage() {
                     </TableCell>
                     <TableCell className="hidden sm:table-cell">
                       <Badge variant={decisionImpactVariant[decision.impact]}>
-                        {decision.impact}
+                        {t(decision.impact)}
                       </Badge>
                     </TableCell>
                     <TableCell className="hidden md:table-cell">

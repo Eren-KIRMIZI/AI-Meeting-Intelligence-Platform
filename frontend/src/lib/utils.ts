@@ -1,5 +1,13 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import {
+  formatDate as formatDateI18n,
+  formatDateTime as formatDateTimeI18n,
+  formatDueDate as formatDueDateI18n,
+  formatRelativeTime as formatRelativeTimeI18n,
+  formatTime as formatTimeI18n,
+  getGreeting as getGreetingI18n,
+} from '@/i18n/format';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -61,41 +69,19 @@ export function formatDate(
   value: string | Date,
   options: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' }
 ) {
-  const date = typeof value === 'string' ? new Date(value) : value;
-  if (Number.isNaN(date.getTime())) return '—';
-  return new Intl.DateTimeFormat('en-US', options).format(date);
+  return formatDateI18n(value, options);
 }
 
 export function formatTime(value: string | Date) {
-  const date = typeof value === 'string' ? new Date(value) : value;
-  if (Number.isNaN(date.getTime())) return '—';
-  return new Intl.DateTimeFormat('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-  }).format(date);
+  return formatTimeI18n(value);
 }
 
 export function formatDateTime(value: string | Date) {
-  return `${formatDate(value, { month: 'short', day: 'numeric' })} · ${formatTime(value)}`;
+  return formatDateTimeI18n(value);
 }
 
 export function formatRelativeTime(value: string | Date) {
-  const date = typeof value === 'string' ? new Date(value) : value;
-  if (Number.isNaN(date.getTime())) return '—';
-
-  const diffMs = Date.now() - date.getTime();
-  const diffMinutes = Math.round(diffMs / 60000);
-
-  if (diffMinutes < 1) return 'just now';
-  if (diffMinutes < 60) return `${diffMinutes}m ago`;
-
-  const diffHours = Math.round(diffMinutes / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
-
-  const diffDays = Math.round(diffHours / 24);
-  if (diffDays < 7) return `${diffDays}d ago`;
-
-  return formatDate(date, { month: 'short', day: 'numeric' });
+  return formatRelativeTimeI18n(value);
 }
 
 export function formatDuration(durationMs: number) {
@@ -114,31 +100,11 @@ export function isOverdue(value: string | null) {
 }
 
 export function formatDueDate(value: string | null) {
-  if (!value) return 'No due date';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return 'No due date';
-
-  const today = new Date();
-  const startOfToday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-  const startOfDue = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-  const diffDays = Math.round(
-    (startOfDue.getTime() - startOfToday.getTime()) / 86_400_000
-  );
-
-  if (diffDays === 0) return 'Today';
-  if (diffDays === 1) return 'Tomorrow';
-  if (diffDays === -1) return 'Yesterday';
-  if (diffDays > 1 && diffDays < 7) {
-    return formatDate(date, { weekday: 'short' });
-  }
-  return formatDate(date, { month: 'short', day: 'numeric' });
+  return formatDueDateI18n(value);
 }
 
 export function getGreeting() {
-  const hour = new Date().getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 18) return 'Good afternoon';
-  return 'Good evening';
+  return getGreetingI18n();
 }
 
 export function downloadCsv(filename: string, rows: Array<Record<string, unknown>>) {

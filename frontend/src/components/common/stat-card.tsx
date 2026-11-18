@@ -17,6 +17,7 @@ import {
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
 import { accentConfig } from '@/lib/status';
+import { useI18n } from '@/i18n';
 import type { DashboardStat } from '@/types';
 
 const statIcons: Record<string, LucideIcon> = {
@@ -42,6 +43,7 @@ const toneClasses = {
 } as const;
 
 export function StatCard({ stat, className }: StatCardProps) {
+  const { t } = useI18n();
   const accent = accentConfig[stat.accent];
   const tone = stat.tone ?? 'neutral';
   const Icon = statIcons[stat.id] ?? Activity;
@@ -76,7 +78,7 @@ export function StatCard({ stat, className }: StatCardProps) {
               <Icon className="h-4 w-4" />
             </span>
             <span className="truncate text-xs font-medium text-muted-foreground">
-              {stat.label}
+              {t(stat.label)}
             </span>
           </div>
           <span className={cn('h-1.5 w-1.5 rounded-full', accent.solidBg)} />
@@ -95,9 +97,9 @@ export function StatCard({ stat, className }: StatCardProps) {
                 )}
               >
                 <TrendIcon className="h-3 w-3" />
-                {stat.change}
+                {t(stat.change, stat.changeVars)}
               </span>
-              <span className="text-muted-foreground">{stat.period}</span>
+              <span className="text-muted-foreground">{t(stat.period)}</span>
             </div>
           </div>
 

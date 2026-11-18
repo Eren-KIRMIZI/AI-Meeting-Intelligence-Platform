@@ -7,21 +7,23 @@ import { EmptyState } from '@/components/common/empty-state';
 import { ProjectStatusBadge } from '@/components/common/status-badges';
 import { accentConfig } from '@/lib/status';
 import { cn, formatDueDate } from '@/lib/utils';
+import { useI18n } from '@/i18n';
 import type { Project } from '@/types';
 
 export function ProjectOverview({ projects }: { projects: Project[] }) {
+  const { t } = useI18n();
   return (
     <Card>
       <CardHeader className="flex-row items-start justify-between gap-3 space-y-0 pb-3">
         <div>
-          <CardTitle>Project overview</CardTitle>
+          <CardTitle>{t('Project overview')}</CardTitle>
           <CardDescription className="mt-1">
-            Portfolio health across active work
+            {t('Portfolio health across active work')}
           </CardDescription>
         </div>
         <Button asChild variant="ghost" size="sm" className="shrink-0">
           <Link to="/projects">
-            View all
+            {t('View all')}
             <ChevronRight className="h-3.5 w-3.5" />
           </Link>
         </Button>
@@ -32,8 +34,10 @@ export function ProjectOverview({ projects }: { projects: Project[] }) {
           <div className="px-5 pb-5">
             <EmptyState
               icon={FolderKanban}
-              title="No projects match this filter"
-              description="Try a different status filter or create a new project."
+              title={t('No projects match this filter')}
+              description={t(
+                'Try a different status filter or create a new project.'
+              )}
             />
           </div>
         ) : (
@@ -72,7 +76,7 @@ export function ProjectOverview({ projects }: { projects: Project[] }) {
                   <div className="hidden shrink-0 items-center gap-6 sm:flex">
                     <div className="text-right">
                       <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                        Tasks
+                        {t('Tasks')}
                       </p>
                       <p className="mt-0.5 text-xs tabular text-foreground">
                         {project.completedTasks}/{project.taskCount}
@@ -80,7 +84,7 @@ export function ProjectOverview({ projects }: { projects: Project[] }) {
                     </div>
                     <div className="hidden text-right md:block">
                       <p className="text-[10px] uppercase tracking-wide text-muted-foreground">
-                        Due
+                        {t('Due')}
                       </p>
                       <p className="mt-0.5 text-xs text-foreground">
                         {formatDueDate(project.dueDate)}
