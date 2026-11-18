@@ -20,6 +20,7 @@ const iconMap: Record<string, LucideIcon> = {
 const providerAccent: Record<string, string> = {
   google_calendar: 'border-blue-500/20 bg-blue-500/10 text-blue-400',
   google_meet: 'border-emerald-500/20 bg-emerald-500/10 text-emerald-400',
+  microsoft_outlook: 'border-sky-500/20 bg-sky-500/10 text-sky-400',
   microsoft_teams: 'border-violet-500/20 bg-violet-500/10 text-violet-400',
   slack: 'border-amber-500/20 bg-amber-500/10 text-amber-400',
   zoom: 'border-sky-500/20 bg-sky-500/10 text-sky-400',

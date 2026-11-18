@@ -100,6 +100,8 @@ export interface Meeting {
   projectName?: string;
   participants: UserProfile[];
   agenda: string[];
+  /** Minutes before the start that Nova should remind participants. */
+  reminderMinutes?: number[];
   summary?: string;
   actionItems: string[];
   decisions: string[];
@@ -387,6 +389,10 @@ export type IntegrationStatus = 'connected' | 'available' | 'error';
 
 export type IntegrationIcon = 'calendar' | 'video' | 'chat' | 'mail' | 'storage';
 
+export type IntegrationSyncDirection = 'inbound' | 'outbound' | 'two_way';
+
+export type IntegrationHealth = 'healthy' | 'attention' | 'offline';
+
 export interface Integration {
   id: string;
   provider: string;
@@ -395,6 +401,112 @@ export interface Integration {
   status: IntegrationStatus;
   category: string;
   icon: IntegrationIcon;
+  syncDirection: IntegrationSyncDirection;
+  lastSyncedAt: string | null;
+  nextSyncAt: string | null;
+  syncedItems: number;
+  accountLabel?: string;
+  health: IntegrationHealth;
+}
+
+export type IntegrationSyncStatus = 'success' | 'partial' | 'failed';
+
+export interface IntegrationSyncEvent {
+  id: string;
+  integrationId: string;
+  provider: string;
+  direction: IntegrationSyncDirection;
+  status: IntegrationSyncStatus;
+  itemCount: number;
+  startedAt: string;
+  durationMs: number;
+  summary: string;
+}
+
+/** A normalised, searchable record built from workspace data. */
+export type SearchResultKind =
+  | 'meeting'
+  | 'transcript'
+  | 'decision'
+  | 'task'
+  | 'person'
+  | 'project'
+  | 'knowledge';
+
+export interface SearchResult {
+  id: string;
+  kind: SearchResultKind;
+  title: string;
+  excerpt: string;
+  /** Full searchable text used for ranking and snippet extraction. */
+  content: string;
+  /** In-app deep link to the record that produced this result. */
+  path: string;
+  projectId?: string;
+  projectName?: string;
+  participantIds: string[];
+  date: string;
+  /** Relevance score computed against the active query. */
+  score: number;
+  meta?: string;
+}
+
+export interface SearchFilters {
+  query: string;
+  kinds: SearchResultKind[];
+  personId: string | null;
+  projectId: string | null;
+  from: string | null;
+  to: string | null;
+}
+
+export interface SearchIndexInput {
+  meetings: Meeting[];
+  tasks: Task[];
+  decisions: Decision[];
+  knowledge: KnowledgeDocument[];
+  projects: Project[];
+  team: TeamMember[];
+}
+
+export type CalendarEventKind = 'meeting' | 'external' | 'focus';
+
+export type CalendarEventSource = 'nova' | 'google_calendar' | 'microsoft_outlook';
+
+export interface CalendarEvent {
+  id: string;
+  meetingId?: string;
+  title: string;
+  startsAt: string;
+  durationMinutes: number;
+  kind: CalendarEventKind;
+  platform?: MeetingPlatform;
+  projectId?: string;
+  projectName?: string;
+  participantIds: string[];
+  location?: string;
+  source: CalendarEventSource;
+  reminderMinutes: number[];
+  status: 'confirmed' | 'tentative' | 'cancelled';
+}
+
+export interface CalendarConflict {
+  eventId: string;
+  withEventId: string;
+  startsAt: string;
+  overlapMinutes: number;
+  severity: 'full' | 'partial';
+}
+
+export type ReminderStatus = 'pending' | 'sent' | 'dismissed';
+
+export interface ScheduleReminder {
+  eventId: string;
+  meetingId?: string;
+  title: string;
+  remindAt: string;
+  minutesBefore: number;
+  status: ReminderStatus;
 }
 
 export type NotificationType =
@@ -518,6 +630,8 @@ export interface CreateMeetingInput {
   durationMinutes: number;
   platform: MeetingPlatform;
   agenda: string[];
+  participantIds?: string[];
+  reminderMinutes?: number[];
 }
 
 export interface CreateWorkflowInput {

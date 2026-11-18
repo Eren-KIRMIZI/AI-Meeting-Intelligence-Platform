@@ -312,6 +312,43 @@ Kontroller:
 
 ---
 
+## Takvim ve planlama
+
+Takvim, Nova toplantılarını ve bağlı sağlayıcı etkinliklerini tek bir ajandada birleştirir; planlama çalışma alanından çıkmaz.
+
+- **İki görünüm.** Hafta ve ay ızgaraları aynı etkinlik verisini kullanır ve Ayarlar'daki hafta başlangıcı tercihine uyar. Izgara hesapları (`weekDays`, `monthGrid`, `eventsInRange`) `src/lib/scheduling.ts` içinde olduğu için görünümler birbirinden kopamaz.
+- **Çakışma tespiti.** `detectConflicts` çakışan her çifti karşılaştırır, çakışmayı dakika olarak bildirir ve tamamen kapsanan etkinliği `full`, kenarı kesilen etkinliği `partial` olarak işaretler. Çakışan kartlar gül rengi bir halka alır ve ajanda çakışma sayısını gösterir.
+- **Hatırlatmalar.** Bir toplantı `reminderMinutes` saklar; `buildReminders` bunları önümüzdeki 72 saat için bekleyen veya gönderilmiş satırlara dönüştürür, böylece yan panel arka plan işçisi olmadan da doğru kalır.
+- **Boş aralıklar.** `findFreeSlots` dolu etkinliklerin çevresinde çalışma saatleri içindeki boşlukları döndürür. **Bu aralığı kullan** planlama penceresini önerilen başlangıç saatiyle önceden doldurur.
+- **Yerinde planlama.** `CreateMeetingDialog` başlık, tarih/saat, süre, platform, gündem, katılımcılar ve hatırlatma toplar. `createMeeting` katılımcı listesini ve hatırlatmayı kaydeder, ardından takvim ve toplantı sorgularını geçersiz kılar; yeni etkinlik hemen görünür.
+- **Kaynaklar.** Nova toplantıları ve harici sağlayıcı etkinlikleri yan yana yaşar; her etkinlik `source` bilgisini (`nova`, `google_calendar`, `microsoft_outlook`) korur ve harici etkinlikler böyle etiketlenir.
+
+---
+
+## Merkezi arama
+
+Arama, çalışma alanı üzerinde tek bir dizindir; yedi ayrı filtre değildir.
+
+- **Tek dizin, yedi tür.** `buildSearchIndex` toplantıları, transkriptleri, kararları, görevleri, kişileri, projeleri ve bilgi belgelerini `SearchResult` kayıtlarına indirger. Her sonuç bir derin bağlantı taşır; transkript isabeti `/meetings/<id>?tab=transcript`, görev isabeti `/tasks?task=<id>` açar.
+- **Türkçe farkındalıklı sıralama.** `normalizeText` `ç ğ ı İ ö ş ü` harflerini sadeleştirir, böylece `ayse` araması `Ayşe`yi bulur. Her sorgu kelimesi eşleşmek zorundadır, başlık eşleşmeleri gövde eşleşmelerinden daha ağır basar ve eşitlikte güncellik belirleyicidir.
+- **Filtreler.** Tür çipleri, kişi, proje ve başlangıç/bitiş tarihi aynı sonuç kümesini daraltır; etkin filtre sayısı görünür ve tek tıkla temizlenir.
+- **Özetler ve vurgular.** `snippetFor` özeti ilk eşleşen kelimenin çevresine ortalar ve arayüz eşleşen her kelimeyi işaretler; böylece uzun bir transkript neden eşleştiğini gizlemez.
+- **Paylaşılabilir durum.** Sorgu `/search?q=` içinde saklanır ve boş sorgu boş sayfa yerine güncelliğe göre sıralanmış bir çalışma alanı akışı gösterir.
+
+---
+
+## Entegrasyon merkezi
+
+Entegrasyon merkezi; takvimler, video platformları ve mesajlaşma araçları için bağlantı yüzeyidir.
+
+- **Sağlayıcılar.** Google Calendar, Microsoft Outlook, Google Meet, Zoom, Microsoft Teams, Slack ve Google Drive. Her kart bağlantı durumunu, eşitleme yönünü, sağlığı, hesabı, eşitlenen öğe sayısını, son eşitlemeyi ve planlanan sonraki eşitlemeyi gösterir.
+- **Bağlan ve eşitle.** Bir sağlayıcıyı bağlamak veya ayırmak tek bir anahtardır. **Şimdi eşitle** işçiyi çalıştırır ve yön, öğe sayısı, süre ve okunabilir bir özet içeren bir `IntegrationSyncEvent` ekler.
+- **Canlı jetonlar sunucuda kalır.** Demo modu işçiyi `mocks/db.ts` içinde simüle eder; canlı mod `/api/integrations/sync` adresindeki sunucu işçisine istek atar, böylece sağlayıcı jetonları tarayıcıya hiç ulaşmaz. Bu işçi demo moduyla değil, canlı Supabase dağıtımıyla gelir.
+- **Etkinlik günlüğü.** Günlük `success`, `partial` ve `failed` çalışmalarını göreli zaman damgalarıyla kaydeder; böylece jeton yenileme veya hâlâ işlenen bir transkript sessiz kalmak yerine görünür olur.
+- **Zincirleme etkiler.** Başarılı bir eşitleme entegrasyonları, eşitleme olaylarını, takvimi ve toplantıları geçersiz kılar; içe aktarılan etkinlikler sayfa yenilenmeden `/calendar` üzerinde görünür.
+
+---
+
 ## Nova Live
 
 Nova Live toplantıyı çalışma alanının içinde yürütür: video/ses, ekran paylaşımı, sohbet, canlı altyazılar, transkripte dayalı bir copilot ve görevlere, kararlara ve bir Knowledge notuna dönüşen bir rapor.

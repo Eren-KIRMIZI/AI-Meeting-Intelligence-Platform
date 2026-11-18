@@ -4,8 +4,11 @@ import type {
   DecisionStatus,
   InsightKind,
   InsightStatus,
+  IntegrationHealth,
   IntegrationIcon,
   IntegrationStatus,
+  IntegrationSyncDirection,
+  IntegrationSyncStatus,
   KnowledgeKind,
   MeetingPlatform,
   MeetingStatus,
@@ -76,6 +79,27 @@ export const asIntegrationIcon = (value: string | null) =>
     value ?? 'video',
     ['calendar', 'video', 'chat', 'mail', 'storage'],
     'video'
+  );
+
+export const asIntegrationSyncDirection = (value: string | null) =>
+  pick<IntegrationSyncDirection>(
+    value ?? 'inbound',
+    ['inbound', 'outbound', 'two_way'],
+    'inbound'
+  );
+
+export const asIntegrationHealth = (value: string | null) =>
+  pick<IntegrationHealth>(
+    value ?? 'offline',
+    ['healthy', 'attention', 'offline'],
+    'offline'
+  );
+
+export const asIntegrationSyncStatus = (value: string) =>
+  pick<IntegrationSyncStatus>(
+    value,
+    ['success', 'partial', 'failed'],
+    'success'
   );
 
 export const asOrgRole = (value: string) =>

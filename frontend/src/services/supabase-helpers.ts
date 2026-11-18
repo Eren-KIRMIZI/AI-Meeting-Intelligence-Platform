@@ -178,6 +178,12 @@ export interface IntegrationRow {
   status: string;
   category: string | null;
   icon: string | null;
+  sync_direction?: string | null;
+  last_synced_at?: string | null;
+  next_sync_at?: string | null;
+  synced_items?: number | null;
+  account_label?: string | null;
+  health?: string | null;
 }
 
 export interface OrgMemberRow {

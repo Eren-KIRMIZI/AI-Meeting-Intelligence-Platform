@@ -36,6 +36,21 @@ const MeetingsPage = lazy(() =>
     default: module.MeetingsPage,
   }))
 );
+const CalendarPage = lazy(() =>
+  import('@/features/calendar/CalendarPage').then((module) => ({
+    default: module.CalendarPage,
+  }))
+);
+const SearchPage = lazy(() =>
+  import('@/features/search/SearchPage').then((module) => ({
+    default: module.SearchPage,
+  }))
+);
+const IntegrationsPage = lazy(() =>
+  import('@/features/integrations/IntegrationsPage').then((module) => ({
+    default: module.IntegrationsPage,
+  }))
+);
 const MeetingDetailPage = lazy(() =>
   import('@/features/meetings/MeetingDetailPage').then((module) => ({
     default: module.MeetingDetailPage,
@@ -145,10 +160,13 @@ export function AppRoutes() {
           <Route path="/tasks" element={<TasksPage />} />
           <Route path="/meetings" element={<MeetingsPage />} />
           <Route path="/meetings/:meetingId" element={<MeetingDetailPage />} />
+          <Route path="/calendar" element={<CalendarPage />} />
+          <Route path="/search" element={<SearchPage />} />
           <Route path="/live" element={<LiveLobbyPage />} />
           <Route path="/decisions" element={<DecisionsPage />} />
           <Route path="/knowledge" element={<KnowledgePage />} />
           <Route path="/workflows" element={<WorkflowsPage />} />
+          <Route path="/integrations" element={<IntegrationsPage />} />
           <Route path="/intelligence" element={<IntelligencePage />} />
           <Route path="/analytics" element={<AnalyticsPage />} />
           <Route path="/team" element={<TeamPage />} />

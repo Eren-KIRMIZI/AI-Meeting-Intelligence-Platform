@@ -312,6 +312,43 @@ Guards:
 
 ---
 
+## Calendar & scheduling
+
+The calendar turns Nova meetings and connected provider events into one agenda, so planning never leaves the workspace.
+
+- **Two views.** The week and month grids share the same event data and respect the week-start preference from Settings. `src/lib/scheduling.ts` owns the grid maths (`weekDays`, `monthGrid`, `eventsInRange`), so the views cannot drift.
+- **Conflict detection.** `detectConflicts` compares every overlapping pair, reports the overlap in minutes and marks a fully contained event as a `full` conflict and a clipped one as `partial`. Conflicting chips get a rose ring and the agenda shows the count.
+- **Reminders.** A meeting stores `reminderMinutes`; `buildReminders` expands them into pending or sent rows for the next 72 hours, so the sidebar is honest without a background worker.
+- **Free slots.** `findFreeSlots` returns working-hour gaps around booked events. **Use this slot** pre-fills the scheduling dialog with the suggested start time.
+- **Scheduling in place.** `CreateMeetingDialog` collects title, date/time, duration, platform, agenda, participants and a reminder. `createMeeting` persists the participant list and reminder, then invalidates the calendar and meeting queries so the new event appears immediately.
+- **Sources.** Nova meetings and external provider events live side by side; each event keeps its `source` (`nova`, `google_calendar`, `microsoft_outlook`) and external events are labelled as such.
+
+---
+
+## Global search
+
+Search is a single index over the workspace, not seven separate filters.
+
+- **One index, seven kinds.** `buildSearchIndex` flattens meetings, transcripts, decisions, tasks, people, projects and knowledge documents into `SearchResult` records. Every result carries a deep link, so a transcript hit opens `/meetings/<id>?tab=transcript` and a task hit opens `/tasks?task=<id>`.
+- **Turkish-aware ranking.** `normalizeText` folds `ç ğ ı İ ö ş ü`, so `ayse` finds `Ayşe`. Every query token must match, title matches weigh more than body matches, and recency breaks ties.
+- **Filters.** Kind chips, person, project and a from/to date range narrow the same result set; the active filter count is visible and one click clears them.
+- **Snippets and highlights.** `snippetFor` centres the excerpt on the first matching token and the UI marks every matched token, so a long transcript does not hide the reason it matched.
+- **Shareable state.** The query is stored in `/search?q=`, and an empty query shows a recency-sorted workspace feed instead of a blank page.
+
+---
+
+## Integrations hub
+
+The Integrations hub is the connection surface for calendars, video platforms and messaging tools.
+
+- **Providers.** Google Calendar, Microsoft Outlook, Google Meet, Zoom, Microsoft Teams, Slack and Google Drive. Each card shows connection state, sync direction, health, account, synced item count, last sync and the next scheduled sync.
+- **Connect and sync.** Connecting or disconnecting a provider is one switch. **Sync now** runs the worker and appends an `IntegrationSyncEvent` with direction, item count, duration and a human-readable summary.
+- **Live tokens stay server-side.** Demo mode simulates the worker in `mocks/db.ts`; live mode posts to the server worker at `/api/integrations/sync`, so provider tokens never reach the browser. That worker ships with the live Supabase deployment, not with demo mode.
+- **Activity log.** The log records `success`, `partial` and `failed` runs with relative timestamps, which makes a token refresh or a still-processing transcript visible instead of silent.
+- **Downstream effects.** A successful sync invalidates integrations, sync events, the calendar and meetings, so imported events appear on `/calendar` without a reload.
+
+---
+
 ## Nova Live
 
 Nova Live runs the meeting inside the workspace: video/audio, screen sharing, chat, live captions, a transcript-grounded copilot and a report that becomes tasks, decisions and a Knowledge note.

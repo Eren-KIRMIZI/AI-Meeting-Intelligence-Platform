@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useSearchParams } from 'react-router-dom';
 import {
   ArrowLeft,
   ArrowUpRight,
@@ -97,6 +97,7 @@ function StepIcon({ status }: { status: 'pending' | 'running' | 'done' | 'failed
 export function MeetingDetailPage() {
   const { t, plural } = useI18n();
   const { meetingId } = useParams();
+  const [searchParams] = useSearchParams();
   const meetingQuery = useMeeting(meetingId);
   const teamQuery = useTeam();
   const commit = useCommitMeetingAnalysis();
@@ -132,6 +133,15 @@ export function MeetingDetailPage() {
     () => analysis?.decisions.filter((decision) => !decision.decisionId) ?? [],
     [analysis]
   );
+
+  // Search results deep-link to ?tab=transcript; the transcript is a section on
+  // this page, so scroll it into view once the analysis has rendered.
+  const transcriptRequested = searchParams.get('tab') === 'transcript';
+  useEffect(() => {
+    if (!transcriptRequested || !analysis) return;
+    const target = document.getElementById('meeting-transcript');
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, [transcriptRequested, analysis]);
 
   if (meetingQuery.isLoading) return <PageSkeleton />;
 
@@ -570,7 +580,7 @@ export function MeetingDetailPage() {
               </Card>
             ) : null}
 
-            <Card>
+            <Card id="meeting-transcript" className="scroll-mt-20">
               <CardHeader className="flex-row items-center justify-between gap-3 space-y-0 pb-3">
                 <CardTitle className="flex items-center gap-2">
                   <MessageSquareText className="h-3.5 w-3.5 text-cyan-400" />

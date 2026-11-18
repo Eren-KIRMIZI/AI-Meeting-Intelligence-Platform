@@ -2,6 +2,7 @@ import type {
   Activity,
   AnalyzeMeetingInput,
   AppNotification,
+  CalendarEvent,
   CommitMeetingInput,
   CommitMeetingResult,
   ConvertInsightToDecisionInput,
@@ -13,6 +14,7 @@ import type {
   Decision,
   Insight,
   Integration,
+  IntegrationSyncEvent,
   InviteMemberInput,
   KnowledgeDocument,
   LiveMeetingInput,
@@ -35,6 +37,7 @@ import { analysisSteps, analyzeTranscript } from '@/lib/meeting-intelligence';
 import { liveMeetingNote } from '@/lib/live/intelligence';
 import { baseMimeType } from '@/lib/recordings';
 import { decisionActivityTitle } from '@/lib/decisions';
+import { buildCalendarEvents } from '@/lib/scheduling';
 import {
   buildInsightCandidates,
   insightStatusTitle,
@@ -51,8 +54,10 @@ import {
   demoOrg,
   demoUser,
   seedActivities,
+  seedCalendarEvents,
   seedDecisions,
   seedInsights,
+  seedIntegrationSyncEvents,
   seedIntegrations,
   seedKnowledge,
   seedMeetings,
@@ -79,6 +84,10 @@ const knowledge: KnowledgeDocument[] = clone(seedKnowledge);
 let workflows: Workflow[] = clone(seedWorkflows);
 const workflowRuns: WorkflowRun[] = clone(seedWorkflowRuns);
 const integrations: Integration[] = clone(seedIntegrations);
+let integrationSyncEvents: IntegrationSyncEvent[] = clone(
+  seedIntegrationSyncEvents
+);
+const calendarEvents: CalendarEvent[] = clone(seedCalendarEvents);
 let team: TeamMember[] = clone(seedTeam);
 let notifications: AppNotification[] = clone(seedNotifications);
 let insights: Insight[] = clone(seedInsights);
@@ -135,7 +144,15 @@ function pushNotification(input: {
 }
 
 function emitDemoResource(
-  resource: 'tasks' | 'decisions' | 'meetings' | 'knowledge' | 'team' | 'insights'
+  resource:
+    | 'tasks'
+    | 'decisions'
+    | 'meetings'
+    | 'knowledge'
+    | 'team'
+    | 'insights'
+    | 'integrations'
+    | 'calendar'
 ) {
   emitWorkspaceEvent({ resource, orgId: demoOrg.id });
 }
@@ -563,6 +580,14 @@ export const mockDb = {
   async createMeeting(input: CreateMeetingInput) {
     await wait(240);
     const startsAt = new Date(input.startsAt);
+    const participants: UserProfile[] = [demoUser];
+    for (const participantId of input.participantIds ?? []) {
+      const member = team.find((item) => item.id === participantId);
+      if (member && !participants.some((item) => item.id === member.id)) {
+        participants.push(profileOf(member));
+      }
+    }
+
     const meeting: Meeting = {
       id: newId('m'),
       title: input.title,
@@ -570,8 +595,9 @@ export const mockDb = {
       durationMinutes: input.durationMinutes,
       platform: input.platform,
       status: 'scheduled',
-      participants: [demoUser],
+      participants,
       agenda: input.agenda,
+      reminderMinutes: input.reminderMinutes ?? [15],
       actionItems: [],
       decisions: [],
       transcriptReady: false,
@@ -589,6 +615,7 @@ export const mockDb = {
       link: `/meetings/${meeting.id}`,
     });
     emitDemoResource('meetings');
+    emitDemoResource('calendar');
     return clone(meeting);
   },
 
@@ -1261,12 +1288,76 @@ export const mockDb = {
     return clone(integrations);
   },
 
+  async listIntegrationSyncEvents() {
+    await wait(140);
+    return clone(
+      integrationSyncEvents
+        .slice()
+        .sort(
+          (a, b) =>
+            new Date(b.startedAt).getTime() - new Date(a.startedAt).getTime()
+        )
+    );
+  },
+
   async toggleIntegration(integrationId: string, connect: boolean) {
     await wait(180);
     const integration = integrations.find((item) => item.id === integrationId);
     if (!integration) throw new Error('Integration not found');
     integration.status = connect ? 'connected' : 'available';
+    integration.health = connect ? 'healthy' : 'offline';
+    integration.lastSyncedAt = connect ? new Date().toISOString() : null;
+    integration.nextSyncAt = connect
+      ? new Date(Date.now() + 3_600_000).toISOString()
+      : null;
+    if (!connect) integration.syncedItems = 0;
+    emitDemoResource('integrations');
     return clone(integration);
+  },
+
+  async syncIntegration(integrationId: string) {
+    await wait(520);
+    const integration = integrations.find((item) => item.id === integrationId);
+    if (!integration) throw new Error('Integration not found');
+    if (integration.status !== 'connected') {
+      throw new Error('Connect this integration before syncing.');
+    }
+
+    const inbound = integration.syncDirection !== 'outbound';
+    const itemCount = inbound ? 2 + Math.floor(Math.random() * 4) : 1;
+    const event: IntegrationSyncEvent = {
+      id: newId('sync'),
+      integrationId: integration.id,
+      provider: integration.provider,
+      direction: integration.syncDirection,
+      status: 'success',
+      itemCount,
+      startedAt: new Date().toISOString(),
+      durationMs: 640 + Math.floor(Math.random() * 900),
+      summary: inbound
+        ? `Imported ${itemCount} updated items from ${integration.name}.`
+        : `Pushed ${itemCount} Nova updates to ${integration.name}.`,
+    };
+
+    integration.lastSyncedAt = event.startedAt;
+    integration.nextSyncAt = new Date(
+      Date.now() + 3_600_000
+    ).toISOString();
+    integration.syncedItems += itemCount;
+    integration.health = 'healthy';
+    integrationSyncEvents = [event, ...integrationSyncEvents];
+    emitDemoResource('integrations');
+    return clone(event);
+  },
+
+  async listCalendarEvents() {
+    await wait(160);
+    return clone(
+      [...buildCalendarEvents(meetings), ...calendarEvents].sort(
+        (a, b) =>
+          new Date(a.startsAt).getTime() - new Date(b.startsAt).getTime()
+      )
+    );
   },
 
   async listTeam() {

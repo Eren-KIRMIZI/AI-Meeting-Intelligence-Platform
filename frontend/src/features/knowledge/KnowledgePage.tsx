@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { BookOpen, Search } from 'lucide-react';
 import { PageHeader } from '@/components/common/page-header';
 import { PageSkeleton } from '@/components/common/page-skeleton';
@@ -20,12 +21,19 @@ import { kindMeta, knowledgeFilters } from './knowledge-meta';
 export function KnowledgePage() {
   const { t } = useI18n();
   const knowledge = useKnowledge();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [filter, setFilter] = useState<'all' | KnowledgeKind>('all');
   const [query, setQuery] = useState('');
   const [selected, setSelected] = useState<KnowledgeDocument | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
 
   const list = useMemo(() => knowledge.data ?? [], [knowledge.data]);
+  const linkedId = searchParams.get('doc');
+  const linkedDocument = useMemo(
+    () => list.find((document) => document.id === linkedId) ?? null,
+    [list, linkedId]
+  );
+  const activeDocument = selected ?? linkedDocument;
 
   const filtered = useMemo(() => {
     const normalized = query.trim().toLowerCase();
@@ -179,16 +187,26 @@ export function KnowledgePage() {
         </div>
       )}
 
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog
+        open={dialogOpen || Boolean(linkedDocument)}
+        onOpenChange={(open) => {
+          setDialogOpen(open);
+          if (!open && searchParams.has('doc')) {
+            const next = new URLSearchParams(searchParams);
+            next.delete('doc');
+            setSearchParams(next, { replace: true });
+          }
+        }}
+      >
         <DialogContent className="max-w-3xl gap-0 overflow-hidden p-0">
-          {selected ? (
+          {activeDocument ? (
             <>
-              <DialogTitle className="sr-only">{selected.title}</DialogTitle>
+              <DialogTitle className="sr-only">{activeDocument.title}</DialogTitle>
               <DialogDescription className="sr-only">
                 {t('{{kind}} by {{author}}, updated {{date}}.', {
-                  kind: t(kindMeta[selected.kind].label),
-                  author: selected.author.fullName,
-                  date: formatDate(selected.updatedAt, {
+                  kind: t(kindMeta[activeDocument.kind].label),
+                  author: activeDocument.author.fullName,
+                  date: formatDate(activeDocument.updatedAt, {
                     month: 'long',
                     day: 'numeric',
                     year: 'numeric',
@@ -196,8 +214,8 @@ export function KnowledgePage() {
                 })}
               </DialogDescription>
               <KnowledgeReader
-                key={selected.id}
-                document={selected}
+                key={activeDocument.id}
+                document={activeDocument}
                 documents={list}
                 query={query}
                 onSelect={setSelected}

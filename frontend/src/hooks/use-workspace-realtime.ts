@@ -19,6 +19,8 @@ const resourceQueryKeys: Record<WorkspaceEventResource, string[]> = {
   activities: ['activities'],
   team: ['team', 'projects'],
   insights: ['insights', 'tasks', 'decisions'],
+  integrations: ['integrations', 'integration-sync-events'],
+  calendar: ['calendar-events', 'meetings'],
 };
 
 function invalidateResource(

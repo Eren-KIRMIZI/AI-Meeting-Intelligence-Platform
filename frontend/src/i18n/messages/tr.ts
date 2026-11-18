@@ -1352,4 +1352,124 @@ export const tr: Record<string, string> = {
   English: 'İngilizce',
   Türkçe: 'Türkçe',
   'Language updated': 'Dil güncellendi',
+
+  // Global search
+  'Global search': 'Merkezi arama',
+  'Search every meeting, transcript, decision, task, person and project, then jump straight to the source.':
+    'Tüm toplantılarda, transkriptlerde, kararlarda, görevlerde, kişilerde ve projelerde arayın; doğrudan kaynağa gidin.',
+  '{{count}} results': '{{count}} sonuç',
+  'Search meetings, transcripts, decisions, tasks and people...':
+    'Toplantı, transkript, karar, görev ve kişi arayın...',
+  'Search the workspace': 'Çalışma alanında ara',
+  'Clear search': 'Aramayı temizle',
+  Filters: 'Filtreler',
+  Person: 'Kişi',
+  'Filter by person': 'Kişiye göre filtrele',
+  Anyone: 'Herkes',
+  'From date': 'Başlangıç tarihi',
+  'To date': 'Bitiş tarihi',
+  'Search could not be completed.': 'Arama tamamlanamadı.',
+  'No results match this search': 'Bu aramayla eşleşen sonuç yok',
+  'Try a shorter phrase, remove a filter, or search for a person, project or decision.':
+    'Daha kısa bir ifade deneyin, bir filtreyi kaldırın veya bir kişi, proje ya da karar arayın.',
+  'Match score {{score}}': 'Eşleşme puanı {{score}}',
+
+  // Calendar & scheduling
+  Calendar: 'Takvim',
+  'Calendar & scheduling': 'Takvim ve planlama',
+  'Plan meetings, invite participants, catch conflicts and keep reminders in one calendar.':
+    'Toplantıları planlayın, katılımcıları davet edin, çakışmaları yakalayın ve hatırlatmaları tek takvimde tutun.',
+  '{{count}} events': '{{count}} etkinlik',
+  '{{start}} – {{end}}': '{{start}} – {{end}}',
+  'The calendar could not be loaded.': 'Takvim yüklenemedi.',
+  'Sync calendars': 'Takvimleri eşitle',
+  'Next 7 days': 'Önümüzdeki 7 gün',
+  Conflicts: 'Çakışmalar',
+  Reminders: 'Hatırlatmalar',
+  'Connected calendars': 'Bağlı takvimler',
+  'Calendar view': 'Takvim görünümü',
+  Week: 'Hafta',
+  Month: 'Ay',
+  'Previous period': 'Önceki dönem',
+  'Next period': 'Sonraki dönem',
+  'No events': 'Etkinlik yok',
+  '+{{count}} more': '+{{count}} daha',
+  'Nothing scheduled in this period': 'Bu dönemde planlanmış bir şey yok',
+  'Schedule a meeting or move to another week to see the agenda.':
+    'Ajandayı görmek için bir toplantı planlayın veya başka bir haftaya geçin.',
+  '{{count}} conflicts': '{{count}} çakışma',
+  Online: 'Çevrimiçi',
+  'Conflict detection': 'Çakışma tespiti',
+  'No overlapping meetings in this calendar.': 'Bu takvimde çakışan toplantı yok.',
+  Meeting: 'Toplantı',
+  '{{count}} min overlap · {{severity}}': '{{count}} dk çakışma · {{severity}}',
+  'full overlap': 'tam çakışma',
+  'partial overlap': 'kısmi çakışma',
+  'Upcoming reminders': 'Yaklaşan hatırlatmalar',
+  'No reminders in the next 72 hours.': 'Önümüzdeki 72 saatte hatırlatma yok.',
+  '{{minutes}} min before · {{time}}': '{{minutes}} dk önce · {{time}}',
+  Pending: 'Bekliyor',
+  Sent: 'Gönderildi',
+  'Next free slot': 'Sonraki boş aralık',
+  'A 30-minute opening is available on this day.':
+    'Bu günde 30 dakikalık bir boşluk var.',
+  'Use this slot': 'Bu aralığı kullan',
+  'This day is fully booked inside working hours.':
+    'Bu gün çalışma saatleri içinde tamamen dolu.',
+  'External calendar event': 'Harici takvim etkinliği',
+  'Plan meetings, invites and reminders':
+    'Toplantıları, davetleri ve hatırlatmaları planlayın',
+  'Search every meeting, transcript and decision':
+    'Her toplantıda, transkriptte ve kararda arayın',
+
+  // Integrations hub
+  'Integrations hub': 'Entegrasyon merkezi',
+  'Integrations could not be loaded.': 'Entegrasyonlar yüklenemedi.',
+  'Bring meetings in from your calendar and video tools, then push decisions and follow-ups back where work happens.':
+    'Toplantıları takviminizden ve video araçlarınızdan içeri alın, kararları ve takipleri işin yapıldığı yere geri gönderin.',
+  '{{connected}} of {{total}} connected':
+    '{{total}} entegrasyonun {{connected}} tanesi bağlı',
+  'Integration settings': 'Entegrasyon ayarları',
+  'Open calendar': 'Takvimi aç',
+  'Items synced': 'Eşitlenen öğeler',
+  'Sync events': 'Eşitleme olayları',
+  'All providers': 'Tüm sağlayıcılar',
+  Messaging: 'Mesajlaşma',
+  Storage: 'Depolama',
+  'No integrations in this category': 'Bu kategoride entegrasyon yok',
+  'Choose another category to see available providers.':
+    'Mevcut sağlayıcıları görmek için başka bir kategori seçin.',
+  Inbound: 'Gelen',
+  Outbound: 'Giden',
+  'Two-way': 'İki yönlü',
+  Direction: 'Yön',
+  'Last sync': 'Son eşitleme',
+  Never: 'Hiç',
+  Account: 'Hesap',
+  'Not connected': 'Bağlı değil',
+  '{{name}} connection': '{{name}} bağlantısı',
+  'Sync now': 'Şimdi eşitle',
+  'Sync activity': 'Eşitleme etkinliği',
+  'Loading sync activity': 'Eşitleme etkinliği yükleniyor',
+  'No sync activity yet. Connect a provider and run a sync.':
+    'Henüz eşitleme etkinliği yok. Bir sağlayıcı bağlayın ve eşitleme çalıştırın.',
+  '{{count}} items': '{{count}} öğe',
+  healthy: 'sağlıklı',
+  attention: 'dikkat',
+  offline: 'çevrimdışı',
+  'The integration could not be updated.': 'Entegrasyon güncellenemedi.',
+  '{{name}} synced: {{count}} items': '{{name}} eşitlendi: {{count}} öğe',
+  'The integration could not be synced.': 'Entegrasyon eşitlenemedi.',
+  'Calendar, video and messaging connections':
+    'Takvim, video ve mesajlaşma bağlantıları',
+
+  // Meeting scheduling dialog
+  'Invite teammates and send the calendar event to everyone.':
+    'Ekip arkadaşlarını davet edin ve takvim etkinliğini herkese gönderin.',
+  Reminder: 'Hatırlatma',
+  'No reminder': 'Hatırlatma yok',
+  '5 minutes before': '5 dakika önce',
+  '15 minutes before': '15 dakika önce',
+  '30 minutes before': '30 dakika önce',
+  '1 hour before': '1 saat önce',
 };

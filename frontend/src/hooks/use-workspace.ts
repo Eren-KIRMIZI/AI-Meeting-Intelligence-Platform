@@ -33,8 +33,12 @@ import {
 } from '@/services/workflows.service';
 import {
   listIntegrations,
+  listIntegrationSyncEvents,
   setIntegrationConnected,
+  syncIntegration,
 } from '@/services/integrations.service';
+import { listCalendarEvents } from '@/services/calendar.service';
+import { searchWorkspace } from '@/services/search.service';
 import {
   inviteMember,
   listTeam,
@@ -59,6 +63,7 @@ import type {
   InviteMemberInput,
   LiveMeetingInput,
   SaveMeetingRecordingInput,
+  SearchFilters,
   SetInsightStatusInput,
   SetMemberProjectsInput,
   Task,
@@ -169,6 +174,42 @@ export function useIntegrations(options: QueryOptions = {}) {
   return useQuery({
     queryKey: ['integrations', orgId],
     queryFn: () => listIntegrations(orgId),
+    enabled: options.enabled ?? true,
+  });
+}
+
+export function useIntegrationSyncEvents(options: QueryOptions = {}) {
+  const { orgId } = useAuth();
+  return useQuery({
+    queryKey: ['integration-sync-events', orgId],
+    queryFn: () => listIntegrationSyncEvents(orgId),
+    enabled: options.enabled ?? true,
+  });
+}
+
+export function useCalendarEvents(options: QueryOptions = {}) {
+  const { orgId } = useAuth();
+  return useQuery({
+    queryKey: ['calendar-events', orgId],
+    queryFn: () => listCalendarEvents(orgId),
+    enabled: options.enabled ?? true,
+  });
+}
+
+export function useGlobalSearch(filters: SearchFilters, options: QueryOptions = {}) {
+  const { orgId } = useAuth();
+  return useQuery({
+    queryKey: [
+      'workspace-search',
+      orgId,
+      filters.query,
+      filters.kinds.join(','),
+      filters.personId,
+      filters.projectId,
+      filters.from,
+      filters.to,
+    ],
+    queryFn: () => searchWorkspace(orgId, filters),
     enabled: options.enabled ?? true,
   });
 }
@@ -305,6 +346,7 @@ export function useCreateMeeting() {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['meetings'] });
+      void queryClient.invalidateQueries({ queryKey: ['calendar-events'] });
       void queryClient.invalidateQueries({ queryKey: ['activities'] });
     },
   });
@@ -439,6 +481,27 @@ export function useToggleIntegration() {
       setIntegrationConnected(id, connect, orgId),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['integrations'] });
+      void queryClient.invalidateQueries({
+        queryKey: ['integration-sync-events'],
+      });
+    },
+  });
+}
+
+export function useSyncIntegration() {
+  const queryClient = useQueryClient();
+  const { orgId } = useAuth();
+
+  return useMutation({
+    mutationFn: (integrationId: string) =>
+      syncIntegration(integrationId, orgId),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['integrations'] });
+      void queryClient.invalidateQueries({
+        queryKey: ['integration-sync-events'],
+      });
+      void queryClient.invalidateQueries({ queryKey: ['calendar-events'] });
+      void queryClient.invalidateQueries({ queryKey: ['meetings'] });
     },
   });
 }
