@@ -1,3 +1,4 @@
+import { lazy, Suspense } from 'react';
 import { Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { AppLayout } from '@/components/layout/AppLayout';
@@ -5,21 +6,85 @@ import { NovaMark } from '@/components/common/nova-mark';
 import { useAuth } from '@/features/auth/auth-provider';
 import { LoginPage } from '@/features/auth/LoginPage';
 import { NotFoundPage } from '@/features/auth/NotFoundPage';
-import { OverviewPage } from '@/features/overview/OverviewPage';
-import { ProjectsPage } from '@/features/projects/ProjectsPage';
-import { ProjectDetailPage } from '@/features/projects/ProjectDetailPage';
-import { TasksPage } from '@/features/tasks/TasksPage';
-import { MeetingsPage } from '@/features/meetings/MeetingsPage';
-import { MeetingDetailPage } from '@/features/meetings/MeetingDetailPage';
-import { LiveLobbyPage } from '@/features/live/LiveLobbyPage';
-import { LiveRoomPage } from '@/features/live/LiveRoomPage';
-import { DecisionsPage } from '@/features/decisions/DecisionsPage';
-import { KnowledgePage } from '@/features/knowledge/KnowledgePage';
-import { WorkflowsPage } from '@/features/workflows/WorkflowsPage';
-import { IntelligencePage } from '@/features/intelligence/IntelligencePage';
-import { AnalyticsPage } from '@/features/analytics/AnalyticsPage';
-import { TeamPage } from '@/features/team/TeamPage';
-import { SettingsPage } from '@/features/settings/SettingsPage';
+
+// Route-level code splitting keeps the first paint small: the workspace shell,
+// auth and login load immediately, and each module arrives on first visit.
+// AppLayout provides the Suspense boundary for the pages inside the shell.
+const OverviewPage = lazy(() =>
+  import('@/features/overview/OverviewPage').then((module) => ({
+    default: module.OverviewPage,
+  }))
+);
+const ProjectsPage = lazy(() =>
+  import('@/features/projects/ProjectsPage').then((module) => ({
+    default: module.ProjectsPage,
+  }))
+);
+const ProjectDetailPage = lazy(() =>
+  import('@/features/projects/ProjectDetailPage').then((module) => ({
+    default: module.ProjectDetailPage,
+  }))
+);
+const TasksPage = lazy(() =>
+  import('@/features/tasks/TasksPage').then((module) => ({
+    default: module.TasksPage,
+  }))
+);
+const MeetingsPage = lazy(() =>
+  import('@/features/meetings/MeetingsPage').then((module) => ({
+    default: module.MeetingsPage,
+  }))
+);
+const MeetingDetailPage = lazy(() =>
+  import('@/features/meetings/MeetingDetailPage').then((module) => ({
+    default: module.MeetingDetailPage,
+  }))
+);
+const LiveLobbyPage = lazy(() =>
+  import('@/features/live/LiveLobbyPage').then((module) => ({
+    default: module.LiveLobbyPage,
+  }))
+);
+const LiveRoomPage = lazy(() =>
+  import('@/features/live/LiveRoomPage').then((module) => ({
+    default: module.LiveRoomPage,
+  }))
+);
+const DecisionsPage = lazy(() =>
+  import('@/features/decisions/DecisionsPage').then((module) => ({
+    default: module.DecisionsPage,
+  }))
+);
+const KnowledgePage = lazy(() =>
+  import('@/features/knowledge/KnowledgePage').then((module) => ({
+    default: module.KnowledgePage,
+  }))
+);
+const WorkflowsPage = lazy(() =>
+  import('@/features/workflows/WorkflowsPage').then((module) => ({
+    default: module.WorkflowsPage,
+  }))
+);
+const IntelligencePage = lazy(() =>
+  import('@/features/intelligence/IntelligencePage').then((module) => ({
+    default: module.IntelligencePage,
+  }))
+);
+const AnalyticsPage = lazy(() =>
+  import('@/features/analytics/AnalyticsPage').then((module) => ({
+    default: module.AnalyticsPage,
+  }))
+);
+const TeamPage = lazy(() =>
+  import('@/features/team/TeamPage').then((module) => ({
+    default: module.TeamPage,
+  }))
+);
+const SettingsPage = lazy(() =>
+  import('@/features/settings/SettingsPage').then((module) => ({
+    default: module.SettingsPage,
+  }))
+);
 
 function AuthLoadingScreen() {
   return (
@@ -60,7 +125,14 @@ export function AppRoutes() {
       <Route path="/login" element={<LoginPage />} />
 
       <Route element={<RequireAuth />}>
-        <Route path="/live/:roomId" element={<LiveRoomPage />} />
+        <Route
+          path="/live/:roomId"
+          element={
+            <Suspense fallback={<AuthLoadingScreen />}>
+              <LiveRoomPage />
+            </Suspense>
+          }
+        />
 
         <Route element={<AppLayout />}>
           <Route index element={<Navigate to="/overview" replace />} />

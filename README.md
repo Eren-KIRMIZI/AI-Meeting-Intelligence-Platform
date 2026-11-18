@@ -346,6 +346,14 @@ The Team directory is a working permission surface. Clicking a member card opens
 
 ---
 
+## Performance
+
+- The shell, auth guard and login screen load eagerly; every workspace page is a `React.lazy` route chunk that arrives on first visit.
+- `AppLayout` owns a single `Suspense` boundary with `PageSkeleton`, so navigation keeps the sidebar and header mounted while the next page streams in. Nova Live has its own full-screen fallback.
+- Charts, dialogs and the mock dataset are split into their own chunks. The production build emits page chunks of 5–26 kB; the entry bundle stays around 269 kB (≈76 kB gzip) with no Vite 500 kB warning.
+
+---
+
 ## Deployment
 
 1. Import the repository.

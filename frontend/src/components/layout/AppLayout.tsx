@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
+import { Suspense, useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
+import { PageSkeleton } from '@/components/common/page-skeleton';
 import { Sidebar } from './Sidebar';
 import { Header } from './Header';
 import { CommandPalette } from './CommandPalette';
@@ -19,7 +20,9 @@ export function AppLayout() {
       <div className="min-w-0 lg:pl-[68px]">
         <Header />
         <main className="page-container">
-          <Outlet />
+          <Suspense fallback={<PageSkeleton />}>
+            <Outlet />
+          </Suspense>
         </main>
       </div>
       <CommandPalette />
