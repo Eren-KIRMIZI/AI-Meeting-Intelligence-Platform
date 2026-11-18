@@ -1,55 +1,86 @@
 import { expect, test } from '@playwright/test';
 import { trackConsoleErrors } from './helpers';
 
-const routes = [
+interface RouteCheck {
+  path: string;
+  heading: string | RegExp;
+  title: string;
+}
+
+/**
+ * The sweep is grouped so the suite can run the groups in parallel. A single
+ * test visiting every route exceeds the default 30s budget on CI, where the
+ * dev server transforms each lazily loaded page chunk on first request.
+ */
+const routeGroups: Array<{ name: string; routes: RouteCheck[] }> = [
   {
-    path: '/overview',
-    heading: /Good (morning|afternoon|evening), Ayşe/,
-    title: 'Overview — Nova',
+    name: 'core workspace',
+    routes: [
+      {
+        path: '/overview',
+        heading: /Good (morning|afternoon|evening), Ayşe/,
+        title: 'Overview — Nova',
+      },
+      { path: '/projects', heading: 'Projects', title: 'Projects — Nova' },
+      {
+        path: '/projects/p-pulse',
+        heading: 'Pulse mobile app',
+        title: 'Project detail — Nova',
+      },
+      { path: '/tasks', heading: 'My Tasks', title: 'My Tasks — Nova' },
+      { path: '/meetings', heading: 'Meetings', title: 'Meetings — Nova' },
+    ],
   },
-  { path: '/projects', heading: 'Projects', title: 'Projects — Nova' },
   {
-    path: '/projects/p-pulse',
-    heading: 'Pulse mobile app',
-    title: 'Project detail — Nova',
+    name: 'meeting follow-through',
+    routes: [
+      {
+        path: '/meetings/m-product-sync-past',
+        heading: 'Product sync — Nov 9',
+        title: 'Meeting detail — Nova',
+      },
+      { path: '/live', heading: 'Nova Live', title: 'Nova Live — Nova' },
+      { path: '/decisions', heading: 'Decisions', title: 'Decisions — Nova' },
+      { path: '/knowledge', heading: 'Knowledge', title: 'Knowledge — Nova' },
+      { path: '/workflows', heading: 'Workflows', title: 'Workflows — Nova' },
+    ],
   },
-  { path: '/tasks', heading: 'My Tasks', title: 'My Tasks — Nova' },
-  { path: '/meetings', heading: 'Meetings', title: 'Meetings — Nova' },
   {
-    path: '/meetings/m-product-sync-past',
-    heading: 'Product sync — Nov 9',
-    title: 'Meeting detail — Nova',
+    name: 'intelligence and administration',
+    routes: [
+      {
+        path: '/intelligence',
+        heading: 'AI Intelligence',
+        title: 'AI Intelligence — Nova',
+      },
+      { path: '/analytics', heading: 'Analytics', title: 'Analytics — Nova' },
+      { path: '/team', heading: 'Team', title: 'Team — Nova' },
+      { path: '/settings', heading: 'Settings', title: 'Settings — Nova' },
+    ],
   },
-  { path: '/live', heading: 'Nova Live', title: 'Nova Live — Nova' },
-  { path: '/decisions', heading: 'Decisions', title: 'Decisions — Nova' },
-  { path: '/knowledge', heading: 'Knowledge', title: 'Knowledge — Nova' },
-  { path: '/workflows', heading: 'Workflows', title: 'Workflows — Nova' },
-  {
-    path: '/intelligence',
-    heading: 'AI Intelligence',
-    title: 'AI Intelligence — Nova',
-  },
-  { path: '/analytics', heading: 'Analytics', title: 'Analytics — Nova' },
-  { path: '/team', heading: 'Team', title: 'Team — Nova' },
-  { path: '/settings', heading: 'Settings', title: 'Settings — Nova' },
 ];
 
 test.describe('workspace shell', () => {
-  test('every workspace route renders its own page without console errors', async ({
-    page,
-  }) => {
-    const errors = trackConsoleErrors(page);
+  for (const group of routeGroups) {
+    test(`${group.name} routes render without console errors`, async ({
+      page,
+    }) => {
+      // Several cold page loads share one test budget, so allow room for the
+      // dev server to transform each route chunk.
+      test.setTimeout(90_000);
+      const errors = trackConsoleErrors(page);
 
-    for (const route of routes) {
-      await page.goto(route.path);
-      await expect(
-        page.getByRole('heading', { level: 1, name: route.heading })
-      ).toBeVisible();
-      await expect(page).toHaveTitle(route.title);
-    }
+      for (const route of group.routes) {
+        await page.goto(route.path, { waitUntil: 'domcontentloaded' });
+        await expect(
+          page.getByRole('heading', { level: 1, name: route.heading })
+        ).toBeVisible({ timeout: 15_000 });
+        await expect(page).toHaveTitle(route.title);
+      }
 
-    expect(errors).toEqual([]);
-  });
+      expect(errors).toEqual([]);
+    });
+  }
 
   test('keyboard users can skip straight to the page content', async ({
     page,
