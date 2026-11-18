@@ -121,4 +121,27 @@ export const routeMeta: Record<string, { title: string; parent?: string }> = {
   '/login': { title: 'Sign in' },
 };
 
+const detailRoutes: Array<{ prefix: string; title: string; parent: string }> = [
+  { prefix: '/projects/', title: 'Project detail', parent: 'Projects' },
+  { prefix: '/meetings/', title: 'Meeting detail', parent: 'Meetings' },
+  { prefix: '/live/', title: 'Live room', parent: 'Nova Live' },
+];
+
+/**
+ * Resolves the header breadcrumb and document title for any path, including
+ * detail routes whose entity name is not known here.
+ */
+export function resolveRouteMeta(pathname: string): {
+  title: string;
+  parent?: string;
+} {
+  const exact = routeMeta[pathname];
+  if (exact) return exact;
+
+  const detail = detailRoutes.find((route) => pathname.startsWith(route.prefix));
+  if (detail) return { title: detail.title, parent: detail.parent };
+
+  return { title: 'Not found', parent: 'Workspace' };
+}
+
 export const allNavItems = [...primaryNav, ...secondaryNav];

@@ -2,8 +2,11 @@ import { Link } from 'react-router-dom';
 import { ArrowLeft, Compass } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { NovaMark } from '@/components/common/nova-mark';
+import { useDocumentTitle } from '@/hooks/use-document-title';
 
 export function NotFoundPage() {
+  useDocumentTitle('Page not found');
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-5">
       <div className="w-full max-w-md text-center">

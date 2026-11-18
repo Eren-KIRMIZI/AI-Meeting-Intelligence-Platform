@@ -1,6 +1,6 @@
 import { useLocation } from 'react-router-dom';
 import { ChevronRight, Menu, Search } from 'lucide-react';
-import { routeMeta } from '@/lib/navigation';
+import { resolveRouteMeta } from '@/lib/navigation';
 import { useAuth } from '@/features/auth/auth-provider';
 import { useUiStore } from '@/stores/ui-store';
 import { Button } from '@/components/ui/button';
@@ -14,9 +14,9 @@ export function Header() {
   const setMobileNavOpen = useUiStore((state) => state.setMobileNavOpen);
   const setCommandOpen = useUiStore((state) => state.setCommandOpen);
 
-  const meta = routeMeta[location.pathname];
-  const title = meta?.title ?? 'Overview';
-  const parent = meta?.parent ?? orgName ?? 'Workspace';
+  const meta = resolveRouteMeta(location.pathname);
+  const title = meta.title;
+  const parent = meta.parent ?? orgName ?? 'Workspace';
 
   return (
     <header className="sticky top-0 z-30 flex h-[60px] items-center gap-2 border-b border-border/80 bg-background/85 px-3 backdrop-blur-md sm:px-5 lg:px-8">

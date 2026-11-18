@@ -90,7 +90,7 @@ Open the printed URL (default `http://localhost:5173`). Use **Continue with demo
 
 ### Testing & CI
 
-Tests use Vitest with jsdom, Testing Library and jest-dom. The suite covers pure helpers, metric builders, range-derived analytics, enum guards, the transcript analyzer, the live-meeting intelligence and Knowledge note, the demo data store and its meeting pipeline (analyze → commit), Nova Live persistence, recording formatting and archive storage, notification preference filtering and deep-link safety, the demo workspace event bus, action-driven notification delivery, team role hierarchy rules, member removal and project-access sync, the insight review queue and its task/decision conversion, the workflow run log, sidebar accessibility, the 404 page and a task-board interaction end to end.
+Tests use Vitest with jsdom, Testing Library and jest-dom. The suite covers pure helpers, metric builders, range-derived analytics, enum guards, the transcript analyzer, the live-meeting intelligence and Knowledge note, the demo data store and its meeting pipeline (analyze → commit), Nova Live persistence, recording formatting and archive storage, notification preference filtering and deep-link safety, the demo workspace event bus, action-driven notification delivery, team role hierarchy rules, member removal and project-access sync, the insight review queue and its task/decision conversion, the workflow run log, sidebar accessibility, route metadata and document titles, the error boundaries, the 404 page and a task-board interaction end to end.
 
 ```bash
 cd frontend
@@ -350,7 +350,16 @@ The Team directory is a working permission surface. Clicking a member card opens
 
 - The shell, auth guard and login screen load eagerly; every workspace page is a `React.lazy` route chunk that arrives on first visit.
 - `AppLayout` owns a single `Suspense` boundary with `PageSkeleton`, so navigation keeps the sidebar and header mounted while the next page streams in. Nova Live has its own full-screen fallback.
-- Charts, dialogs and the mock dataset are split into their own chunks. The production build emits page chunks of 5–26 kB; the entry bundle stays around 269 kB (≈76 kB gzip) with no Vite 500 kB warning.
+- Charts, dialogs and the mock dataset are split into their own chunks. The production build emits page chunks of 5–26 kB; the entry bundle stays around 272 kB (≈77 kB gzip) with no Vite 500 kB warning.
+
+---
+
+## Resilience & accessibility
+
+- A route-level `ErrorBoundary` wraps the page outlet, so a render error keeps the sidebar, header and navigation usable. Failed route chunks are recognised and offer a reload instead of a retry loop; an app-level boundary covers the shell as a last resort.
+- Navigating moves focus to the `<main>` landmark and resets scroll, while the first load leaves focus untouched.
+- A skip link jumps straight to `#main-content`, and every route sets a meaningful document title (`Tasks — Nova`, `Meeting detail — Nova`, …). Detail routes resolve their breadcrumb to the owning module instead of falling back to Overview.
+- Unknown paths are labelled "Not found" in both the breadcrumb and the tab title.
 
 ---
 

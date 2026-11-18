@@ -13,6 +13,7 @@ import { Badge } from '@/components/ui/badge';
 import { Field } from '@/components/common/field';
 import { NovaMark } from '@/components/common/nova-mark';
 import { useAuth } from '@/features/auth/auth-provider';
+import { useDocumentTitle } from '@/hooks/use-document-title';
 
 const highlights = [
   'Every meeting becomes a brief with owners and next steps.',
@@ -29,6 +30,8 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  useDocumentTitle('Sign in');
 
   const redirectTo =
     (location.state as { from?: string } | null)?.from ?? '/overview';

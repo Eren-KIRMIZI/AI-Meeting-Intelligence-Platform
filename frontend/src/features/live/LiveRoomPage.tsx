@@ -38,6 +38,7 @@ import {
 import { Field } from '@/components/common/field';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/features/auth/auth-provider';
+import { useDocumentTitle } from '@/hooks/use-document-title';
 import { useLiveRoom } from '@/hooks/use-live-room';
 import { useLocalRecording } from '@/hooks/use-local-recording';
 import { useCommitMeetingAnalysis, useSaveLiveMeeting, useSaveMeetingRecording } from '@/hooks/use-workspace';
@@ -86,6 +87,7 @@ export function LiveRoomPage() {
   const [roomTitle, setRoomTitle] = useState(
     params.get('title')?.trim() || 'Nova Live meeting'
   );
+  useDocumentTitle(roomTitle);
   const [displayName, setDisplayName] = useState(user?.fullName ?? '');
   const [deviceMic, setDeviceMic] = useState(true);
   const [deviceCam, setDeviceCam] = useState(mode === 'video');
