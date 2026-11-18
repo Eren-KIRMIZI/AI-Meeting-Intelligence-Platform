@@ -1,3 +1,9 @@
+<!-- Keep README.md and README.tr.md in sync: every structural or content change must land in both files. -->
+
+<p align="center">
+  <strong>🇬🇧 English</strong> · <a href="README.tr.md">🇹🇷 Türkçe</a>
+</p>
+
 # Nova — AI Meeting Intelligence Platform
 
 Nova turns meetings into execution: every conversation becomes a brief with decisions, owners, deadlines and follow-ups. This repository contains the full-stack foundation: a production-ready React frontend, a Supabase schema with row-level security, and Vercel serverless functions for privileged operations.
