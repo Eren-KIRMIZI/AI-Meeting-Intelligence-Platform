@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { methodNotAllowed, readBody, sendJson } from '../_lib/http';
-import { rateLimit } from '../_lib/redis';
+import { methodNotAllowed, readBody, sendJson } from '../_lib/http.js';
+import { rateLimit } from '../_lib/redis.js';
 
 const INVITE_ROLES = ['admin', 'member', 'viewer'] as const;
 type InviteRole = (typeof INVITE_ROLES)[number];

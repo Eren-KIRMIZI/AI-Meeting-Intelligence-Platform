@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 import { AccessToken } from 'livekit-server-sdk';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { methodNotAllowed, readBody, sendJson } from '../_lib/http';
-import { rateLimit } from '../_lib/redis';
+import { methodNotAllowed, readBody, sendJson } from '../_lib/http.js';
+import { rateLimit } from '../_lib/redis.js';
 
 interface TokenBody {
   room?: unknown;

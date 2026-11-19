@@ -1,7 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { methodNotAllowed, readBody, sendJson } from '../_lib/http';
-import { rateLimit } from '../_lib/redis';
+import { methodNotAllowed, readBody, sendJson } from '../_lib/http.js';
+import { rateLimit } from '../_lib/redis.js';
 
 const UUID_PATTERN =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

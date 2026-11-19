@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { methodNotAllowed, sendJson } from './_lib/http';
-import { getRedis } from './_lib/redis';
+import { methodNotAllowed, sendJson } from './_lib/http.js';
+import { getRedis } from './_lib/redis.js';
 
 interface HealthCheck {
   ok: boolean;
