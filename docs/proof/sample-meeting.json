@@ -1,0 +1,37 @@
+{
+  "title": "Nova Weekly Product Sync — Sample Recording",
+  "provenance": "Original fictional dialogue written for this repository and synthesized locally with Windows SAPI. No third-party audio, transcript or copyrighted material is used. Dedicated to the public domain under CC0 1.0.",
+  "speakers": ["Mina", "Deniz", "Alex"],
+  "lines": [
+    {
+      "at": "00:00",
+      "speaker": "Mina",
+      "text": "Let's keep this to ten minutes. We need to decide the onboarding release date and who owns the accessibility fixes."
+    },
+    {
+      "at": "00:12",
+      "speaker": "Deniz",
+      "text": "The transcript QA edge cases are fixed, but the invite email still fails for guests on mobile. I can close that by Thursday."
+    },
+    {
+      "at": "00:26",
+      "speaker": "Alex",
+      "text": "I reviewed the new empty state. The contrast is still below the target, so I will ship a darker variant tomorrow morning."
+    },
+    {
+      "at": "00:40",
+      "speaker": "Mina",
+      "text": "Decision: we ship onboarding version two next Tuesday, as long as the guest invite fix lands by Thursday and the contrast issue is closed. Deniz owns the invite fix, Alex owns contrast. I will write the release note on Friday."
+    },
+    {
+      "at": "01:02",
+      "speaker": "Deniz",
+      "text": "One risk: the translation vendor has not confirmed the Turkish strings. If they slip, we launch English only and add Turkish in the following patch."
+    },
+    {
+      "at": "01:18",
+      "speaker": "Mina",
+      "text": "Agreed. Let's record that as a risk and keep the English-only fallback in the release note."
+    }
+  ]
+}

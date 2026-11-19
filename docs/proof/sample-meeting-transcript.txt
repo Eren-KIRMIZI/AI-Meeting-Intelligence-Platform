@@ -1,0 +1,6 @@
+[00:00] Mina: Let's keep this to ten minutes. We need to decide the onboarding release date and who owns the accessibility fixes.
+[00:12] Deniz: The transcript QA edge cases are fixed, but the invite email still fails for guests on mobile. I can close that by Thursday.
+[00:26] Alex: I reviewed the new empty state. The contrast is still below the target, so I will ship a darker variant tomorrow morning.
+[00:40] Mina: Decision: we ship onboarding version two next Tuesday, as long as the guest invite fix lands by Thursday and the contrast issue is closed. Deniz owns the invite fix, Alex owns contrast. I will write the release note on Friday.
+[01:02] Deniz: One risk: the translation vendor has not confirmed the Turkish strings. If they slip, we launch English only and add Turkish in the following patch.
+[01:18] Mina: Agreed. Let's record that as a risk and keep the English-only fallback in the release note.

@@ -1,0 +1,123 @@
+{
+  "title": "Nova Weekly Product Sync — Sample Recording",
+  "source": "docs/proof/sample-meeting.wav",
+  "script": "docs/proof/sample-meeting.json",
+  "transcript": [
+    {
+      "speaker": "Mina",
+      "at": 0,
+      "text": "Let's keep this to ten minutes. We need to decide the onboarding release date and who owns the accessibility fixes."
+    },
+    {
+      "speaker": "Deniz",
+      "at": 12,
+      "text": "The transcript QA edge cases are fixed, but the invite email still fails for guests on mobile. I can close that by Thursday."
+    },
+    {
+      "speaker": "Alex",
+      "at": 26,
+      "text": "I reviewed the new empty state. The contrast is still below the target, so I will ship a darker variant tomorrow morning."
+    },
+    {
+      "speaker": "Mina",
+      "at": 40,
+      "text": "Decision: we ship onboarding version two next Tuesday, as long as the guest invite fix lands by Thursday and the contrast issue is closed. Deniz owns the invite fix, Alex owns contrast. I will write the release note on Friday."
+    },
+    {
+      "speaker": "Deniz",
+      "at": 62,
+      "text": "One risk: the translation vendor has not confirmed the Turkish strings. If they slip, we launch English only and add Turkish in the following patch."
+    },
+    {
+      "speaker": "Mina",
+      "at": 78,
+      "text": "Agreed. Let's record that as a risk and keep the English-only fallback in the release note."
+    }
+  ],
+  "pipeline": "frontend/api/meetings/analyze.ts prompt and model, executed locally against the configured free provider",
+  "generatedAt": "2026-11-19T14:18:29.951Z",
+  "summary": "During the Nova Weekly Product Sync, the team agreed to ship onboarding version two next Tuesday, provided the guest invite email fix is completed by Thursday and the empty‑state contrast issue is resolved. Deniz will own the invite email fix, Alex will deliver the darker contrast variant, and Mina will draft the release notes on Friday. Additionally, a risk was flagged concerning unconfirmed Turkish translation strings from the vendor.",
+  "keyPoints": [
+    "Ship onboarding version 2 next Tuesday",
+    "Fix mobile invite email by Thursday",
+    "Ship darker empty‑state variant tomorrow",
+    "Deniz owns invite fix; Alex owns contrast",
+    "Mina writes release notes Friday"
+  ],
+  "risks": [
+    "Guest invite email fails on mobile devices",
+    "Empty‑state contrast below target",
+    "Turkish translation strings not confirmed by vendor",
+    "Potential English‑only launch if Turkish strings slip"
+  ],
+  "topics": [
+    "Onboarding release",
+    "Accessibility (invite email)",
+    "Visual contrast",
+    "Localization (Turkish)",
+    "Action items and deadlines"
+  ],
+  "confidence": 0.96,
+  "actions": [
+    {
+      "id": "action-1",
+      "text": "Close the mobile invite email failure",
+      "owner": "Deniz",
+      "ownerId": null,
+      "dueDate": null,
+      "confidence": 0.9,
+      "taskId": null
+    },
+    {
+      "id": "action-2",
+      "text": "Ship a darker variant of the empty state",
+      "owner": "Alex",
+      "ownerId": null,
+      "dueDate": null,
+      "confidence": 0.85,
+      "taskId": null
+    },
+    {
+      "id": "action-3",
+      "text": "Write the release note",
+      "owner": "Mina",
+      "ownerId": null,
+      "dueDate": null,
+      "confidence": 0.9,
+      "taskId": null
+    }
+  ],
+  "decisions": [
+    {
+      "id": "decision-1",
+      "title": "Ship onboarding version 2",
+      "context": "Scheduled for next Tuesday, contingent on guest invite fix by Thursday and contrast issue closed.",
+      "owner": "Mina",
+      "ownerId": null,
+      "confidence": 0.97,
+      "decisionId": null
+    }
+  ],
+  "analyzedAt": "2026-11-19T14:18:29.949Z",
+  "model": "liquid/lfm-3-1.7b:free",
+  "steps": [
+    {
+      "key": "transcribe",
+      "label": "Normalize transcript",
+      "status": "done",
+      "detail": "Speakers, timestamps and line breaks"
+    },
+    {
+      "key": "extract",
+      "label": "Extract signal",
+      "status": "done",
+      "detail": "Summary, decisions, risks and action items"
+    },
+    {
+      "key": "link",
+      "label": "Prepare follow-through",
+      "status": "done",
+      "detail": "Owners, due dates and confidence"
+    }
+  ]
+}

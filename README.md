@@ -42,6 +42,14 @@ Every workspace route below was captured from the seeded local demo workspace at
 
 To refresh the gallery, start the demo server without `.env.local` on port 4173, then run `npm run capture:screenshots` from `frontend/` (see the script table below).
 
+## AI extraction proof
+
+The gallery above uses seeded demo data. To prove the pipeline on a **real recording**, this repository includes a 61-second original meeting audio: the script was written here, synthesized locally and dedicated to the public domain (CC0 1.0), so no third-party or copyrighted material is involved. Nova's production extraction prompt (the same code path as `/api/meetings/analyze`) processed its transcript with the configured free provider and produced **5 key points, 1 decision, 3 owned actions, 4 risks and 96% confidence**.
+
+<a href="docs/proof/ai-notes-proof.png"><img src="docs/proof/ai-notes-proof.png" alt="Nova AI extraction proof: original recording and generated meeting notes" width="1200"></a>
+
+[Open the proof page](docs/proof/index.html) · [Listen to the WAV](docs/proof/sample-meeting.wav) · [Read the transcript](docs/proof/sample-meeting-transcript.txt) · [Inspect the exact model output](docs/proof/sample-meeting-analysis.json) · [View the source script](docs/proof/sample-meeting.json)
+
 ---
 
 ## Stack

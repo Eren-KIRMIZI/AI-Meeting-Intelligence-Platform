@@ -42,6 +42,14 @@ Aşağıdaki her çalışma alanı rotası, 1920×1200 çözünürlükte tohumla
 
 Galeriyi yenilemek için `.env.local` olmadan 4173 portunda demo sunucusunu başlatın, ardından `frontend/` içinden `npm run capture:screenshots` komutunu çalıştırın (bkz. aşağıdaki komut tablosu).
 
+## AI çıktısı kanıtı
+
+Yukarıdaki galeri tohumlanmış demo verisi kullanır. Hattın **gerçek bir kayıt** üzerinde çalıştığını göstermek için bu depoda 61 saniyelik özgün bir toplantı sesi var: metin burada yazıldı, yerel olarak sentezlendi ve kamuya mal edildi (CC0 1.0); üçüncü taraf veya telifli içerik yok. Nova'nın üretim çıkarım istemi (`/api/meetings/analyze` ile aynı kod yolu), transkripti yapılandırılmış ücretsiz sağlayıcıyla işledi ve **5 ana nokta, 1 karar, 3 sorumlu aksiyon, 4 risk ve %96 güven** üretti.
+
+<a href="docs/proof/ai-notes-proof.png"><img src="docs/proof/ai-notes-proof.png" alt="Nova AI çıktısı kanıtı: özgün kayıt ve üretilen toplantı notları" width="1200"></a>
+
+[Kanıt sayfasını aç](docs/proof/index.html) · [WAV kaydını dinle](docs/proof/sample-meeting.wav) · [Transkripti oku](docs/proof/sample-meeting-transcript.txt) · [Model çıktısını incele](docs/proof/sample-meeting-analysis.json) · [Kaynak metni gör](docs/proof/sample-meeting.json)
+
 ---
 
 ## Teknoloji yığını
