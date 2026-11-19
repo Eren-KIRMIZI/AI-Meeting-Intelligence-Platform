@@ -94,12 +94,12 @@ Yazdırılan URL'yi açın (varsayılan `http://localhost:5173`). Giriş ekranı
 | `npm run test` | Vitest paketini bir kez çalıştırır |
 | `npm run test:watch` | Vitest'i izleme modunda çalıştırır |
 | `npm run test:coverage` | Paketi V8 kapsam raporuyla çalıştırır |
-| `npm run test:e2e` | Playwright tarayıcı paketini çalıştırır |
+| `npm run test:e2e` | Üretim varlıklarını oluşturur ve Playwright tarayıcı paketini çalıştırır |
 | `npm run test:e2e:ui` | Playwright UI çalıştırıcısını açar |
 
 ### Testler ve CI
 
-Testler Vitest, jsdom, Testing Library ve jest-dom kullanır. Paket; saf yardımcıları, metrik oluşturucuları, aralığa dayalı analitiği, enum koruyucularını, transkript analizcisini, canlı toplantı zekâsını ve Knowledge notunu, demo veri deposunu ve toplantı hattını (analiz → kaydet), Nova Live kalıcılığını, kayıt biçimlendirmesini ve arşiv depolamayı, bildirim tercihi filtrelemesini ve derin bağlantı güvenliğini, demo çalışma alanı olay veri yolunu, eylem odaklı bildirim teslimini, ekip rol hiyerarşisi kurallarını, üye çıkarma ve proje erişimi eşitlemesini, içgörü inceleme kuyruğunu ve görev/karar dönüşümünü, iş akışı çalıştırma günlüğünü, kenar çubuğu erişilebilirliğini, rota meta verisini ve belge başlıklarını, hata sınırlarını, 404 sayfasını, yerel ayar değiştirmeyi ve yerel ayara duyarlı biçimlendirmeyi, çeviri kapsamını (AST tabanlı anahtar, yer tutucu ve JSX koruması) ve uçtan uca bir görev panosu etkileşimini kapsar.
+Testler Vitest, jsdom, Testing Library ve jest-dom kullanır. Paket; saf yardımcıları, metrik oluşturucuları, aralığa dayalı analitiği, enum koruyucularını, transkript analizcisini, canlı toplantı zekâsını ve Knowledge notunu, demo veri deposunu ve toplantı hattını (analiz → kaydet), Nova Live kalıcılığını, kayıt biçimlendirmesini ve arşiv depolamayı, bildirim tercihi filtrelemesini ve derin bağlantı güvenliğini, demo çalışma alanı olay veri yolunu, eylem odaklı bildirim teslimini, ekip rol hiyerarşisi kurallarını, üye çıkarma ve proje erişimi eşitlemesini, içgörü inceleme kuyruğunu ve görev/karar dönüşümünü, iş akışı çalıştırma günlüğünü, sparkline geometrisini ve canlı oda/konuşma/ortam yardımcılarını, kenar çubuğu erişilebilirliğini, rota meta verisini ve belge başlıklarını, hata sınırlarını, 404 sayfasını, yerel ayar değiştirmeyi ve yerel ayara duyarlı biçimlendirmeyi, çeviri kapsamını (AST tabanlı anahtar, yer tutucu ve JSX koruması) ve uçtan uca bir görev panosu etkileşimini kapsar.
 
 ```bash
 cd frontend
@@ -118,9 +118,9 @@ npm run test:e2e
 
 `e2e/a11y.spec.ts`, her rotada ve ayrıca içgörü ayrıntı penceresinde, görev oluşturma penceresinde, komut paletinde, bildirimler panelinde ve kullanıcı menüsünde WCAG 2.0/2.1/2.2 A ve AA kurallarına karşı bir axe-core denetimi (`@axe-core/playwright`) çalıştırır. Paket herhangi bir ihlalde başarısız olur; böylece erişilebilirlik gerilemeleri tıpkı bozuk bir test gibi CI'ı engeller.
 
-Playwright kendi Vite sunucusunu `127.0.0.1:4173` üzerinde başlatır; bu yüzden geliştirme sunucusunun çalışıyor olması gerekmez. CI tarayıcı paketini ayrı bir işte çalıştırır ve başarısız olduğunda HTML raporunu yükler.
+Playwright önce üretim paketini oluşturur, ardından `127.0.0.1:4173` üzerinde bir Vite önizleme sunucusu başlatır; böylece testler geliştirme dönüşümleri yerine yayınlanan varlıkları çalıştırır ve geliştirme sunucusunun açık olması gerekmez. CI tarayıcı paketini ayrı bir işte çalıştırır ve başarısız olduğunda HTML raporunu yükler.
 
-GitHub Actions her push ve `main` hedefli pull request'te `lint → typecheck → test → build` ile Playwright işini çalıştırır (`.github/workflows/ci.yml`). CI paketi `npm run test:coverage` ile çalıştırır ve kapsam tabanlarını zorunlu kılar (%36 ifade, %24 dal, %34 fonksiyon, %37 satır); böylece oran yalnızca yükselebilir. Ayrı bir `npm run check:readme` adımı derleme başlamadan önce iki README'yi karşılaştırır.
+GitHub Actions her push ve `main` hedefli pull request'te `lint → typecheck → test → build` ile Playwright işini çalıştırır (`.github/workflows/ci.yml`). CI paketi `npm run test:coverage` ile çalıştırır ve kapsam tabanlarını zorunlu kılar (%38 ifade, %26 dal, %36 fonksiyon, %39 satır); böylece oran yalnızca yükselebilir. Ayrı bir `npm run check:readme` adımı derleme başlamadan önce iki README'yi karşılaştırır.
 
 ---
 
@@ -499,7 +499,7 @@ Tek başına `npm run test -- src/i18n/translation-coverage.test.ts` ile çalı�
 
 - Kabuk, kimlik doğrulama koruması ve giriş ekranı hemen yüklenir; her çalışma alanı sayfası ilk ziyarette gelen bir `React.lazy` rota parçasıdır.
 - `AppLayout`, `PageSkeleton` içeren tek bir `Suspense` sınırına sahiptir; böylece gezinme sırasında kenar çubuğu ve başlık bağlı kalırken sonraki sayfa akar. Nova Live'ın kendi tam ekran yedeği vardır.
-- Grafikler, pencereler ve mock veri kümesi kendi parçalarına ayrılır. Üretim derlemesi 5–26 kB arasında sayfa parçaları üretir; giriş paketi Vite'ın 500 kB uyarısı olmadan yaklaşık 343 kB (≈100 kB gzip) seviyesinde kalır.
+- Pano istatistik kartları ilk boyamada Recharts yerine saf bir SVG sparkline (`src/lib/sparkline.ts`) kullanır. Recharts yalnızca gecikmeli `/analytics` sayfası tarafından içe aktarılır; grafik parçası (~409 kB, ≈118 kB gzip) yalnızca gerektiğinde yüklenir ve başlangıç HTML'si yalnızca react/data/ui parçalarını ön yükler. Çoğu sayfa parçası ~30 kB altında kalır, giriş paketi ~410 kB (≈120 kB gzip) civarındadır ve Vite 500 kB uyarısı vermez.
 
 ---
 

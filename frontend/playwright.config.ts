@@ -24,10 +24,13 @@ export default defineConfig({
       use: { ...devices['Desktop Chrome'] },
     },
   ],
+  // Serve the production bundle: on-demand dev transforms made cold route loads
+  // timing-dependent under parallel workers, which showed up as flaky a11y and
+  // smoke tests. The build lives in the test script so local and CI runs match.
   webServer: {
-    command: `npm run dev -- --port ${PORT} --strictPort --host 127.0.0.1`,
+    command: `npm run preview -- --port ${PORT} --strictPort --host 127.0.0.1`,
     url: baseURL,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: false,
     timeout: 120_000,
   },
 });

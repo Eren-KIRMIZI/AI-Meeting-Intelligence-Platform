@@ -94,12 +94,12 @@ Open the printed URL (default `http://localhost:5173`). Use **Continue with demo
 | `npm run test` | Run the Vitest suite once |
 | `npm run test:watch` | Run Vitest in watch mode |
 | `npm run test:coverage` | Run the suite with a V8 coverage report |
-| `npm run test:e2e` | Run the Playwright browser suite |
+| `npm run test:e2e` | Build production assets and run the Playwright browser suite |
 | `npm run test:e2e:ui` | Open the Playwright UI runner |
 
 ### Testing & CI
 
-Tests use Vitest with jsdom, Testing Library and jest-dom. The suite covers pure helpers, metric builders, range-derived analytics, enum guards, the transcript analyzer, the live-meeting intelligence and Knowledge note, the demo data store and its meeting pipeline (analyze → commit), Nova Live persistence, recording formatting and archive storage, notification preference filtering and deep-link safety, the demo workspace event bus, action-driven notification delivery, team role hierarchy rules, member removal and project-access sync, the insight review queue and its task/decision conversion, the workflow run log, sidebar accessibility, route metadata and document titles, the error boundaries, the 404 page, locale switching and locale-aware formatting, translation coverage (AST-based key, placeholder and JSX guard), and a task-board interaction end to end.
+Tests use Vitest with jsdom, Testing Library and jest-dom. The suite covers pure helpers, metric builders, range-derived analytics, enum guards, the transcript analyzer, the live-meeting intelligence and Knowledge note, the demo data store and its meeting pipeline (analyze → commit), Nova Live persistence, recording formatting and archive storage, notification preference filtering and deep-link safety, the demo workspace event bus, action-driven notification delivery, team role hierarchy rules, member removal and project-access sync, the insight review queue and its task/decision conversion, the workflow run log, sparkline geometry and live room/speech/media helpers, sidebar accessibility, route metadata and document titles, the error boundaries, the 404 page, locale switching and locale-aware formatting, translation coverage (AST-based key, placeholder and JSX guard), and a task-board interaction end to end.
 
 ```bash
 cd frontend
@@ -118,9 +118,9 @@ npm run test:e2e
 
 `e2e/a11y.spec.ts` runs an axe-core audit (`@axe-core/playwright`) against WCAG 2.0/2.1/2.2 A and AA rules on every route plus the insight detail dialog, the create-task dialog, the command palette, the notifications panel and the user menu. The suite fails on any violation, so accessibility regressions block CI just like a broken test.
 
-Playwright starts its own Vite server on `127.0.0.1:4173`, so the dev server does not need to be running. CI runs the browser suite in a separate job and uploads the HTML report when it fails.
+Playwright builds the production bundle first, then starts a Vite preview server on `127.0.0.1:4173`, so tests exercise the shipped assets instead of dev transforms and the dev server does not need to be running. CI runs the browser suite in a separate job and uploads the HTML report when it fails.
 
-GitHub Actions runs `lint → typecheck → test → build` plus the Playwright job on every push and pull request to `main` (`.github/workflows/ci.yml`). CI runs the suite through `npm run test:coverage`, which enforces coverage floors (36% statements, 24% branches, 34% functions, 37% lines) so the number can only move up. A separate `npm run check:readme` step compares both READMEs before the build starts.
+GitHub Actions runs `lint → typecheck → test → build` plus the Playwright job on every push and pull request to `main` (`.github/workflows/ci.yml`). CI runs the suite through `npm run test:coverage`, which enforces coverage floors (38% statements, 26% branches, 36% functions, 39% lines) so the number can only move up. A separate `npm run check:readme` step compares both READMEs before the build starts.
 
 ---
 
@@ -499,7 +499,7 @@ Run it alone with `npm run test -- src/i18n/translation-coverage.test.ts`. Dynam
 
 - The shell, auth guard and login screen load eagerly; every workspace page is a `React.lazy` route chunk that arrives on first visit.
 - `AppLayout` owns a single `Suspense` boundary with `PageSkeleton`, so navigation keeps the sidebar and header mounted while the next page streams in. Nova Live has its own full-screen fallback.
-- Charts, dialogs and the mock dataset are split into their own chunks. The production build emits page chunks of 5–26 kB; the entry bundle stays around 343 kB (≈100 kB gzip) with no Vite 500 kB warning.
+- Dashboard stat cards use a pure SVG sparkline (`src/lib/sparkline.ts`) instead of mounting Recharts on first paint. Recharts is imported only by the lazy `/analytics` page, whose chart chunk (~409 kB, ≈118 kB gzip) loads on demand; the initial HTML preloads only the react/data/ui chunks. Most page chunks stay under ~30 kB, the entry bundle is ~410 kB (≈120 kB gzip), and Vite reports no 500 kB warning.
 
 ---
 

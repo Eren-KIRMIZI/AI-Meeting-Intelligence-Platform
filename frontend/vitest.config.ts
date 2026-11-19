@@ -31,10 +31,10 @@ export default defineConfig({
       // page-level behaviour is covered by Playwright. Keep the global floor
       // just below today's numbers so untested additions cannot slip through.
       thresholds: {
-        statements: 36,
-        branches: 24,
-        functions: 34,
-        lines: 37,
+        statements: 38,
+        branches: 26,
+        functions: 36,
+        lines: 39,
       },
     },
   },

@@ -1,4 +1,3 @@
-import { Area, AreaChart, ResponsiveContainer } from 'recharts';
 import {
   Activity,
   ArrowDownRight,
@@ -16,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import { sparklineGeometry } from '@/lib/sparkline';
 import { accentConfig } from '@/lib/status';
 import { useI18n } from '@/i18n';
 import type { DashboardStat } from '@/types';
@@ -54,7 +54,7 @@ export function StatCard({ stat, className }: StatCardProps) {
         ? ArrowDownRight
         : Minus;
 
-  const data = stat.trend.map((value, index) => ({ index, value }));
+  const sparkline = sparklineGeometry(stat.trend);
   const gradientId = `spark-${stat.id.replace(/[^a-z0-9]/gi, '')}`;
 
   return (
@@ -104,29 +104,26 @@ export function StatCard({ stat, className }: StatCardProps) {
           </div>
 
           <div className="h-10 w-20 shrink-0 sm:w-24" aria-hidden="true">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart
-                data={data}
-                accessibilityLayer={false}
-                margin={{ top: 4, right: 0, left: 0, bottom: 0 }}
-              >
-                <defs>
-                  <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor={accent.chart} stopOpacity={0.24} />
-                    <stop offset="100%" stopColor={accent.chart} stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <Area
-                  type="monotone"
-                  dataKey="value"
-                  stroke={accent.chart}
-                  strokeWidth={1.5}
-                  fill={`url(#${gradientId})`}
-                  dot={false}
-                  isAnimationActive={false}
-                />
-              </AreaChart>
-            </ResponsiveContainer>
+            <svg
+              className="h-full w-full"
+              viewBox={`0 0 ${sparkline.width} ${sparkline.height}`}
+              preserveAspectRatio="none"
+              focusable="false"
+            >
+              <defs>
+                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor={accent.chart} stopOpacity={0.24} />
+                  <stop offset="100%" stopColor={accent.chart} stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <path d={sparkline.area} fill={`url(#${gradientId})`} />
+              <path
+                d={sparkline.line}
+                fill="none"
+                stroke={accent.chart}
+                strokeWidth={1.5}
+              />
+            </svg>
           </div>
         </div>
       </div>

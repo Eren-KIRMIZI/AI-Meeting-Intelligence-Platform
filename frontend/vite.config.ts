@@ -19,7 +19,9 @@ export default defineConfig({
         manualChunks: {
           react: ['react', 'react-dom', 'react-router-dom'],
           data: ['@tanstack/react-query', '@supabase/supabase-js', 'zustand'],
-          charts: ['recharts'],
+          // Recharts is only imported by the lazy analytics page. Keeping it
+          // out of manualChunks lets Vite emit it as a dynamic-only chunk;
+          // naming it here pulled a shared dependency into the entry preload.
           ui: ['@radix-ui/react-dialog', '@radix-ui/react-dropdown-menu', '@radix-ui/react-popover', 'lucide-react'],
         },
       },
