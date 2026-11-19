@@ -444,30 +444,44 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   for (const model of models) {
     usedModel = model;
-    try {
-      providerResponse = await fetch(`${baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({
-          model,
-          temperature: 0.2,
-          messages: [
-            {
-              role: 'system',
-              content:
-                'You extract structured meeting intelligence. Reply with JSON only.',
-            },
-            { role: 'user', content: prompt },
-          ],
-        }),
-      });
-    } catch {
-      sendJson(res, 502, {
-        error: 'The analysis provider could not be reached. Try again.',
-      });
-      return;
+    let response: Response | null = null;
+
+    // Free providers throttle bursts. A short retry before rotating to the
+    // next model keeps the no-credentials, no-paid-plan flow usable.
+    for (let attempt = 0; attempt < 2; attempt += 1) {
+      try {
+        response = await fetch(`${baseUrl}/chat/completions`, {
+          method: 'POST',
+          headers,
+          body: JSON.stringify({
+            model,
+            temperature: 0.2,
+            messages: [
+              {
+                role: 'system',
+                content:
+                  'You extract structured meeting intelligence. Reply with JSON only.',
+              },
+              { role: 'user', content: prompt },
+            ],
+          }),
+        });
+      } catch {
+        sendJson(res, 502, {
+          error: 'The analysis provider could not be reached. Try again.',
+        });
+        return;
+      }
+
+      if (response.status !== 429) break;
+      if (attempt === 0) {
+        await new Promise((resolve) => setTimeout(resolve, 400));
+      }
     }
-    if (providerResponse.status !== 429) break;
+
+    if (!response) continue;
+    providerResponse = response;
+    if (response.status !== 429) break;
     rateLimited = true;
   }
 

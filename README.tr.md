@@ -6,9 +6,37 @@
 
 # Nova — AI Toplantı Zekâsı Platformu
 
-Nova toplantıları yürütmeye dönüştürür: her görüşme; kararlar, sahipler, son tarihler ve takipler içeren bir özete dönüşür. Bu depo tam yığın temeli içerir: üretime hazır bir React ön yüzü, satır düzeyi güvenlik (RLS) içeren bir Supabase şeması ve ayrıcalıklı işlemler için Vercel sunucusuz fonksiyonları.
+Nova, ekipler için bir AI toplantı zekâsı çalışma alanıdır. Toplantıları yürütmeye dönüştürür: bir toplantıyı içe aktarın veya planlayın, transkriptini yakalayın; kararlar, sahipler, son tarihler ve takipler içeren bir özet alın; ardından bu takipleri görev olarak izleyin, AI sinyallerini inceleyin ve ekip desenlerini zaman içinde ölçün. Nova Live; uygulama içinde altyazılar, sohbet, transkripte dayalı bir copilot ve kayıt arşivi olan görüntülü toplantılar ekler. Bu depo tam yığın temeli içerir: üretime hazır bir React ön yüzü, satır düzeyi güvenlik (RLS) içeren bir Supabase şeması ve ayrıcalıklı işlemler için Vercel sunucusuz fonksiyonları.
 
 > **Demo modu varsayılandır.** Hiçbir kimlik bilgisi yapılandırılmadığında uygulama tamamen açıkça etiketlenmiş yerel demo verisiyle çalışır. Canlı veriye geçmek için Supabase anahtarlarını ekleyin; tek bir bileşeni değiştirmeniz gerekmez.
+
+---
+
+## Ekran görüntüleri
+
+Aşağıdaki her çalışma alanı modülü, tohumlanmış yerel demo çalışma alanından yakalandı; ekranlar gerçekçi verilerle doludur ve canlı kiracı içeriği görünmez. Her dilin kendi eksiksiz görsel seti vardır; arayüzü **Ayarlar → Profil → Arayüz dili** bölümünden değiştirebilirsiniz.
+
+| Modül | Önizleme | Ne gösteriyor |
+| --- | --- | --- |
+| Genel bakış | <img src="docs/screenshots/tr/overview.png" alt="Nova genel bakış" width="360"> | KPI'lar, son etkinlikler ve çalışma alanı nabzı. |
+| Projeler | <img src="docs/screenshots/tr/projects.png" alt="Nova projeler" width="360"> | Proje hattı, sağlık durumu, bütçe ve sahiplik. |
+| Görevler | <img src="docs/screenshots/tr/tasks.png" alt="Nova görevler" width="360"> | Filtreler, öncelikler ve durum değişiklikleriyle kanban panosu. |
+| Toplantılar | <img src="docs/screenshots/tr/meetings.png" alt="Nova toplantılar" width="360"> | Analiz, transkript ve kayıtlarla toplantı kütüphanesi. |
+| Takvim | <img src="docs/screenshots/tr/calendar.png" alt="Nova takvim" width="360"> | Çakışmalar, hatırlatmalar ve boş aralıklarla hafta/ay ajandası. |
+| Arama | <img src="docs/screenshots/tr/search.png" alt="Nova arama" width="360"> | Toplantılar, kararlar, kişiler ve bilgi belgeleri üzerinde tek dizin. |
+| Nova Live | <img src="docs/screenshots/tr/live.png" alt="Nova Live" width="360"> | Katılım öncesi lobi, oda kontrolleri ve oturum geçmişi. |
+| Kararlar | <img src="docs/screenshots/tr/decisions.png" alt="Nova kararlar" width="360"> | Durum geçmişi ve inceleme eylemleriyle karar günlüğü. |
+| Bilgi | <img src="docs/screenshots/tr/knowledge.png" alt="Nova bilgi" width="360"> | Bilgi kütüphanesi ve tam belge okuyucusu. |
+| İş akışları | <img src="docs/screenshots/tr/workflows.png" alt="Nova iş akışları" width="360"> | Satır içi çalıştırma günlüğü olan otomasyon tarifleri. |
+| Entegrasyonlar | <img src="docs/screenshots/tr/integrations.png" alt="Nova entegrasyonlar" width="360"> | Bağlı sağlayıcılar, eşitleme sağlığı ve etkinlik. |
+| AI Intelligence | <img src="docs/screenshots/tr/intelligence.png" alt="Nova AI intelligence" width="360"> | İşe dönüştürme eylemleriyle incelenen AI sinyalleri. |
+| Organizasyon zekası | <img src="docs/screenshots/tr/org-intelligence.png" alt="Nova organizasyon zekası" width="360"> | Çalışma alanı geneli puan, sinyaller ve tekrarlayan temalar. |
+| Analitik | <img src="docs/screenshots/tr/analytics.png" alt="Nova analitik" width="360"> | Eğilim grafikleri, karar dağılımı ve iş yükü. |
+| Ekip | <img src="docs/screenshots/tr/team.png" alt="Nova ekip" width="360"> | Roller ve proje erişimiyle üye dizini. |
+| Denetim ve uyum | <img src="docs/screenshots/tr/audit.png" alt="Nova denetim" width="360"> | Denetim kaydı, önem dağılımı ve uyumluluk puanı. |
+| Ayarlar | <img src="docs/screenshots/tr/settings.png" alt="Nova ayarlar" width="360"> | Profil, bildirimler ve çalışma alanı tercihleri. |
+
+Galeriyi yenilemek için `.env.local` olmadan 4173 portunda demo sunucusunu başlatın, ardından `frontend/` içinden `npm run capture:screenshots` komutunu çalıştırın (bkz. aşağıdaki komut tablosu).
 
 ---
 
@@ -99,6 +127,7 @@ Yazdırılan URL'yi açın (varsayılan `http://localhost:5173`). Giriş ekranı
 | `npm run test:coverage` | Paketi V8 kapsam raporuyla çalıştırır |
 | `npm run test:e2e` | Üretim varlıklarını oluşturur ve Playwright tarayıcı paketini çalıştırır |
 | `npm run test:e2e:ui` | Üretim varlıklarını oluşturur ve Playwright UI çalıştırıcısını açar |
+| `npm run capture:screenshots` | 4173 portundaki demo sunucusundan tüm modülleri EN ve TR olarak yakalar |
 
 ### Testler ve CI
 
@@ -247,6 +276,8 @@ Supabase → Authentication → URL configuration bölümünde:
 - Redirect URLs: `http://localhost:5173/**`, `https://your-app.vercel.app/**`
 
 Davetler, `/login` adresine yönlendirme ile `auth.admin.inviteUserByEmail` kullanır.
+
+İlk canlı oturum açmada uygulama aktif üyelikleri kontrol eder. Hiçbiri yoksa kuruluşu, sahip üyeliğini ve bir başlangıç projesini oluşturmak için `bootstrap_workspace()` yöntemini bir kez çağırır, ardından çalışma alanını yeniden yükler — elle SQL adımı gerekmez. Demo modu etkilenmez.
 
 ---
 
@@ -420,6 +451,17 @@ Nova Live toplantıyı çalışma alanının içinde yürütür: video/ses, ekra
 - **Kalıcılık.** Bir odayı bitirmek, analizi, transkripti, sohbeti ve katılımcılarıyla tamamlanmış bir `nova_live` toplantısı kaydeder, ardından bir Knowledge notu yazar. Takipler yalnızca mevcut `commitMeetingAnalysis` adımı üzerinden incelemeden sonra oluşturulur.
 - **Rotalar.** `/live` uygulama kabuğu içindeki lobidir; `/live/:roomId` tam ekran çalışır. Mesh yapısını iki katılımcı olarak test etmek için bir sekmede oda başlatın ve davet bağlantısını başka bir sekmede açın.
 - **Türkçe sorular.** Deterministik copilot Türkçe niyetleri (kararlar, aksiyon maddeleri, tarihler, riskler, konuşma süresi, özetler) anlar ve aktif arayüz dilinde yanıtlar; böylece Türkçe bir oda İngilizceye düşmez.
+
+### LiveKit manuel duman testi (canlı mod)
+
+Playwright paketi demo modunda kalır; bu yol gerçek kimlik bilgileri ve gerçek bir oda gerektirdiği için elle doğrulanır:
+
+1. `0005` ve `0006` geçişlerini uygulayın, `VITE_SUPABASE_*` ve `VITE_LIVEKIT_URL` ile sunucu tarafındaki LiveKit ve Supabase değişkenlerini ayarlayın, ardından geliştirme sunucusunu yeniden başlatın (veya dağıtılmış önizlemeyi kullanın).
+2. Gerçek bir kullanıcıyla oturum açın. Aktif üyelik yoksa ilk giriş çalışma alanını otomatik oluşturur.
+3. `/live` adresini açın, onay ekranını kabul edip bir oda başlatın. Geliştirici araçlarında Ağ → Fetch/XHR bölümünde `POST /api/live/token` isteğinin `{ token, url, room }` içeren kısa ömürlü bir `200` yanıtı döndürdüğünü doğrulayın — API sırrı asla görünmemelidir.
+4. WS filtresine geçin ve LiveKit `wss://` adresine yapılan `101` yükseltmesini onaylayın. Davet bağlantısıyla ikinci bir sekmeden veya cihazdan katılın; iki katılımcı da odada görünmelidir.
+5. Altyazıları, sohbeti ve copilot'u deneyin, ardından odayı bitirin. Kaydedilen `nova_live` toplantısını, transkripti, sohbeti ve Knowledge notunu doğrulayın; tarayıcı konsolunda hata olmadığını kontrol edin.
+6. Geçici kullanıcıyı, odayı ve çalışma alanını temizleyin. Bu akış, tek kullanımlık kimlik bilgilerine sahip secret-gated bir iş eklenmedikçe bilinçli olarak CI'a dahil edilmez.
 
 ---
 

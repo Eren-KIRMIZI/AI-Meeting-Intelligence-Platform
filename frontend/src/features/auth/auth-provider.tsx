@@ -2,6 +2,7 @@ import {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
@@ -30,9 +31,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
   const [orgRole, setOrgRole] = useState<OrgRole | null>(isDemo ? 'owner' : null);
   const [loading, setLoading] = useState(!isDemo);
+  const bootstrappedUser = useRef<string | null>(null);
 
   const loadWorkspace = useCallback(async (nextSession: Session) => {
     if (!supabase) return;
+    const client = supabase;
 
     const userId = nextSession.user.id;
 
@@ -71,15 +74,41 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
     }
 
-    const { data: memberships } = await supabase
-      .from('organization_members')
-      .select('role, organization_id, organizations(name)')
-      .eq('user_id', userId)
-      .eq('status', 'active')
-      .limit(1)
-      .returns<MembershipRow[]>();
+    const readMembership = async (): Promise<MembershipRow | null> => {
+      const { data: memberships } = await client
+        .from('organization_members')
+        .select('role, organization_id, organizations(name)')
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .limit(1)
+        .returns<MembershipRow[]>();
 
-    const membership = memberships?.[0];
+      return memberships?.[0] ?? null;
+    };
+
+    let membership = await readMembership();
+
+    // A freshly created auth user only gets a profile row from the database
+    // trigger. Without a membership every org-scoped service throws. The
+    // bootstrap RPC is idempotent, so create the first workspace on sign-in.
+    if (!membership && bootstrappedUser.current !== userId) {
+      bootstrappedUser.current = userId;
+      const displayName =
+        (profileRow?.full_name as string | null)?.trim() ||
+        (nextSession.user.user_metadata?.full_name as string | undefined) ||
+        nextSession.user.email?.split('@')[0] ||
+        'Workspace member';
+
+      const { error: bootstrapError } = await client.rpc(
+        'bootstrap_workspace',
+        { workspace_name: `${displayName}'s Workspace` }
+      );
+
+      if (!bootstrapError) {
+        membership = await readMembership();
+      }
+    }
+
     if (membership) {
       const organization = Array.isArray(membership.organizations)
         ? membership.organizations[0]
@@ -167,6 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setOrgId(null);
     setOrgName(null);
     setOrgRole(null);
+    bootstrappedUser.current = null;
   }, []);
 
   const enterDemo = useCallback(() => {

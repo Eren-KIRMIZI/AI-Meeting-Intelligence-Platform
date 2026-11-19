@@ -6,9 +6,37 @@
 
 # Nova — AI Meeting Intelligence Platform
 
-Nova turns meetings into execution: every conversation becomes a brief with decisions, owners, deadlines and follow-ups. This repository contains the full-stack foundation: a production-ready React frontend, a Supabase schema with row-level security, and Vercel serverless functions for privileged operations.
+Nova is an AI meeting intelligence workspace for teams. It turns meetings into execution: import or plan a meeting, capture its transcript, and get a brief with decisions, owners, deadlines and follow-ups — then track those follow-ups as tasks, review AI signals and measure team patterns over time. Nova Live adds in-app video meetings with captions, chat, a transcript-grounded copilot and a recording archive. This repository contains the full-stack foundation: a production-ready React frontend, a Supabase schema with row-level security, and Vercel serverless functions for privileged operations.
 
 > **Demo mode is the default.** With no credentials configured the app runs entirely on clearly-labelled local demo data. Add Supabase keys to switch to live data without changing a single component.
+
+---
+
+## Screenshots
+
+Every workspace module below was captured from the seeded local demo workspace, so the screens are populated with realistic data and no live tenant content appears. Each language has its own full set of images; switch the interface under **Settings → Profile → Interface language**.
+
+| Module | Preview | What it shows |
+| --- | --- | --- |
+| Overview | <img src="docs/screenshots/en/overview.png" alt="Nova overview" width="360"> | KPIs, recent activity and the workspace pulse at a glance. |
+| Projects | <img src="docs/screenshots/en/projects.png" alt="Nova projects" width="360"> | Project pipeline, health, budget and ownership. |
+| Tasks | <img src="docs/screenshots/en/tasks.png" alt="Nova tasks" width="360"> | Kanban board with filters, priorities and status changes. |
+| Meetings | <img src="docs/screenshots/en/meetings.png" alt="Nova meetings" width="360"> | Meeting library with analysis, transcripts and recordings. |
+| Calendar | <img src="docs/screenshots/en/calendar.png" alt="Nova calendar" width="360"> | Week/month agenda with conflicts, reminders and free slots. |
+| Search | <img src="docs/screenshots/en/search.png" alt="Nova search" width="360"> | One index across meetings, decisions, people and knowledge. |
+| Nova Live | <img src="docs/screenshots/en/live.png" alt="Nova Live" width="360"> | Pre-join lobby, room controls and session history. |
+| Decisions | <img src="docs/screenshots/en/decisions.png" alt="Nova decisions" width="360"> | Decision log with status history and review actions. |
+| Knowledge | <img src="docs/screenshots/en/knowledge.png" alt="Nova knowledge" width="360"> | Knowledge library and full-document reader. |
+| Workflows | <img src="docs/screenshots/en/workflows.png" alt="Nova workflows" width="360"> | Automation recipes with an inline run log. |
+| Integrations | <img src="docs/screenshots/en/integrations.png" alt="Nova integrations" width="360"> | Connected providers, sync health and activity. |
+| AI Intelligence | <img src="docs/screenshots/en/intelligence.png" alt="Nova AI intelligence" width="360"> | Reviewed AI signals with convert-to-work actions. |
+| Organizational intelligence | <img src="docs/screenshots/en/org-intelligence.png" alt="Nova organizational intelligence" width="360"> | Workspace-wide score, signals and recurring themes. |
+| Analytics | <img src="docs/screenshots/en/analytics.png" alt="Nova analytics" width="360"> | Trend charts, decision mix and workload. |
+| Team | <img src="docs/screenshots/en/team.png" alt="Nova team" width="360"> | Member directory with roles and project access. |
+| Audit & compliance | <img src="docs/screenshots/en/audit.png" alt="Nova audit" width="360"> | Audit log, severity breakdown and compliance score. |
+| Settings | <img src="docs/screenshots/en/settings.png" alt="Nova settings" width="360"> | Profile, notifications and workspace preferences. |
+
+To refresh the gallery, start the demo server without `.env.local` on port 4173, then run `npm run capture:screenshots` from `frontend/` (see the script table below).
 
 ---
 
@@ -99,6 +127,7 @@ Open the printed URL (default `http://localhost:5173`). Use **Continue with demo
 | `npm run test:coverage` | Run the suite with a V8 coverage report |
 | `npm run test:e2e` | Build production assets and run the Playwright browser suite |
 | `npm run test:e2e:ui` | Build production assets and open the Playwright UI runner |
+| `npm run capture:screenshots` | Capture every module in EN and TR from the demo server on port 4173 |
 
 ### Testing & CI
 
@@ -247,6 +276,8 @@ In Supabase → Authentication → URL configuration:
 - Redirect URLs: `http://localhost:5173/**`, `https://your-app.vercel.app/**`
 
 Invitations use `auth.admin.inviteUserByEmail` with a redirect to `/login`.
+
+On the first live sign-in the app checks active memberships. If the user has none, it calls `bootstrap_workspace()` once to create the organization, the owner membership and a starter project, then reloads the workspace — no manual SQL step is needed. Demo mode is unaffected.
 
 ---
 
@@ -420,6 +451,17 @@ Nova Live runs the meeting inside the workspace: video/audio, screen sharing, ch
 - **Persistence.** Ending a room saves a completed `nova_live` meeting with its analysis, transcript, chat and participants, then writes a Knowledge note. Follow-ups are created only after review through the existing `commitMeetingAnalysis` step.
 - **Routes.** `/live` is the lobby inside the app shell; `/live/:roomId` runs full-screen. Start a room in one tab and open the invite link in another to test the mesh as two participants.
 - **Turkish questions.** The deterministic copilot understands Turkish intents (decisions, action items, dates, risks, speaking time, summaries) and answers in the active interface language, so a Turkish room does not fall back to English.
+
+### Manual LiveKit smoke test (live mode)
+
+The Playwright suite stays in demo mode; this path needs real credentials and a real room, so verify it by hand:
+
+1. Apply migrations `0005` and `0006`, set `VITE_SUPABASE_*` and `VITE_LIVEKIT_URL` plus the server-side LiveKit and Supabase variables, then restart the dev server (or use the deployed preview).
+2. Sign in with a real user. First login creates the workspace automatically when no active membership exists.
+3. Open `/live`, accept the consent screen and start a room. In DevTools → Network (Fetch/XHR), confirm `POST /api/live/token` returns `200` with a short-lived `{ token, url, room }` body — never the API secret.
+4. Filter by WS and confirm the `101` upgrade to the LiveKit `wss://` URL. Join from a second tab or device with the invite link; both participants must appear in the room.
+5. Exercise captions, chat and the copilot, then end the room. Confirm the saved `nova_live` meeting, transcript, chat and Knowledge note, and check the browser console for errors.
+6. Clean up the temporary user, room and workspace. This flow is deliberately not in CI unless a secret-gated job with disposable credentials is added.
 
 ---
 
