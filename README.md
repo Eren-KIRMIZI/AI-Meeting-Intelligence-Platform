@@ -224,8 +224,9 @@ SUPABASE_URL=https://<project>.supabase.co
 SUPABASE_SECRET_KEY=<service-role-key>
 UPSTASH_REDIS_REST_URL=<optional>
 UPSTASH_REDIS_REST_TOKEN=<optional>
-OPENAI_API_KEY=<optional, enables live transcript extraction>
-OPENAI_MODEL=gpt-4o-mini
+OPENAI_BASE_URL=https://openrouter.ai/api/v1
+OPENAI_API_KEY=<openrouter-or-openai-key>
+OPENAI_MODEL=google/gemma-4-31b-it:free
 LIVEKIT_URL=wss://<project>.livekit.cloud
 LIVEKIT_API_KEY=<server-side only>
 LIVEKIT_API_SECRET=<server-side only>
@@ -233,6 +234,8 @@ VITE_APP_URL=https://your-app.vercel.app
 ```
 
 Optional Nova Live media. `VITE_LIVEKIT_URL` is browser-safe and only switches the room transport to LiveKit; the API key and secret stay on the server and are read exclusively by `POST /api/live/token`. Leave all four empty to keep the WebRTC mesh used by demo mode.
+
+For free AI analysis, point `OPENAI_BASE_URL` at OpenRouter and use a model ending in `:free`; no paid OpenAI key is needed. `OPENAI_MODEL` accepts comma-separated fallbacks that are tried in order when a free provider is rate limited.
 
 > Only variables prefixed with `VITE_` are bundled into the browser. Never prefix a secret with `VITE_`.
 
@@ -298,7 +301,7 @@ Guards:
 1. Validates the JWT with Supabase Auth.
 2. Confirms the caller is an **active owner/admin/member** of the organization.
 3. Verifies the meeting belongs to that organization.
-4. Requires `OPENAI_API_KEY` on the server; returns `503` when it is absent.
+4. Requires `OPENAI_API_KEY` (OpenAI or OpenRouter) on the server; returns `503` when it is absent.
 5. Rate limits to 20 analyses per hour per user via Upstash (fails open when unset).
 6. Caps the transcript at 20,000 characters and validates the provider JSON before returning it.
 

@@ -224,8 +224,9 @@ SUPABASE_URL=https://<project>.supabase.co
 SUPABASE_SECRET_KEY=<service-role-key>
 UPSTASH_REDIS_REST_URL=<optional>
 UPSTASH_REDIS_REST_TOKEN=<optional>
-OPENAI_API_KEY=<optional, enables live transcript extraction>
-OPENAI_MODEL=gpt-4o-mini
+OPENAI_BASE_URL=https://openrouter.ai/api/v1
+OPENAI_API_KEY=<openrouter-veya-openai-anahtari>
+OPENAI_MODEL=google/gemma-4-31b-it:free
 LIVEKIT_URL=wss://<project>.livekit.cloud
 LIVEKIT_API_KEY=<server-side only>
 LIVEKIT_API_SECRET=<server-side only>
@@ -233,6 +234,8 @@ VITE_APP_URL=https://your-app.vercel.app
 ```
 
 İsteğe bağlı Nova Live medyası. `VITE_LIVEKIT_URL` tarayıcıda güvenlidir ve yalnızca oda taşımasını LiveKit'e geçirir; API anahtarı ve sırrı sunucuda kalır ve yalnızca `POST /api/live/token` tarafından okunur. Demo modunun kullandığı WebRTC mesh yapısını korumak için dördünü de boş bırakın.
+
+Ücretsiz AI analizi için `OPENAI_BASE_URL` değerini OpenRouter'a ayarlayıp `:free` ile biten bir model kullanın; ücretli OpenAI anahtarı gerekmez. Ücretsiz sağlayıcı hız sınırına takıldığında `OPENAI_MODEL` virgülle ayrılmış yedek modelleri sırayla dener.
 
 > Yalnızca `VITE_` önekli değişkenler tarayıcı paketine dahil edilir. Bir sırrı asla `VITE_` ile öneklendirmeyin.
 
@@ -298,7 +301,7 @@ Kontroller:
 1. JWT'yi Supabase Auth ile doğrular.
 2. Çağıranın kuruluşun **aktif sahibi/yöneticisi/üyesi** olduğunu onaylar.
 3. Toplantının o kuruluşa ait olduğunu doğrular.
-4. Sunucuda `OPENAI_API_KEY` gerektirir; yoksa `503` döner.
+4. Sunucuda `OPENAI_API_KEY` (OpenAI veya OpenRouter) gerektirir; yoksa `503` döner.
 5. Upstash üzerinden kullanıcı başına saatte 20 analizle sınırlar (yapılandırılmadığında açık kalır).
 6. Transkripti 20.000 karakterle sınırlar ve sağlayıcı JSON'unu döndürmeden önce doğrular.
 

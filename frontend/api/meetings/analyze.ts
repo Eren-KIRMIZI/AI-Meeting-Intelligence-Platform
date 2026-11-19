@@ -9,6 +9,7 @@ const UUID_PATTERN =
 const MIN_TRANSCRIPT = 40;
 const MAX_TRANSCRIPT = 20_000;
 const MAX_PROMPT_TRANSCRIPT = 12_000;
+const DEFAULT_FREE_MODEL = 'google/gemma-4-31b-it:free';
 
 const WRITE_ROLES = ['owner', 'admin', 'member'] as const;
 
@@ -254,6 +255,13 @@ const steps: AnalysisStep[] = [
   },
 ];
 
+/** Free providers often wrap JSON in a markdown fence; accept both forms. */
+function cleanJson(content: string): string {
+  const trimmed = content.trim();
+  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  return (fenced ? fenced[1] : trimmed).trim();
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (req.method !== 'POST') {
     methodNotAllowed(res, ['POST']);
@@ -391,7 +399,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (!apiKey) {
     sendJson(res, 503, {
       error:
-        'Transcript analysis is not connected yet. Add OPENAI_API_KEY on the server to enable live extraction.',
+        'Transcript analysis is not connected yet. Add an OpenAI or OpenRouter key on the server to enable live extraction.',
     });
     return;
   }
@@ -410,41 +418,72 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return;
   }
 
-  const model = process.env.OPENAI_MODEL?.trim() || 'gpt-4o-mini';
-  let providerResponse: Response;
+  // OpenAI-compatible providers such as OpenRouter keep the app free to run.
+  // Comma-separated models are tried in order when a free model is throttled.
+  const baseUrl = (
+    process.env.OPENAI_BASE_URL?.trim() || 'https://api.openai.com/v1'
+  ).replace(/\/+$/, '');
+  const models = (process.env.OPENAI_MODEL?.trim() || DEFAULT_FREE_MODEL)
+    .split(',')
+    .map((item) => item.trim())
+    .filter(Boolean);
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${apiKey}`,
+    'Content-Type': 'application/json',
+  };
+  if (baseUrl.includes('openrouter')) {
+    headers['HTTP-Referer'] =
+      process.env.VITE_APP_URL?.trim() || 'https://nova.local';
+    headers['X-Title'] = 'Nova Meeting Intelligence';
+  }
 
-  try {
-    providerResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model,
-        temperature: 0.2,
-        response_format: { type: 'json_object' },
-        messages: [
-          {
-            role: 'system',
-            content:
-              'You extract structured meeting intelligence. Reply with JSON only.',
-          },
-          {
-            role: 'user',
-            content: buildPrompt(meeting.title, transcript),
-          },
-        ],
-      }),
-    });
-  } catch {
-    sendJson(res, 502, {
-      error: 'The analysis provider could not be reached. Try again.',
-    });
+  const prompt = buildPrompt(meeting.title, transcript);
+  let providerResponse: Response | null = null;
+  let usedModel = models[0] ?? DEFAULT_FREE_MODEL;
+  let rateLimited = false;
+
+  for (const model of models) {
+    usedModel = model;
+    try {
+      providerResponse = await fetch(`${baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({
+          model,
+          temperature: 0.2,
+          messages: [
+            {
+              role: 'system',
+              content:
+                'You extract structured meeting intelligence. Reply with JSON only.',
+            },
+            { role: 'user', content: prompt },
+          ],
+        }),
+      });
+    } catch {
+      sendJson(res, 502, {
+        error: 'The analysis provider could not be reached. Try again.',
+      });
+      return;
+    }
+    if (providerResponse.status !== 429) break;
+    rateLimited = true;
+  }
+
+  if (!providerResponse) {
+    sendJson(res, 502, { error: 'No analysis provider was selected.' });
     return;
   }
 
   if (!providerResponse.ok) {
+    if (rateLimited && providerResponse.status === 429) {
+      res.setHeader('Retry-After', '30');
+      sendJson(res, 429, {
+        error: 'The free analysis provider is rate limited. Try again shortly.',
+      });
+      return;
+    }
     sendJson(res, 502, {
       error:
         providerResponse.status === 401
@@ -466,7 +505,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   let parsed: Record<string, unknown>;
   try {
-    parsed = JSON.parse(content) as Record<string, unknown>;
+    parsed = JSON.parse(cleanJson(content)) as Record<string, unknown>;
   } catch {
     sendJson(res, 502, {
       error: 'The analysis provider returned invalid JSON.',
@@ -489,7 +528,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     actions: parseActions(parsed.actions),
     decisions: parseDecisions(parsed.decisions),
     analyzedAt: new Date().toISOString(),
-    model,
+    model: usedModel,
     steps,
   };
 
