@@ -510,11 +510,11 @@ export function useToggleIntegration() {
 
 export function useSyncIntegration() {
   const queryClient = useQueryClient();
-  const { orgId } = useAuth();
+  const { orgId, session } = useAuth();
 
   return useMutation({
     mutationFn: (integrationId: string) =>
-      syncIntegration(integrationId, orgId),
+      syncIntegration(integrationId, orgId, session?.access_token ?? null),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: ['integrations'] });
       void queryClient.invalidateQueries({

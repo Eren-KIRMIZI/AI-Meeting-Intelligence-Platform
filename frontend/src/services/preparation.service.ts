@@ -1,11 +1,15 @@
 import { isSupabaseConfigured } from '@/lib/env';
+import { buildMeetingPreparation } from '@/lib/preparation';
 import { mockDb } from '@/mocks/db';
 import type {
   MeetingPreparation,
   PreparationAttendeeNote,
   PreparationContextItem,
 } from '@/types';
+import { listInsights } from './intelligence.service';
+import { getMeeting, listMeetings } from './meetings.service';
 import { assertOrg, getClient } from './supabase-helpers';
+import { listTasks } from './tasks.service';
 
 interface PreparationRow {
   meeting_id: string;
@@ -56,9 +60,44 @@ export async function getMeetingPreparation(
     .maybeSingle<PreparationRow>();
 
   if (error) throw new Error(error.message);
-  if (!data) {
-    throw new Error('No preparation brief has been generated for this meeting.');
-  }
+  if (data) return mapPreparation(data);
 
-  return mapPreparation(data);
+  // No cached brief yet. Build it from the same live workspace records demo
+  // mode uses, then persist it so the next visit is a single read.
+  const [meeting, meetings, insights, tasks] = await Promise.all([
+    getMeeting(meetingId, orgId),
+    listMeetings(orgId),
+    listInsights(orgId),
+    listTasks(orgId),
+  ]);
+
+  const preparation = buildMeetingPreparation({
+    meeting,
+    pastMeetings: meetings,
+    insights,
+    tasks,
+  });
+
+  const { error: upsertError } = await client
+    .from('meeting_preparations')
+    .upsert(
+      {
+        organization_id: organizationId,
+        meeting_id: meetingId,
+        generated_at: preparation.generatedAt,
+        readiness: preparation.readiness,
+        headline: preparation.headline,
+        objective: preparation.objective,
+        questions: preparation.questions,
+        context: preparation.context,
+        risks: preparation.risks,
+        attendee_notes: preparation.attendeeNotes,
+        suggested_agenda: preparation.suggestedAgenda,
+        model: preparation.model,
+      },
+      { onConflict: 'organization_id,meeting_id' }
+    );
+
+  if (upsertError) throw new Error(upsertError.message);
+  return preparation;
 }

@@ -38,7 +38,8 @@ Nova turns meetings into execution: every conversation becomes a brief with deci
 │  │  ├─ health.ts             GET  /api/health
 │  │  ├─ meetings/analyze.ts   POST /api/meetings/analyze
 │  │  ├─ live/token.ts         POST /api/live/token (LiveKit, server-side)
-│  │  └─ team/invite.ts        POST /api/team/invite
+│  │  ├─ team/invite.ts        POST /api/team/invite
+│  │  └─ integrations/sync.ts  POST /api/integrations/sync
 │  ├─ src/
 │  │  ├─ app/                  providers, router, root component
 │  │  ├─ components/           layout, common, UI primitives
@@ -63,6 +64,7 @@ Nova turns meetings into execution: every conversation becomes a brief with deci
    ├─ migrations/0007_notifications_realtime.sql notifications, RPC and Realtime
    ├─ migrations/0008_team_management.sql      roles, removals and project access
    ├─ migrations/0009_meeting_insights.sql     insight queue, review RPCs and Realtime
+   ├─ migrations/0010_workspace_extensions.sql audit, compliance, templates, sync, prep, follow-ups
    └─ seed.sql                                 idempotent demo workspace
 ```
 
@@ -143,7 +145,8 @@ Open the SQL editor and run, in order:
 7. `supabase/migrations/0007_notifications_realtime.sql`
 8. `supabase/migrations/0008_team_management.sql`
 9. `supabase/migrations/0009_meeting_insights.sql`
-10. `supabase/seed.sql` — optional demo workspace. Requires at least one auth user; sign up once first.
+10. `supabase/migrations/0010_workspace_extensions.sql`
+11. `supabase/seed.sql` — optional demo workspace. Requires at least one auth user; sign up once first.
 
 Or with the Supabase CLI:
 
@@ -163,6 +166,9 @@ The migration creates:
 - `meeting_sessions`, `meeting_transcript_segments` and `meeting_chat_messages`
   (added in `0005`) for Nova Live rooms, plus the `nova_live` platform value
 - `meeting_recordings` (added in `0006`) for archived recordings
+- `audit_events`, `compliance_controls`, `meeting_templates`,
+  `integration_sync_events`, `meeting_preparations` and `follow_up_messages`
+  (added in `0010`) for the extended workspace modules
 - `notifications.link`, the `digest` type, `notify_workspace()` and Realtime
   publication (added in `0007`) for action-driven, live notifications
 - `update_member_role()`, `remove_workspace_member()` and
@@ -186,6 +192,8 @@ The sixth migration adds `meeting_recordings` and the private `meeting-recording
 The seventh migration adds `notifications.link` and the `digest` notification type, then creates the `notify_workspace()` security-definer RPC. The RPC resolves the audience (`workspace`, `meeting` or `assignee`), excludes the actor and inserts one row per recipient, so client code never writes notifications for other people. It also publishes `notifications`, `tasks`, `decisions`, `decision_events`, `meetings`, `meeting_recordings` and `knowledge_documents` to `supabase_realtime` with replica identity `full`.
 
 The eighth migration makes team management explicit. Direct writes to `organization_members` are disabled and `project_members` writes are restricted to owners/admins. Three security-definer RPCs enforce the hierarchy: `update_member_role()` (owner fixed, no self-change, admins cannot manage admins or grant admin), `remove_workspace_member()` (no self-removal, no owner removal, revokes project memberships) and `set_member_projects()` (active members only, validates project ownership and keeps project owners in their own project). Role and project changes write an activity and notify the affected member with a `/team?member=<id>` deep link. `organization_members` and `project_members` are published to Realtime so every open tab refreshes.
+
+The tenth migration creates the tables the extended modules already query in live mode: `audit_events` (append-only), `compliance_controls` (read-only), `meeting_templates` (member-curated), plus `integration_sync_events`, `meeting_preparations` and `follow_up_messages`. All are organization-scoped with RLS; derived worker output stays read-only for clients.
 
 ### 3. Configure environment
 
@@ -309,6 +317,25 @@ Guards:
 3. Validates the room and identity formats and caps them at 80 characters.
 4. Rate limits to 30 token requests per 10 minutes per user via Upstash (fails open when unset).
 5. Returns only `{ token, url, room }` — never the API secret.
+
+### `POST /api/integrations/sync`
+
+Requires `Authorization: Bearer <access-token>`. Runs a connected integration sync on the server and returns the recorded event.
+
+```json
+{ "integrationId": "<uuid>", "organizationId": "<uuid>" }
+```
+
+Guards:
+
+1. Validates the JWT with Supabase Auth.
+2. Confirms the caller is an **active owner/admin/member** of the organization.
+3. Validates both UUIDs and that the integration belongs to that workspace.
+4. Rejects integrations that are not connected (`409`).
+5. Rate limits to 20 syncs per 10 minutes per user via Upstash (fails open when unset).
+6. Writes only through the service role, so provider credentials never reach the browser.
+
+Response: `{ "event": { id, integrationId, provider, direction, status, itemCount, startedAt, durationMs, summary } }`.
 
 ---
 
@@ -523,7 +550,7 @@ Run it alone with `npm run test -- src/i18n/translation-coverage.test.ts`. Dynam
 4. Add the environment variables above (production + preview).
 5. Deploy.
 
-`frontend/vercel.json` rewrites non-API routes to `index.html` (SPA routing) and sets `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` and `Permissions-Policy` headers.
+`frontend/vercel.json` rewrites non-API routes to `index.html` (SPA routing) and sets `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` and `Permissions-Policy` headers. Camera and microphone are allowed for `self` so Nova Live can capture media; geolocation stays disabled.
 
 ---
 

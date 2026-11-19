@@ -134,14 +134,23 @@ export async function setIntegrationConnected(
  */
 export async function syncIntegration(
   integrationId: string,
-  orgId: string | null
+  orgId: string | null,
+  accessToken?: string | null
 ): Promise<IntegrationSyncEvent> {
   if (!isSupabaseConfigured) return mockDb.syncIntegration(integrationId);
 
   const organizationId = assertOrg(orgId);
+
+  if (!accessToken) {
+    throw new Error('A signed-in session is required to sync integrations.');
+  }
+
   const response = await fetch('/api/integrations/sync', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${accessToken}`,
+    },
     body: JSON.stringify({ integrationId, organizationId }),
   });
 

@@ -38,7 +38,8 @@ Nova toplantıları yürütmeye dönüştürür: her görüşme; kararlar, sahip
 │  │  ├─ health.ts             GET  /api/health
 │  │  ├─ meetings/analyze.ts   POST /api/meetings/analyze
 │  │  ├─ live/token.ts         POST /api/live/token (LiveKit, sunucu tarafı)
-│  │  └─ team/invite.ts        POST /api/team/invite
+│  │  ├─ team/invite.ts        POST /api/team/invite
+│  │  └─ integrations/sync.ts  POST /api/integrations/sync
 │  ├─ src/
 │  │  ├─ app/                  sağlayıcılar, yönlendirici, kök bileşen
 │  │  ├─ components/           düzen, ortak bileşenler, UI temelleri
@@ -63,6 +64,7 @@ Nova toplantıları yürütmeye dönüştürür: her görüşme; kararlar, sahip
    ├─ migrations/0007_notifications_realtime.sql bildirimler, RPC ve Realtime
    ├─ migrations/0008_team_management.sql      roller, çıkarmalar ve proje erişimi
    ├─ migrations/0009_meeting_insights.sql     içgörü kuyruğu, inceleme RPC'leri ve Realtime
+   ├─ migrations/0010_workspace_extensions.sql denetim, uyumluluk, şablonlar, eşitleme, hazırlık, takipler
    └─ seed.sql                                 yinelenebilir demo çalışma alanı
 ```
 
@@ -143,7 +145,8 @@ SQL düzenleyicisini açın ve sırasıyla çalıştırın:
 7. `supabase/migrations/0007_notifications_realtime.sql`
 8. `supabase/migrations/0008_team_management.sql`
 9. `supabase/migrations/0009_meeting_insights.sql`
-10. `supabase/seed.sql` — isteğe bağlı demo çalışma alanı. En az bir kimlik doğrulama kullanıcısı gerektirir; önce bir kez kaydolun.
+10. `supabase/migrations/0010_workspace_extensions.sql`
+11. `supabase/seed.sql` — isteğe bağlı demo çalışma alanı. En az bir kimlik doğrulama kullanıcısı gerektirir; önce bir kez kaydolun.
 
 Veya Supabase CLI ile:
 
@@ -163,6 +166,9 @@ Geçişler şunları oluşturur:
 - Nova Live odaları için `meeting_sessions`, `meeting_transcript_segments` ve
   `meeting_chat_messages` (`0005` içinde eklendi) ile `nova_live` platform değeri
 - Arşivlenen kayıtlar için `meeting_recordings` (`0006` içinde eklendi)
+- Genişletilmiş çalışma alanı modülleri için `audit_events`, `compliance_controls`,
+  `meeting_templates`, `integration_sync_events`, `meeting_preparations` ve
+  `follow_up_messages` (`0010` içinde eklendi)
 - Eylem odaklı, canlı bildirimler için `notifications.link`, `digest` türü,
   `notify_workspace()` ve Realtime yayını (`0007` içinde eklendi)
 - Hiyerarşiye duyarlı ekip yönetimi için `update_member_role()`,
@@ -186,6 +192,8 @@ Altıncı geçiş, `meeting_recordings` tablosunu ve özel `meeting-recordings` 
 Yedinci geçiş, `notifications.link` sütununu ve `digest` bildirim türünü ekler, ardından `notify_workspace()` security-definer RPC'sini oluşturur. RPC hedef kitleyi (`workspace`, `meeting` veya `assignee`) çözer, eylemi yapanı hariç tutar ve alıcı başına bir satır ekler; böylece istemci kodu başkaları için asla bildirim yazmaz. Ayrıca `notifications`, `tasks`, `decisions`, `decision_events`, `meetings`, `meeting_recordings` ve `knowledge_documents` tablolarını `full` replica identity ile `supabase_realtime` yayınına ekler.
 
 Sekizinci geçiş ekip yönetimini açık hale getirir. `organization_members` tablosuna doğrudan yazma devre dışı bırakılır ve `project_members` yazmaları sahipler/yöneticilerle sınırlanır. Üç security-definer RPC hiyerarşiyi uygular: `update_member_role()` (sahip sabit, kendi rolünü değiştirme yok, yöneticiler yöneticileri yönetemez veya yönetici atayamaz), `remove_workspace_member()` (kendini çıkarma yok, sahibi çıkarma yok, proje üyeliklerini iptal eder) ve `set_member_projects()` (yalnızca aktif üyeler, proje sahipliğini doğrular ve proje sahiplerini kendi projelerinde tutar). Rol ve proje değişiklikleri bir etkinlik yazar ve etkilenen üyeye `/team?member=<id>` derin bağlantısıyla bildirim gönderir. Açık her sekmenin yenilenmesi için `organization_members` ve `project_members` Realtime'a eklenir.
+
+Onuncu geçiş, genişletilmiş modüllerin canlı modda zaten sorguladığı tabloları oluşturur: `audit_events` (yalnızca ekleme), `compliance_controls` (yalnızca okuma), `meeting_templates` (üyeler tarafından yönetilen) ve ayrıca `integration_sync_events`, `meeting_preparations` ve `follow_up_messages`. Tümü kuruluş kapsamlıdır ve RLS ile korunur; türetilmiş işçi çıktıları istemciler için yalnızca okunabilir.
 
 ### 3. Ortamı yapılandırın
 
@@ -309,6 +317,25 @@ Kontroller:
 3. Oda ve kimlik biçimlerini doğrular ve 80 karakterle sınırlar.
 4. Upstash üzerinden kullanıcı başına 10 dakikada 30 jeton isteğiyle sınırlar (yapılandırılmadığında açık kalır).
 5. Yalnızca `{ token, url, room }` döner — API sırrını asla döndürmez.
+
+### `POST /api/integrations/sync`
+
+`Authorization: Bearer <access-token>` gerektirir. Bağlı bir entegrasyon eşitlemesini sunucuda çalıştırır ve kaydedilen olayı döndürür.
+
+```json
+{ "integrationId": "<uuid>", "organizationId": "<uuid>" }
+```
+
+Kontroller:
+
+1. JWT'yi Supabase Auth ile doğrular.
+2. Çağıranın kuruluşun **aktif sahibi/yöneticisi/üyesi** olduğunu onaylar.
+3. Her iki UUID'yi ve entegrasyonun o çalışma alanına ait olduğunu doğrular.
+4. Bağlı olmayan entegrasyonları reddeder (`409`).
+5. Upstash üzerinden kullanıcı başına 10 dakikada 20 eşitlemeyle sınırlar (yapılandırılmadığında açık kalır).
+6. Yalnızca servis rolüyle yazar; böylece sağlayıcı kimlik bilgileri tarayıcıya hiç ulaşmaz.
+
+Yanıt: `{ "event": { id, integrationId, provider, direction, status, itemCount, startedAt, durationMs, summary } }`.
 
 ---
 
@@ -523,7 +550,7 @@ Tek başına `npm run test -- src/i18n/translation-coverage.test.ts` ile çalı�
 4. Yukarıdaki ortam değişkenlerini ekleyin (production + preview).
 5. Dağıtın.
 
-`frontend/vercel.json`, API olmayan rotaları `index.html` dosyasına yönlendirir (SPA yönlendirmesi) ve `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` ve `Permissions-Policy` başlıklarını ayarlar.
+`frontend/vercel.json`, API olmayan rotaları `index.html` dosyasına yönlendirir (SPA yönlendirmesi) ve `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy` ve `Permissions-Policy` başlıklarını ayarlar. Kamera ve mikrofon Nova Live'ın medya yakalaması için `self` ile sınırlı olarak açılır; coğrafi konum kapalı kalır.
 
 ---
 
