@@ -14,27 +14,31 @@ Nova, ekipler için bir AI toplantı zekâsı çalışma alanıdır. Toplantıla
 
 ## Ekran görüntüleri
 
-Aşağıdaki her çalışma alanı modülü, tohumlanmış yerel demo çalışma alanından yakalandı; ekranlar gerçekçi verilerle doludur ve canlı kiracı içeriği görünmez. Her dilin kendi eksiksiz görsel seti vardır; arayüzü **Ayarlar → Profil → Arayüz dili** bölümünden değiştirebilirsiniz.
+Aşağıdaki her çalışma alanı rotası, 1920×1200 çözünürlükte tohumlanmış yerel demo çalışma alanından yakalandı; ekranlar gerçekçi verilerle doludur ve canlı kiracı içeriği görünmez. Her dilin kendi eksiksiz görsel seti vardır; arayüzü **Ayarlar → Profil → Arayüz dili** bölümünden değiştirebilirsiniz.
 
-| Modül | Önizleme | Ne gösteriyor |
-| --- | --- | --- |
-| Genel bakış | <img src="docs/screenshots/tr/overview.png" alt="Nova genel bakış" width="360"> | KPI'lar, son etkinlikler ve çalışma alanı nabzı. |
-| Projeler | <img src="docs/screenshots/tr/projects.png" alt="Nova projeler" width="360"> | Proje hattı, sağlık durumu, bütçe ve sahiplik. |
-| Görevler | <img src="docs/screenshots/tr/tasks.png" alt="Nova görevler" width="360"> | Filtreler, öncelikler ve durum değişiklikleriyle kanban panosu. |
-| Toplantılar | <img src="docs/screenshots/tr/meetings.png" alt="Nova toplantılar" width="360"> | Analiz, transkript ve kayıtlarla toplantı kütüphanesi. |
-| Takvim | <img src="docs/screenshots/tr/calendar.png" alt="Nova takvim" width="360"> | Çakışmalar, hatırlatmalar ve boş aralıklarla hafta/ay ajandası. |
-| Arama | <img src="docs/screenshots/tr/search.png" alt="Nova arama" width="360"> | Toplantılar, kararlar, kişiler ve bilgi belgeleri üzerinde tek dizin. |
-| Nova Live | <img src="docs/screenshots/tr/live.png" alt="Nova Live" width="360"> | Katılım öncesi lobi, oda kontrolleri ve oturum geçmişi. |
-| Kararlar | <img src="docs/screenshots/tr/decisions.png" alt="Nova kararlar" width="360"> | Durum geçmişi ve inceleme eylemleriyle karar günlüğü. |
-| Bilgi | <img src="docs/screenshots/tr/knowledge.png" alt="Nova bilgi" width="360"> | Bilgi kütüphanesi ve tam belge okuyucusu. |
-| İş akışları | <img src="docs/screenshots/tr/workflows.png" alt="Nova iş akışları" width="360"> | Satır içi çalıştırma günlüğü olan otomasyon tarifleri. |
-| Entegrasyonlar | <img src="docs/screenshots/tr/integrations.png" alt="Nova entegrasyonlar" width="360"> | Bağlı sağlayıcılar, eşitleme sağlığı ve etkinlik. |
-| AI Intelligence | <img src="docs/screenshots/tr/intelligence.png" alt="Nova AI intelligence" width="360"> | İşe dönüştürme eylemleriyle incelenen AI sinyalleri. |
-| Organizasyon zekası | <img src="docs/screenshots/tr/org-intelligence.png" alt="Nova organizasyon zekası" width="360"> | Çalışma alanı geneli puan, sinyaller ve tekrarlayan temalar. |
-| Analitik | <img src="docs/screenshots/tr/analytics.png" alt="Nova analitik" width="360"> | Eğilim grafikleri, karar dağılımı ve iş yükü. |
-| Ekip | <img src="docs/screenshots/tr/team.png" alt="Nova ekip" width="360"> | Roller ve proje erişimiyle üye dizini. |
-| Denetim ve uyum | <img src="docs/screenshots/tr/audit.png" alt="Nova denetim" width="360"> | Denetim kaydı, önem dağılımı ve uyumluluk puanı. |
-| Ayarlar | <img src="docs/screenshots/tr/settings.png" alt="Nova ayarlar" width="360"> | Profil, bildirimler ve çalışma alanı tercihleri. |
+| Modül | Önizleme |
+| --- | --- |
+| Genel bakış | <img src="docs/screenshots/tr/overview.png" alt="Nova genel bakış" width="760"><br><em>KPI'lar, son etkinlikler ve çalışma alanı nabzı.</em> |
+| Projeler | <img src="docs/screenshots/tr/projects.png" alt="Nova projeler" width="760"><br><em>Proje hattı, sağlık durumu, bütçe ve sahiplik.</em> |
+| Proje detayı | <img src="docs/screenshots/tr/project-detail.png" alt="Nova proje detayı" width="760"><br><em>Proje özeti, görevler, toplantılar ve sağlık zaman çizelgesi.</em> |
+| Görevler | <img src="docs/screenshots/tr/tasks.png" alt="Nova görevler" width="760"><br><em>Filtreler, öncelikler ve durum değişiklikleriyle kanban panosu.</em> |
+| Toplantılar | <img src="docs/screenshots/tr/meetings.png" alt="Nova toplantılar" width="760"><br><em>Analiz, transkript ve kayıtlarla toplantı kütüphanesi.</em> |
+| Toplantı detayı | <img src="docs/screenshots/tr/meeting-detail.png" alt="Nova toplantı detayı" width="760"><br><em>Analiz, transkript, kararlar ve takip işleriyle tamamlanmış toplantı.</em> |
+| Toplantı şablonları | <img src="docs/screenshots/tr/templates.png" alt="Nova toplantı şablonları" width="760"><br><em>Aşamalar, istemler ve kullanım bilgileriyle altı tohumlanmış oyun kitabı.</em> |
+| Takvim | <img src="docs/screenshots/tr/calendar.png" alt="Nova takvim" width="760"><br><em>Çakışmalar, hatırlatmalar ve boş aralıklarla hafta/ay ajandası.</em> |
+| Arama | <img src="docs/screenshots/tr/search.png" alt="Nova arama" width="760"><br><em>Toplantılar, kararlar, kişiler ve bilgi belgeleri üzerinde tek dizin.</em> |
+| Nova Live | <img src="docs/screenshots/tr/live.png" alt="Nova Live" width="760"><br><em>Odalar, davet bağlantıları ve oturum geçmişi.</em> |
+| Canlı oda | <img src="docs/screenshots/tr/live-room.png" alt="Nova canlı oda" width="760"><br><em>Katılım öncesi kontroller, cihaz kontrolleri ve onay kapısı.</em> |
+| Kararlar | <img src="docs/screenshots/tr/decisions.png" alt="Nova kararlar" width="760"><br><em>Durum geçmişi ve inceleme eylemleriyle karar günlüğü.</em> |
+| Bilgi | <img src="docs/screenshots/tr/knowledge.png" alt="Nova bilgi" width="760"><br><em>Bilgi kütüphanesi ve tam belge okuyucusu.</em> |
+| İş akışları | <img src="docs/screenshots/tr/workflows.png" alt="Nova iş akışları" width="760"><br><em>Satır içi çalıştırma günlüğü olan otomasyon tarifleri.</em> |
+| Entegrasyonlar | <img src="docs/screenshots/tr/integrations.png" alt="Nova entegrasyonlar" width="760"><br><em>Bağlı sağlayıcılar, eşitleme sağlığı ve etkinlik.</em> |
+| AI Intelligence | <img src="docs/screenshots/tr/intelligence.png" alt="Nova AI intelligence" width="760"><br><em>İşe dönüştürme eylemleriyle incelenen AI sinyalleri.</em> |
+| Organizasyon zekası | <img src="docs/screenshots/tr/org-intelligence.png" alt="Nova organizasyon zekası" width="760"><br><em>Çalışma alanı geneli puan, sinyaller ve tekrarlayan temalar.</em> |
+| Analitik | <img src="docs/screenshots/tr/analytics.png" alt="Nova analitik" width="760"><br><em>Eğilim grafikleri, karar dağılımı ve iş yükü.</em> |
+| Ekip | <img src="docs/screenshots/tr/team.png" alt="Nova ekip" width="760"><br><em>Roller ve proje erişimiyle üye dizini.</em> |
+| Denetim ve uyum | <img src="docs/screenshots/tr/audit.png" alt="Nova denetim" width="760"><br><em>Denetim kaydı, önem dağılımı ve uyumluluk puanı.</em> |
+| Ayarlar | <img src="docs/screenshots/tr/settings.png" alt="Nova ayarlar" width="760"><br><em>Profil, bildirimler ve çalışma alanı tercihleri.</em> |
 
 Galeriyi yenilemek için `.env.local` olmadan 4173 portunda demo sunucusunu başlatın, ardından `frontend/` içinden `npm run capture:screenshots` komutunu çalıştırın (bkz. aşağıdaki komut tablosu).
 

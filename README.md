@@ -14,27 +14,31 @@ Nova is an AI meeting intelligence workspace for teams. It turns meetings into e
 
 ## Screenshots
 
-Every workspace module below was captured from the seeded local demo workspace, so the screens are populated with realistic data and no live tenant content appears. Each language has its own full set of images; switch the interface under **Settings → Profile → Interface language**.
+Every workspace route below was captured from the seeded local demo workspace at 1920×1200, so the screens are populated with realistic data and no live tenant content appears. Each language has its own full set of images; switch the interface under **Settings → Profile → Interface language**.
 
-| Module | Preview | What it shows |
-| --- | --- | --- |
-| Overview | <img src="docs/screenshots/en/overview.png" alt="Nova overview" width="360"> | KPIs, recent activity and the workspace pulse at a glance. |
-| Projects | <img src="docs/screenshots/en/projects.png" alt="Nova projects" width="360"> | Project pipeline, health, budget and ownership. |
-| Tasks | <img src="docs/screenshots/en/tasks.png" alt="Nova tasks" width="360"> | Kanban board with filters, priorities and status changes. |
-| Meetings | <img src="docs/screenshots/en/meetings.png" alt="Nova meetings" width="360"> | Meeting library with analysis, transcripts and recordings. |
-| Calendar | <img src="docs/screenshots/en/calendar.png" alt="Nova calendar" width="360"> | Week/month agenda with conflicts, reminders and free slots. |
-| Search | <img src="docs/screenshots/en/search.png" alt="Nova search" width="360"> | One index across meetings, decisions, people and knowledge. |
-| Nova Live | <img src="docs/screenshots/en/live.png" alt="Nova Live" width="360"> | Pre-join lobby, room controls and session history. |
-| Decisions | <img src="docs/screenshots/en/decisions.png" alt="Nova decisions" width="360"> | Decision log with status history and review actions. |
-| Knowledge | <img src="docs/screenshots/en/knowledge.png" alt="Nova knowledge" width="360"> | Knowledge library and full-document reader. |
-| Workflows | <img src="docs/screenshots/en/workflows.png" alt="Nova workflows" width="360"> | Automation recipes with an inline run log. |
-| Integrations | <img src="docs/screenshots/en/integrations.png" alt="Nova integrations" width="360"> | Connected providers, sync health and activity. |
-| AI Intelligence | <img src="docs/screenshots/en/intelligence.png" alt="Nova AI intelligence" width="360"> | Reviewed AI signals with convert-to-work actions. |
-| Organizational intelligence | <img src="docs/screenshots/en/org-intelligence.png" alt="Nova organizational intelligence" width="360"> | Workspace-wide score, signals and recurring themes. |
-| Analytics | <img src="docs/screenshots/en/analytics.png" alt="Nova analytics" width="360"> | Trend charts, decision mix and workload. |
-| Team | <img src="docs/screenshots/en/team.png" alt="Nova team" width="360"> | Member directory with roles and project access. |
-| Audit & compliance | <img src="docs/screenshots/en/audit.png" alt="Nova audit" width="360"> | Audit log, severity breakdown and compliance score. |
-| Settings | <img src="docs/screenshots/en/settings.png" alt="Nova settings" width="360"> | Profile, notifications and workspace preferences. |
+| Module | Preview |
+| --- | --- |
+| Overview | <img src="docs/screenshots/en/overview.png" alt="Nova overview" width="760"><br><em>KPIs, recent activity and the workspace pulse at a glance.</em> |
+| Projects | <img src="docs/screenshots/en/projects.png" alt="Nova projects" width="760"><br><em>Project pipeline, health, budget and ownership.</em> |
+| Project detail | <img src="docs/screenshots/en/project-detail.png" alt="Nova project detail" width="760"><br><em>Project brief, tasks, meetings and health timeline.</em> |
+| Tasks | <img src="docs/screenshots/en/tasks.png" alt="Nova tasks" width="760"><br><em>Kanban board with filters, priorities and status changes.</em> |
+| Meetings | <img src="docs/screenshots/en/meetings.png" alt="Nova meetings" width="760"><br><em>Meeting library with analysis, transcripts and recordings.</em> |
+| Meeting detail | <img src="docs/screenshots/en/meeting-detail.png" alt="Nova meeting detail" width="760"><br><em>Completed meeting with analysis, transcript, decisions and follow-ups.</em> |
+| Meeting templates | <img src="docs/screenshots/en/templates.png" alt="Nova meeting templates" width="760"><br><em>Six seeded playbooks with phases, prompts and usage.</em> |
+| Calendar | <img src="docs/screenshots/en/calendar.png" alt="Nova calendar" width="760"><br><em>Week/month agenda with conflicts, reminders and free slots.</em> |
+| Search | <img src="docs/screenshots/en/search.png" alt="Nova search" width="760"><br><em>One index across meetings, decisions, people and knowledge.</em> |
+| Nova Live | <img src="docs/screenshots/en/live.png" alt="Nova Live" width="760"><br><em>Rooms, invite links and session history.</em> |
+| Live room | <img src="docs/screenshots/en/live-room.png" alt="Nova Live room" width="760"><br><em>Pre-join checks, device controls and the consent gate.</em> |
+| Decisions | <img src="docs/screenshots/en/decisions.png" alt="Nova decisions" width="760"><br><em>Decision log with status history and review actions.</em> |
+| Knowledge | <img src="docs/screenshots/en/knowledge.png" alt="Nova knowledge" width="760"><br><em>Knowledge library and full-document reader.</em> |
+| Workflows | <img src="docs/screenshots/en/workflows.png" alt="Nova workflows" width="760"><br><em>Automation recipes with an inline run log.</em> |
+| Integrations | <img src="docs/screenshots/en/integrations.png" alt="Nova integrations" width="760"><br><em>Connected providers, sync health and activity.</em> |
+| AI Intelligence | <img src="docs/screenshots/en/intelligence.png" alt="Nova AI intelligence" width="760"><br><em>Reviewed AI signals with convert-to-work actions.</em> |
+| Organizational intelligence | <img src="docs/screenshots/en/org-intelligence.png" alt="Nova organizational intelligence" width="760"><br><em>Workspace-wide score, signals and recurring themes.</em> |
+| Analytics | <img src="docs/screenshots/en/analytics.png" alt="Nova analytics" width="760"><br><em>Trend charts, decision mix and workload.</em> |
+| Team | <img src="docs/screenshots/en/team.png" alt="Nova team" width="760"><br><em>Member directory with roles and project access.</em> |
+| Audit & compliance | <img src="docs/screenshots/en/audit.png" alt="Nova audit" width="760"><br><em>Audit log, severity breakdown and compliance score.</em> |
+| Settings | <img src="docs/screenshots/en/settings.png" alt="Nova settings" width="760"><br><em>Profile, notifications and workspace preferences.</em> |
 
 To refresh the gallery, start the demo server without `.env.local` on port 4173, then run `npm run capture:screenshots` from `frontend/` (see the script table below).
 
