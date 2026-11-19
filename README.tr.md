@@ -95,11 +95,11 @@ Yazdırılan URL'yi açın (varsayılan `http://localhost:5173`). Giriş ekranı
 | `npm run test:watch` | Vitest'i izleme modunda çalıştırır |
 | `npm run test:coverage` | Paketi V8 kapsam raporuyla çalıştırır |
 | `npm run test:e2e` | Üretim varlıklarını oluşturur ve Playwright tarayıcı paketini çalıştırır |
-| `npm run test:e2e:ui` | Playwright UI çalıştırıcısını açar |
+| `npm run test:e2e:ui` | Üretim varlıklarını oluşturur ve Playwright UI çalıştırıcısını açar |
 
 ### Testler ve CI
 
-Testler Vitest, jsdom, Testing Library ve jest-dom kullanır. Paket; saf yardımcıları, metrik oluşturucuları, aralığa dayalı analitiği, enum koruyucularını, transkript analizcisini, canlı toplantı zekâsını ve Knowledge notunu, demo veri deposunu ve toplantı hattını (analiz → kaydet), Nova Live kalıcılığını, kayıt biçimlendirmesini ve arşiv depolamayı, bildirim tercihi filtrelemesini ve derin bağlantı güvenliğini, demo çalışma alanı olay veri yolunu, eylem odaklı bildirim teslimini, ekip rol hiyerarşisi kurallarını, üye çıkarma ve proje erişimi eşitlemesini, içgörü inceleme kuyruğunu ve görev/karar dönüşümünü, iş akışı çalıştırma günlüğünü, sparkline geometrisini ve canlı oda/konuşma/ortam yardımcılarını, kenar çubuğu erişilebilirliğini, rota meta verisini ve belge başlıklarını, hata sınırlarını, 404 sayfasını, yerel ayar değiştirmeyi ve yerel ayara duyarlı biçimlendirmeyi, çeviri kapsamını (AST tabanlı anahtar, yer tutucu ve JSX koruması) ve uçtan uca bir görev panosu etkileşimini kapsar.
+Testler Vitest, jsdom, Testing Library ve jest-dom kullanır. Paket; saf yardımcıları, metrik oluşturucuları, aralığa dayalı analitiği, enum koruyucularını, transkript analizcisini, canlı toplantı zekâsını ve Knowledge notunu, demo veri deposunu ve toplantı hattını (analiz → kaydet), Nova Live kalıcılığını, kayıt biçimlendirmesini ve arşiv depolamayı, bildirim tercihi filtrelemesini ve derin bağlantı güvenliğini, demo çalışma alanı olay veri yolunu, eylem odaklı bildirim teslimini, ekip rol hiyerarşisi kurallarını, üye çıkarma ve proje erişimi eşitlemesini, içgörü inceleme kuyruğunu ve görev/karar dönüşümünü, iş akışı çalıştırma günlüğünü, sparkline geometrisini ve canlı oda/konuşma/ortam yardımcılarını, taklit edilmiş SDK ile LiveKit adaptörünü, Supabase yardımcı korumalarını ve demo modu servis yedeklerini, kenar çubuğu erişilebilirliğini, rota meta verisini ve belge başlıklarını, hata sınırlarını, 404 sayfasını, yerel ayar değiştirmeyi ve yerel ayara duyarlı biçimlendirmeyi, çeviri kapsamını (AST tabanlı anahtar, yer tutucu ve JSX koruması) ve uçtan uca bir görev panosu etkileşimini kapsar.
 
 ```bash
 cd frontend
@@ -120,7 +120,7 @@ npm run test:e2e
 
 Playwright önce üretim paketini oluşturur, ardından `127.0.0.1:4173` üzerinde bir Vite önizleme sunucusu başlatır; böylece testler geliştirme dönüşümleri yerine yayınlanan varlıkları çalıştırır ve geliştirme sunucusunun açık olması gerekmez. CI tarayıcı paketini ayrı bir işte çalıştırır ve başarısız olduğunda HTML raporunu yükler.
 
-GitHub Actions her push ve `main` hedefli pull request'te `lint → typecheck → test → build` ile Playwright işini çalıştırır (`.github/workflows/ci.yml`). CI paketi `npm run test:coverage` ile çalıştırır ve kapsam tabanlarını zorunlu kılar (%38 ifade, %26 dal, %36 fonksiyon, %39 satır); böylece oran yalnızca yükselebilir. Ayrı bir `npm run check:readme` adımı derleme başlamadan önce iki README'yi karşılaştırır.
+GitHub Actions her push ve `main` hedefli pull request'te `lint → typecheck → test → build` ile Playwright işini çalıştırır (`.github/workflows/ci.yml`). CI paketi `npm run test:coverage` ile çalıştırır ve kapsam tabanlarını zorunlu kılar (%40 ifade, %27 dal, %38 fonksiyon, %41 satır); böylece oran yalnızca yükselebilir. Ayrı bir `npm run check:readme` adımı derleme başlamadan önce iki README'yi karşılaştırır.
 
 ---
 

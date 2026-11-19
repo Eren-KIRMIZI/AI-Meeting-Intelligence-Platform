@@ -13,7 +13,7 @@
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "npm run build && playwright test",
-    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:ui": "npm run build && playwright test --ui",
     "check:readme": "node ../scripts/check-readme-sync.mjs"
   },
   "dependencies": {
