@@ -65,6 +65,7 @@ Nova turns meetings into execution: every conversation becomes a brief with deci
    ├─ migrations/0008_team_management.sql      roles, removals and project access
    ├─ migrations/0009_meeting_insights.sql     insight queue, review RPCs and Realtime
    ├─ migrations/0010_workspace_extensions.sql audit, compliance, templates, sync, prep, follow-ups
+   ├─ migrations/0011_api_grants.sql            PostgREST role grants on public schema
    └─ seed.sql                                 idempotent demo workspace
 ```
 
@@ -146,7 +147,8 @@ Open the SQL editor and run, in order:
 8. `supabase/migrations/0008_team_management.sql`
 9. `supabase/migrations/0009_meeting_insights.sql`
 10. `supabase/migrations/0010_workspace_extensions.sql`
-11. `supabase/seed.sql` — optional demo workspace. Requires at least one auth user; sign up once first.
+11. `supabase/migrations/0011_api_grants.sql`
+12. `supabase/seed.sql` — optional demo workspace. Requires at least one auth user; sign up once first.
 
 Or with the Supabase CLI:
 
@@ -194,6 +196,8 @@ The seventh migration adds `notifications.link` and the `digest` notification ty
 The eighth migration makes team management explicit. Direct writes to `organization_members` are disabled and `project_members` writes are restricted to owners/admins. Three security-definer RPCs enforce the hierarchy: `update_member_role()` (owner fixed, no self-change, admins cannot manage admins or grant admin), `remove_workspace_member()` (no self-removal, no owner removal, revokes project memberships) and `set_member_projects()` (active members only, validates project ownership and keeps project owners in their own project). Role and project changes write an activity and notify the affected member with a `/team?member=<id>` deep link. `organization_members` and `project_members` are published to Realtime so every open tab refreshes.
 
 The tenth migration creates the tables the extended modules already query in live mode: `audit_events` (append-only), `compliance_controls` (read-only), `meeting_templates` (member-curated), plus `integration_sync_events`, `meeting_preparations` and `follow_up_messages`. All are organization-scoped with RLS; derived worker output stays read-only for clients.
+
+The eleventh migration grants standard CRUD privileges on the public schema to `anon`, `authenticated` and `service_role` and sets default privileges for future tables. Projects with altered default privileges otherwise reject every API request with `permission denied for table ...` even when RLS is correct.
 
 ### 3. Configure environment
 

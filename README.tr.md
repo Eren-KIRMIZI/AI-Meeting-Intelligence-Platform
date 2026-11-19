@@ -65,6 +65,7 @@ Nova toplantıları yürütmeye dönüştürür: her görüşme; kararlar, sahip
    ├─ migrations/0008_team_management.sql      roller, çıkarmalar ve proje erişimi
    ├─ migrations/0009_meeting_insights.sql     içgörü kuyruğu, inceleme RPC'leri ve Realtime
    ├─ migrations/0010_workspace_extensions.sql denetim, uyumluluk, şablonlar, eşitleme, hazırlık, takipler
+   ├─ migrations/0011_api_grants.sql            public şemada PostgREST rol yetkileri
    └─ seed.sql                                 yinelenebilir demo çalışma alanı
 ```
 
@@ -146,7 +147,8 @@ SQL düzenleyicisini açın ve sırasıyla çalıştırın:
 8. `supabase/migrations/0008_team_management.sql`
 9. `supabase/migrations/0009_meeting_insights.sql`
 10. `supabase/migrations/0010_workspace_extensions.sql`
-11. `supabase/seed.sql` — isteğe bağlı demo çalışma alanı. En az bir kimlik doğrulama kullanıcısı gerektirir; önce bir kez kaydolun.
+11. `supabase/migrations/0011_api_grants.sql`
+12. `supabase/seed.sql` — isteğe bağlı demo çalışma alanı. En az bir kimlik doğrulama kullanıcısı gerektirir; önce bir kez kaydolun.
 
 Veya Supabase CLI ile:
 
@@ -194,6 +196,8 @@ Yedinci geçiş, `notifications.link` sütununu ve `digest` bildirim türünü e
 Sekizinci geçiş ekip yönetimini açık hale getirir. `organization_members` tablosuna doğrudan yazma devre dışı bırakılır ve `project_members` yazmaları sahipler/yöneticilerle sınırlanır. Üç security-definer RPC hiyerarşiyi uygular: `update_member_role()` (sahip sabit, kendi rolünü değiştirme yok, yöneticiler yöneticileri yönetemez veya yönetici atayamaz), `remove_workspace_member()` (kendini çıkarma yok, sahibi çıkarma yok, proje üyeliklerini iptal eder) ve `set_member_projects()` (yalnızca aktif üyeler, proje sahipliğini doğrular ve proje sahiplerini kendi projelerinde tutar). Rol ve proje değişiklikleri bir etkinlik yazar ve etkilenen üyeye `/team?member=<id>` derin bağlantısıyla bildirim gönderir. Açık her sekmenin yenilenmesi için `organization_members` ve `project_members` Realtime'a eklenir.
 
 Onuncu geçiş, genişletilmiş modüllerin canlı modda zaten sorguladığı tabloları oluşturur: `audit_events` (yalnızca ekleme), `compliance_controls` (yalnızca okuma), `meeting_templates` (üyeler tarafından yönetilen) ve ayrıca `integration_sync_events`, `meeting_preparations` ve `follow_up_messages`. Tümü kuruluş kapsamlıdır ve RLS ile korunur; türetilmiş işçi çıktıları istemciler için yalnızca okunabilir.
+
+On birinci geçiş, public şemadaki tablolar için `anon`, `authenticated` ve `service_role` rollerine standart CRUD yetkileri verir ve yeni tablolar için varsayılan yetkileri ayarlar. Varsayılan yetkileri değiştirilmiş projelerde RLS doğru olsa bile her API isteği `permission denied for table ...` hatasıyla reddedilir.
 
 ### 3. Ortamı yapılandırın
 
